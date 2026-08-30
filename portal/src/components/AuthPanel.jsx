@@ -10,6 +10,7 @@ export function AuthPanel({ onAuthenticated }) {
   const displayName = signal('')
   const password = signal('')
   const error = signal('')
+  const fieldErrors = signal({})
   const busy = signal(false)
 
   const title = computed(() => mode.value === 'login' ? 'Welcome back' : 'Join Echo')
@@ -24,11 +25,13 @@ export function AuthPanel({ onAuthenticated }) {
   function setMode(nextMode) {
     mode.value = nextMode
     error.value = ''
+    fieldErrors.value = {}
   }
 
   async function submit(event, submitMode) {
     event.preventDefault()
     error.value = ''
+    fieldErrors.value = {}
     busy.value = true
 
     const payload = submitMode === 'login'
@@ -47,7 +50,10 @@ export function AuthPanel({ onAuthenticated }) {
       })
       onAuthenticated(result.data.user)
     } catch (requestError) {
-      error.value = requestError.message || 'Could not complete sign in'
+      fieldErrors.value = requestError.details?.fieldErrors || {}
+      error.value = Object.keys(fieldErrors.value).length
+        ? 'Fix the marked fields and try again.'
+        : requestError.message || 'Could not complete sign in'
     } finally {
       busy.value = false
     }
@@ -87,17 +93,25 @@ export function AuthPanel({ onAuthenticated }) {
     return (
       <form class="auth-form" onSubmit={event => submit(event, 'register')}>
         <Stack gap="medium">
-          <FormField id="auth-username" label="Username" required hint="Lowercase letters, numbers, and underscores.">
+          <FormField
+            id="auth-username"
+            label="Username"
+            required
+            hint="3–32 lowercase letters, numbers, and underscores."
+            error={computed(() => fieldErrors.value.username?.[0])}
+          >
             <TextField
               id="auth-username"
               value={username}
               placeholder="your_name"
               autocomplete="username"
+              minLength={3}
               maxLength={32}
+              pattern="[a-z0-9_]+"
               required
             />
           </FormField>
-          <FormField id="auth-email" label="Email" required>
+          <FormField id="auth-email" label="Email" required error={computed(() => fieldErrors.value.email?.[0])}>
             <TextField
               id="auth-email"
               value={email}
@@ -108,7 +122,7 @@ export function AuthPanel({ onAuthenticated }) {
               required
             />
           </FormField>
-          <FormField id="auth-display-name" label="Display name" required>
+          <FormField id="auth-display-name" label="Display name" required error={computed(() => fieldErrors.value.displayName?.[0])}>
             <TextField
               id="auth-display-name"
               value={displayName}
@@ -118,7 +132,13 @@ export function AuthPanel({ onAuthenticated }) {
               required
             />
           </FormField>
-          <FormField id="auth-register-password" label="Password" required hint="At least 8 characters.">
+          <FormField
+            id="auth-register-password"
+            label="Password"
+            required
+            hint="At least 8 characters."
+            error={computed(() => fieldErrors.value.password?.[0])}
+          >
             <TextField
               id="auth-register-password"
               value={password}
