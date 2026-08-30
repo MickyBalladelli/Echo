@@ -319,6 +319,15 @@ textarea {
   min-width: 0;
 }
 
+.post-author-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.post-author-link:hover .prism-label {
+  color: #dff8ec;
+}
+
 .post-author-copy > span,
 .post-card-meta time {
   color: #84909b;
@@ -561,6 +570,90 @@ textarea {
   justify-content: flex-end;
 }
 
+.user-social-stack {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.public-profile-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 16px;
+  align-items: center;
+}
+
+.follow-control {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+
+.follow-control-error {
+  min-height: 16px;
+  color: #ef9999;
+  font-size: 12px;
+}
+
+.social-counts {
+  display: flex;
+  gap: 20px;
+  color: #aeb8c1;
+}
+
+.social-counts strong {
+  color: #f5f7fb;
+}
+
+.social-lists-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.social-list-card {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.social-user-list {
+  display: grid;
+  gap: 6px;
+}
+
+.social-user-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 10px;
+  color: #f5f7fb;
+  text-decoration: none;
+}
+
+.social-user-row:hover {
+  background: rgba(103, 128, 255, 0.12);
+}
+
+.social-user-avatar {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: #3657d6;
+  font-weight: 800;
+}
+
+.social-user-row > span:last-child {
+  display: grid;
+}
+
+.social-user-row small {
+  color: #84909b;
+}
+
 .profile-editor {
   display: grid;
   grid-column: 1 / -1;
@@ -596,6 +689,15 @@ textarea {
 
   .profile-actions {
     grid-column: 1 / -1;
+  }
+
+  .public-profile-card,
+  .social-lists-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .follow-control {
+    justify-items: start;
   }
 }
 

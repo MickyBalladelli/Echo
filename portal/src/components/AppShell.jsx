@@ -2,6 +2,7 @@ import { createRouter, html, onMount, routerView } from '../lib/vendor.js'
 import { Badge, Footer, Header, Label, Layout, prismTheme } from '../lib/vendor.js'
 import { ContextRail } from './ContextRail.jsx'
 import { ShellNavigation } from './ShellNavigation.jsx'
+import { UserProfilePage } from '../pages/UserProfilePage.jsx'
 import {
   ChannelsPage,
   ChatPage,
@@ -17,6 +18,11 @@ import {
 export function AppShell({ userState, apiStatus, socketStatus, onLogout, onUpdated }) {
   const router = createRouter([
     { path: '/', title: 'Home', view: () => HomePage({ router, currentUserId: userState.value.id }) },
+    {
+      path: '/following',
+      title: 'Following',
+      view: () => HomePage({ router, currentUserId: userState.value.id, feed: 'following' })
+    },
     { path: '/explore', title: 'Explore', view: ExplorePage },
     { path: '/notifications', title: 'Notifications', view: NotificationsPage },
     { path: '/notes', title: 'Notes', view: NotesPage },
@@ -25,7 +31,12 @@ export function AppShell({ userState, apiStatus, socketStatus, onLogout, onUpdat
     {
       path: '/profile',
       title: 'Profile',
-      view: () => ProfilePage({ userState, onLogout, onUpdated })
+      view: () => ProfilePage({ userState, onLogout, onUpdated, router })
+    },
+    {
+      path: '/users/:username',
+      title: 'Profile',
+      view: ({ username }) => UserProfilePage({ username, router, currentUserId: userState.value.id })
     },
     {
       path: '/posts/:id',

@@ -72,10 +72,14 @@ export function PostCard({ post, router, currentUserId, onDeleted, onReply }) {
             ? <img src={post.author.avatarUrl} alt="" />
             : authorInitial(post)}
         </div>
-        <div class="post-author-copy">
+        <a
+          class="post-author-copy post-author-link"
+          href={`/users/${post.author.username}`}
+          onClick={router.link(`/users/${post.author.username}`)}
+        >
           <Label size="large">{post.author.displayName}</Label>
           <span>@{post.author.username}</span>
-        </div>
+        </a>
         <div class="post-card-meta">
           <time datetime={post.createdAt} title={new Date(post.createdAt).toLocaleString()}>{formatPostTime(post.createdAt)}</time>
           {post.following && <Badge tone="success">Following</Badge>}
@@ -91,8 +95,8 @@ export function PostCard({ post, router, currentUserId, onDeleted, onReply }) {
           variant="tertiary"
           size="small"
           class={computed(() => liked.value ? 'post-like-button post-like-button-active' : 'post-like-button')}
-          aria-pressed={liked}
-          aria-label={computed(() => `${liked.value ? 'Unlike' : 'Like'} this post. ${likeLabel.value}`)}
+          pressed={liked}
+          ariaLabel={computed(() => `${liked.value ? 'Unlike' : 'Like'} this post. ${likeLabel.value}`)}
           loading={updatingLike}
           onClick={toggleLike}
         >

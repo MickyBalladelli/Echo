@@ -3,6 +3,7 @@ import { Navigator } from '../lib/vendor.js'
 
 const navItems = Object.freeze([
   { path: '/', label: 'Home', mark: '⌂' },
+  { path: '/following', label: 'Following', mark: '◇' },
   { path: '/explore', label: 'Explore', mark: '⌕' },
   { path: '/notifications', label: 'Notifications', mark: '●' },
   { path: '/notes', label: 'Notes', mark: '▤' },

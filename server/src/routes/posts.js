@@ -1,8 +1,8 @@
 import { Router } from 'express'
 import { ok, cursorMeta } from '../http/api.js'
 import { decodeCursor } from '../http/pagination.js'
-import { idSchema, paginationSchema, parse } from '../http/validation.js'
-import { createPostSchema, createReplySchema } from '../posts/schemas.js'
+import { idSchema, parse } from '../http/validation.js'
+import { createPostSchema, createReplySchema, postFeedSchema } from '../posts/schemas.js'
 import {
   createPost,
   createReply,
@@ -17,10 +17,11 @@ export const postsRouter = Router()
 
 postsRouter.get('/', async (request, response, next) => {
   try {
-    const page = parse(paginationSchema, request.query, 'post feed query')
+    const page = parse(postFeedSchema, request.query, 'post feed query')
     const result = await listPosts(request.auth.userId, {
       cursor: decodeCursor(page.cursor),
-      limit: page.limit
+      limit: page.limit,
+      feed: page.feed
     })
     response.json(ok(result.posts, cursorMeta(result.nextCursor)))
   } catch (error) {

@@ -1,4 +1,5 @@
 import { ProfileCard } from '../components/ProfileCard.jsx'
+import { UserSocialContent } from '../components/UserSocialContent.jsx'
 import { Card, EmptyState, Button } from '../lib/vendor.js'
 import { ComingSoon, PageFrame } from './PageFrame.jsx'
 import { FeedPage, PostDetailPage } from './FeedPage.jsx'
@@ -63,7 +64,7 @@ export function ChatPage() {
   )
 }
 
-export function ProfilePage({ userState, onLogout, onUpdated }) {
+export function ProfilePage({ userState, onLogout, onUpdated, router }) {
   return (
     <PageFrame
       eyebrow="YOU / PROFILE"
@@ -71,6 +72,12 @@ export function ProfilePage({ userState, onLogout, onUpdated }) {
       description="Your public identity, bio, and account details."
     >
       <ProfileCard user={userState.value} onLogout={onLogout} onUpdated={onUpdated} />
+      <UserSocialContent
+        username={userState.value.username}
+        router={router}
+        currentUserId={userState.value.id}
+        showIdentity={false}
+      />
     </PageFrame>
   )
 }

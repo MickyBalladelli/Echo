@@ -105,14 +105,14 @@ learn and use components in Prism for all your UI
 
 ### Following and feeds
 
-- [ ] Add follow and unfollow endpoints.
-- [ ] Add follow button and state.
-- [ ] Notify users when someone follows them.
-- [ ] Build Following feed from followed users.
-- [ ] Keep Home feed behavior defined: Following-only or mixed discovery feed.
-- [ ] Add follower and following lists.
-- [ ] Add user profile post list.
-- [ ] Prevent duplicate follow relationships.
+- [x] Add follow and unfollow endpoints.
+- [x] Add follow button and state.
+- [x] Notify users when someone follows them.
+- [x] Build Following feed from followed users.
+- [x] Keep Home feed behavior defined: Following-only or mixed discovery feed.
+- [x] Add follower and following lists.
+- [x] Add user profile post list.
+- [x] Prevent duplicate follow relationships.
 
 ### Explore and search
 

@@ -71,6 +71,7 @@ async function selectPosts({
   replacements,
   limit,
   order = 'DESC',
+  orderBy,
   transaction,
   withClause = '',
   extraFrom = '',
@@ -83,7 +84,7 @@ async function selectPosts({
     ${extraFrom}
     WHERE ${where}
     GROUP BY p.id, u.id, pr.user_id${extraGroupBy ? `, ${extraGroupBy}` : ''}
-    ORDER BY p.created_at ${order}, p.id ${order}
+    ORDER BY ${orderBy || `p.created_at ${order}, p.id ${order}`}
     LIMIT :limit
   `, {
     replacements: { viewerId, limit, ...replacements },
@@ -94,12 +95,38 @@ async function selectPosts({
   return rows.map(mapPost)
 }
 
-export async function listPosts(viewerId, { cursor, limit }) {
+export async function listPosts(viewerId, {
+  cursor,
+  limit,
+  feed = 'home',
+  authorId = null,
+  searchQuery = null
+}) {
   const where = [
     "p.deleted_at IS NULL",
     "p.visibility = 'public'"
   ]
   const replacements = {}
+
+  if (feed === 'following') {
+    where.push(`(
+      p.author_id = :viewerId OR EXISTS (
+        SELECT 1 FROM follows feed_follow
+        WHERE feed_follow.follower_id = :viewerId
+          AND feed_follow.following_id = p.author_id
+      )
+    )`)
+  }
+
+  if (authorId) {
+    where.push('p.author_id = :authorId')
+    replacements.authorId = authorId
+  }
+
+  if (searchQuery) {
+    where.push('p.body ILIKE :searchPattern')
+    replacements.searchPattern = `%${searchQuery}%`
+  }
 
   if (cursor) {
     where.push('(p.created_at, p.id) < (CAST(:cursorCreatedAt AS timestamptz), CAST(:cursorId AS uuid))')
@@ -121,6 +148,16 @@ export async function listPosts(viewerId, { cursor, limit }) {
     posts,
     nextCursor: hasMore && last ? encodeCursor({ createdAt: last.createdAt, id: last.id }) : null
   }
+}
+
+export async function listPopularPosts(viewerId, limit) {
+  return selectPosts({
+    viewerId,
+    where: "p.deleted_at IS NULL AND p.visibility = 'public'",
+    replacements: {},
+    limit,
+    orderBy: 'like_count DESC, reply_count DESC, p.created_at DESC, p.id DESC'
+  })
 }
 
 async function listThreadReplies(viewerId, postId, transaction) {

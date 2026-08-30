@@ -10,7 +10,7 @@ function getRequestMessage(error) {
   return error?.message || 'Could not load posts'
 }
 
-export function FeedPage({ router, currentUserId }) {
+export function FeedPage({ router, currentUserId, feed = 'home' }) {
   const posts = signal([])
   const nextCursor = signal(null)
   const state = signal('loading')
@@ -27,7 +27,7 @@ export function FeedPage({ router, currentUserId }) {
     }
 
     try {
-      const query = new URLSearchParams({ limit: '20' })
+      const query = new URLSearchParams({ limit: '20', feed })
       if (append && nextCursor.value) query.set('cursor', nextCursor.value)
       const result = await apiRequest(`/api/posts?${query.toString()}`)
       const received = result.data || []
@@ -76,7 +76,10 @@ export function FeedPage({ router, currentUserId }) {
     if (!posts.value.length) {
       return (
         <Card class="route-card feed-status-card">
-          <EmptyState title="Your feed is quiet" description="Write the first signal and start the conversation." />
+          <EmptyState
+            title={feed === 'following' ? 'Nothing from your circle yet' : 'Your feed is quiet'}
+            description={feed === 'following' ? 'Follow people to see their posts here.' : 'Write the first signal and start the conversation.'}
+          />
         </Card>
       )
     }
@@ -106,9 +109,11 @@ export function FeedPage({ router, currentUserId }) {
 
   return (
     <PageFrame
-      eyebrow="HOME / FEED"
-      title="Home"
-      description="Share a thought, follow the thread, and keep the signal moving."
+      eyebrow={feed === 'following' ? 'HOME / FOLLOWING' : 'HOME / DISCOVERY'}
+      title={feed === 'following' ? 'Following' : 'Home'}
+      description={feed === 'following'
+        ? 'Posts from you and people you follow.'
+        : 'A mixed discovery feed of public posts.'}
     >
       <PostComposer onCreated={addPost} />
       {feedContent}
