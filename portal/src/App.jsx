@@ -1,0 +1,142 @@
+import { io } from 'socket.io-client'
+import { clientEnv } from './config/env.js'
+import { AuthPanel } from './components/AuthPanel.jsx'
+import { ProfileCard } from './components/ProfileCard.jsx'
+import {
+  Background,
+  Badge,
+  Button,
+  Card,
+  Label,
+  computed,
+  onMount,
+  prismTheme,
+  signal
+} from './lib/vendor.js'
+
+const apiUrl = clientEnv.apiUrl.replace(/\/$/, '')
+
+export function App() {
+  const status = signal('checking')
+  const authStatus = signal('checking')
+  const currentUser = signal(null)
+  const socketStatus = signal('connecting')
+  const statusLabel = computed(() => {
+    if (status.value === 'ready') return 'API online'
+    if (status.value === 'offline') return 'API offline'
+    return 'Checking API'
+  })
+  const statusClass = computed(() => `status status-${status.value}`)
+  const authView = computed(() => {
+    if (authStatus.value === 'checking') {
+      return <Card class="auth-card"><Label size="small" tone="accent">ECHO / ACCOUNT</Label><h1>Checking session</h1><p class="auth-description">One moment.</p></Card>
+    }
+
+    if (authStatus.value === 'anonymous') {
+      return <AuthPanel onAuthenticated={user => {
+        currentUser.value = user
+        authStatus.value = 'authenticated'
+        window.location.reload()
+      }} />
+    }
+
+    if (authStatus.value === 'offline') {
+      return <Card class="auth-card"><Label size="small" tone="accent">ECHO / ACCOUNT</Label><h1>Server offline</h1><p class="auth-description">Echo cannot check your session right now.</p><Button onClick={() => window.location.reload()}>Try again</Button></Card>
+    }
+
+    return (
+      <main class="shell" use:style={prismTheme}>
+        <section class="hero-card" aria-labelledby="app-title">
+          <div class="hero-meta">
+            <Label size="small" tone="accent">ECHO / FOUNDATION</Label>
+            <Badge>AUTHENTICATED</Badge>
+          </div>
+          <h1 id="app-title">Your people. Your notes. Your signal.</h1>
+          <p class="lede">
+            The Matrix app shell is ready. Posts, channels, notes, notifications, and chat come next.
+          </p>
+          <div class={statusClass} role="status">
+            <span aria-hidden="true" />
+            {statusLabel}
+          </div>
+          <p class="socket-status">Socket: {socketStatus}</p>
+          <ProfileCard user={currentUser.value} onLogout={logout} onUpdated={user => currentUser.value = user} />
+          <Card class="next-card">
+            <strong>Next build step</strong>
+            <span>Postgres models and authenticated user sessions.</span>
+          </Card>
+          <Button variant="secondary" onClick={() => window.location.reload()}>
+            Refresh connection
+          </Button>
+        </section>
+      </main>
+    )
+  })
+
+  onMount(() => {
+    let socket
+    let active = true
+
+    const connectSocket = () => {
+      socket = io(clientEnv.socketUrl, { withCredentials: true })
+      socket.on('connect', () => {
+        socketStatus.value = 'connected'
+      })
+      socket.on('disconnect', () => {
+        socketStatus.value = 'disconnected'
+      })
+      socket.on('connect_error', error => {
+        socketStatus.value = error.message === 'AUTH_REQUIRED' ? 'auth required' : 'error'
+      })
+    }
+
+    fetch(`${apiUrl}/api/health`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('API health check failed')
+        }
+
+        return response.json()
+      })
+      .then(() => {
+        if (active) status.value = 'ready'
+      })
+      .catch(() => {
+        if (active) status.value = 'offline'
+      })
+
+    fetch(`${apiUrl}/api/auth/me`, { credentials: 'include' })
+      .then(async response => {
+        if (response.status === 401) {
+          authStatus.value = 'anonymous'
+          return null
+        }
+        if (!response.ok) throw new Error('Session check failed')
+        return response.json()
+      })
+      .then(result => {
+        if (!result || !active) return
+        currentUser.value = result.data.user
+        authStatus.value = 'authenticated'
+        connectSocket()
+      })
+      .catch(() => {
+        if (active) authStatus.value = 'offline'
+      })
+
+    return () => {
+      active = false
+      socket?.close()
+    }
+  })
+
+  async function logout() {
+    await fetch(`${apiUrl}/api/auth/logout`, {
+      method: 'POST',
+      credentials: 'include'
+    })
+    window.location.reload()
+  }
+
+  return <Background palette="midnight" animation="veil" intensity={0.65} grain={0.018} minHeight="100vh">{authView}</Background>
+}

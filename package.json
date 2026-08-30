@@ -1,0 +1,23 @@
+{
+  "name": "echo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A social app with notes and real-time chat",
+  "workspaces": [
+    "portal",
+    "server"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,portal -c blue,green \"npm run dev --workspace server\" \"npm run dev --workspace portal\"",
+    "build": "npm run build --workspace portal",
+    "start": "npm run start --workspace server",
+    "db:migrate": "npm run db:migrate --workspace server",
+    "db:seed": "npm run db:seed --workspace server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
