@@ -3,7 +3,15 @@ import { ok, cursorMeta } from '../http/api.js'
 import { decodeCursor } from '../http/pagination.js'
 import { idSchema, paginationSchema, parse } from '../http/validation.js'
 import { createPostSchema, createReplySchema } from '../posts/schemas.js'
-import { createPost, createReply, deletePost, getPostById, listPosts } from '../posts/service.js'
+import {
+  createPost,
+  createReply,
+  deletePost,
+  getPostById,
+  likePost,
+  listPosts,
+  unlikePost
+} from '../posts/service.js'
 
 export const postsRouter = Router()
 
@@ -36,6 +44,26 @@ postsRouter.post('/:id/replies', async (request, response, next) => {
     const input = parse(createReplySchema, request.body, 'reply request')
     const reply = await createReply(request.auth.userId, parentPostId, input)
     response.status(201).json(ok({ reply }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+postsRouter.put('/:id/likes', async (request, response, next) => {
+  try {
+    const postId = parse(idSchema, request.params.id, 'post id')
+    const like = await likePost(request.auth.userId, postId)
+    response.json(ok({ like }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+postsRouter.delete('/:id/likes', async (request, response, next) => {
+  try {
+    const postId = parse(idSchema, request.params.id, 'post id')
+    const like = await unlikePost(request.auth.userId, postId)
+    response.json(ok({ like }))
   } catch (error) {
     next(error)
   }

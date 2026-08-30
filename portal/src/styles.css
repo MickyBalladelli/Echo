@@ -364,8 +364,16 @@ textarea {
   color: #dff8ec;
 }
 
+.post-like-button-active {
+  color: #ff7896;
+}
+
 .post-card-footer .prism-button {
   margin-left: auto;
+}
+
+.post-card-footer .post-like-button {
+  margin-left: 0;
 }
 
 .post-card-error {

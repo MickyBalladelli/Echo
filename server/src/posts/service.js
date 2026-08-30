@@ -347,3 +347,114 @@ export async function deletePost(authorId, postId) {
 
   return { id: rows[0].id }
 }
+
+async function getLikeState(userId, postId, transaction) {
+  const rows = await sequelize.query(`
+    SELECT
+      EXISTS (
+        SELECT 1
+        FROM post_likes
+        WHERE post_id = :postId AND user_id = :userId
+      ) AS liked,
+      COUNT(post_likes.user_id)::INTEGER AS like_count
+    FROM posts
+    LEFT JOIN post_likes ON post_likes.post_id = posts.id
+    WHERE posts.id = :postId
+      AND posts.deleted_at IS NULL
+      AND posts.visibility = 'public'
+    GROUP BY posts.id
+  `, {
+    replacements: { userId, postId },
+    type: QueryTypes.SELECT,
+    transaction
+  })
+
+  if (!rows[0]) {
+    throw new HttpError(404, 'POST_NOT_FOUND', 'Post not found')
+  }
+
+  return {
+    postId,
+    liked: Boolean(rows[0].liked),
+    likeCount: Number(rows[0].like_count)
+  }
+}
+
+export async function likePost(userId, postId) {
+  return withTransaction(async transaction => {
+    const postRows = await sequelize.query(`
+      SELECT p.id, p.author_id
+      FROM posts p
+      JOIN users u ON u.id = p.author_id AND u.deleted_at IS NULL AND u.status = 'active'
+      WHERE p.id = :postId
+        AND p.deleted_at IS NULL
+        AND p.visibility = 'public'
+      LIMIT 1
+    `, {
+      replacements: { postId },
+      type: QueryTypes.SELECT,
+      transaction
+    })
+    const post = postRows[0]
+
+    if (!post) {
+      throw new HttpError(404, 'POST_NOT_FOUND', 'Post not found')
+    }
+
+    const insertedRows = await sequelize.query(`
+      INSERT INTO post_likes (post_id, user_id)
+      VALUES (:postId, :userId)
+      ON CONFLICT (post_id, user_id) DO NOTHING
+      RETURNING post_id
+    `, {
+      replacements: { postId, userId },
+      type: QueryTypes.SELECT,
+      transaction
+    })
+
+    if (insertedRows[0] && post.author_id !== userId) {
+      await sequelize.query(`
+        INSERT INTO notifications (recipient_id, actor_id, type, post_id, payload)
+        VALUES (:recipientId, :actorId, 'like', :postId, CAST(:payload AS JSONB))
+      `, {
+        replacements: {
+          recipientId: post.author_id,
+          actorId: userId,
+          postId,
+          payload: JSON.stringify({ postId })
+        },
+        transaction
+      })
+    }
+
+    return getLikeState(userId, postId, transaction)
+  })
+}
+
+export async function unlikePost(userId, postId) {
+  return withTransaction(async transaction => {
+    const state = await getLikeState(userId, postId, transaction)
+
+    if (state.liked) {
+      await sequelize.query(`
+        DELETE FROM post_likes
+        WHERE post_id = :postId AND user_id = :userId
+      `, {
+        replacements: { postId, userId },
+        transaction
+      })
+
+      await sequelize.query(`
+        DELETE FROM notifications
+        WHERE actor_id = :userId
+          AND post_id = :postId
+          AND type = 'like'
+      `, {
+        replacements: { postId, userId },
+        transaction
+      })
+    }
+
+    return getLikeState(userId, postId, transaction)
+  })
+}

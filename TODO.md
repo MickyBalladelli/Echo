@@ -97,11 +97,11 @@ learn and use components in Prism for all your UI
 
 ### Likes
 
-- [ ] Add like and unlike API endpoints.
-- [ ] Make likes idempotent.
-- [ ] Update like count and liked state in the UI.
-- [ ] Add likes to notification events.
-- [ ] Prevent self-like notification spam if desired by product rules.
+- [x] Add like and unlike API endpoints.
+- [x] Make likes idempotent.
+- [x] Update like count and liked state in the UI.
+- [x] Add likes to notification events.
+- [x] Prevent self-like notification spam if desired by product rules.
 
 ### Following and feeds
 

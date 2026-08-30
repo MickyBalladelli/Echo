@@ -1,4 +1,4 @@
-import { signal } from '../lib/vendor.js'
+import { computed, signal } from '../lib/vendor.js'
 import { Badge, Button, Card, Label } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 
@@ -24,8 +24,30 @@ function authorInitial(post) {
 
 export function PostCard({ post, router, currentUserId, onDeleted, onReply }) {
   const deleting = signal(false)
+  const updatingLike = signal(false)
+  const liked = signal(post.liked)
+  const likeCount = signal(post.likeCount)
   const error = signal('')
   const isOwnPost = post.author.id === currentUserId
+  const likeLabel = computed(() => `${likeCount.value} ${likeCount.value === 1 ? 'like' : 'likes'}`)
+
+  async function toggleLike() {
+    if (updatingLike.value) return
+    error.value = ''
+    updatingLike.value = true
+
+    try {
+      const result = await apiRequest(`/api/posts/${encodeURIComponent(post.id)}/likes`, {
+        method: liked.value ? 'DELETE' : 'PUT'
+      })
+      liked.value = result.data.like.liked
+      likeCount.value = result.data.like.likeCount
+    } catch (requestError) {
+      error.value = requestError.message || 'Could not update like'
+    } finally {
+      updatingLike.value = false
+    }
+  }
 
   async function deleteOwnPost() {
     if (deleting.value) return
@@ -65,10 +87,18 @@ export function PostCard({ post, router, currentUserId, onDeleted, onReply }) {
           <span aria-hidden="true">↩</span>
           <span>{post.replyCount} {post.replyCount === 1 ? 'reply' : 'replies'}</span>
         </a>
-        <span class="post-card-action" aria-label={`${post.likeCount} likes`}>
-          <span aria-hidden="true">♡</span>
-          <span>{post.likeCount} {post.likeCount === 1 ? 'like' : 'likes'}</span>
-        </span>
+        <Button
+          variant="tertiary"
+          size="small"
+          class={computed(() => liked.value ? 'post-like-button post-like-button-active' : 'post-like-button')}
+          aria-pressed={liked}
+          aria-label={computed(() => `${liked.value ? 'Unlike' : 'Like'} this post. ${likeLabel.value}`)}
+          loading={updatingLike}
+          onClick={toggleLike}
+        >
+          <span aria-hidden="true">{computed(() => liked.value ? '♥' : '♡')}</span>
+          <span>{likeLabel}</span>
+        </Button>
         {onReply && <Button variant="tertiary" size="small" onClick={() => onReply(post)}>Reply</Button>}
         {isOwnPost && <Button variant="tertiary" size="small" loading={deleting} onClick={deleteOwnPost}>Delete</Button>}
       </div>
