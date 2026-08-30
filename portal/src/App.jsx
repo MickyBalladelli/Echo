@@ -2,6 +2,7 @@ import { io } from 'socket.io-client'
 import { clientEnv } from './config/env.js'
 import { AuthPanel } from './components/AuthPanel.jsx'
 import { AppShell } from './components/AppShell.jsx'
+import { acceptRealtimeEvent, configureRealtimeSocket } from './lib/realtime.js'
 import {
   Background,
   Button,
@@ -62,18 +63,32 @@ export function App() {
     let active = true
 
     const connectSocket = () => {
-      socket = io(clientEnv.socketUrl, { withCredentials: true })
+      socket = io(clientEnv.socketUrl, {
+        withCredentials: true,
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 500,
+        reconnectionDelayMax: 5000
+      })
+      configureRealtimeSocket(socket)
       socket.on('connect', () => {
+        socketStatus.value = 'syncing'
+      })
+      socket.on('connection:ready', () => {
         socketStatus.value = 'connected'
       })
       socket.on('disconnect', () => {
-        socketStatus.value = 'disconnected'
+        socketStatus.value = socket.active ? 'reconnecting' : 'disconnected'
       })
       socket.on('connect_error', error => {
-        socketStatus.value = error.message === 'AUTH_REQUIRED' ? 'auth required' : 'error'
+        socketStatus.value = error.message === 'AUTH_REQUIRED' ? 'auth required' : 'reconnecting'
       })
-      socket.on('notification:new', event => {
-        unreadNotifications.value = event.unreadCount
+      socket.io.on('reconnect_attempt', () => {
+        socketStatus.value = 'reconnecting'
+      })
+      socket.on('notification:new', envelope => {
+        if (!acceptRealtimeEvent(envelope)) return
+        unreadNotifications.value = envelope.data.unreadCount
         notificationVersion.value += 1
       })
     }

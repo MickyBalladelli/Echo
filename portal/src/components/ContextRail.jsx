@@ -1,6 +1,13 @@
+import { computed } from '../lib/vendor.js'
 import { Badge, Card, Label, Separator } from '../lib/vendor.js'
 
 export function ContextRail({ user, apiStatus, socketStatus }) {
+  const socketTone = computed(() => socketStatus.value === 'connected'
+    ? 'success'
+    : socketStatus.value === 'reconnecting' || socketStatus.value === 'syncing'
+      ? 'warning'
+      : 'error')
+
   return (
     <aside class="context-rail" aria-label="Echo context panel">
       <Card class="context-card">
@@ -16,7 +23,7 @@ export function ContextRail({ user, apiStatus, socketStatus }) {
         </div>
         <Separator />
         <div class="context-status-row"><span>API</span><Badge>{apiStatus}</Badge></div>
-        <div class="context-status-row"><span>Socket</span><Badge>{socketStatus}</Badge></div>
+        <div class="context-status-row" aria-live="polite"><span>Socket</span><Badge tone={socketTone}>{socketStatus}</Badge></div>
       </Card>
       <Card class="context-card">
         <Label size="small" tone="accent">WHAT IS NEXT</Label>

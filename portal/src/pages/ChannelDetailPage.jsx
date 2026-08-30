@@ -4,6 +4,7 @@ import { apiRequest } from '../lib/api.js'
 import { PostCard } from '../components/PostCard.jsx'
 import { PostComposer } from '../components/PostComposer.jsx'
 import { PageFrame } from './PageFrame.jsx'
+import { joinRealtimeRoom } from '../lib/realtime.js'
 
 export function ChannelDetailPage({ slug, router, currentUserId }) {
   const channel = signal(null)
@@ -188,7 +189,17 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
     )
   })
 
-  onMount(() => load())
+  onMount(() => {
+    let active = true
+    let leaveRoom
+    load().then(() => {
+      if (active && channel.value) leaveRoom = joinRealtimeRoom('channel', channel.value.id)
+    })
+    return () => {
+      active = false
+      leaveRoom?.()
+    }
+  })
 
   return (
     <PageFrame eyebrow="COMMUNITIES / CHANNEL" title={slug} description="A focused space for shared conversation.">

@@ -5,6 +5,7 @@ import { PostCard } from '../components/PostCard.jsx'
 import { PostComposer } from '../components/PostComposer.jsx'
 import { ReplyComposer } from '../components/ReplyComposer.jsx'
 import { PageFrame } from './PageFrame.jsx'
+import { joinRealtimeRoom } from '../lib/realtime.js'
 
 function getRequestMessage(error) {
   return error?.message || 'Could not load posts'
@@ -228,7 +229,10 @@ export function PostDetailPage({ id, router, currentUserId }) {
     )
   })
 
-  onMount(() => loadPost())
+  onMount(() => {
+    loadPost()
+    return joinRealtimeRoom('post', id)
+  })
 
   return (
     <PageFrame

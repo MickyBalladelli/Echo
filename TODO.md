@@ -152,12 +152,12 @@ learn and use components in Prism for all your UI
 
 ### Real-time foundation
 
-- [ ] Add Socket.IO server and client connection.
-- [ ] Authenticate sockets before joining rooms.
-- [ ] Create rooms for users, channels, posts, and conversations.
-- [ ] Add reconnect handling.
-- [ ] Add connection status in the UI.
-- [ ] Make real-time events safe to replay or ignore when duplicated.
+- [x] Add Socket.IO server and client connection.
+- [x] Authenticate sockets before joining rooms.
+- [x] Create rooms for users, channels, posts, and conversations.
+- [x] Add reconnect handling.
+- [x] Add connection status in the UI.
+- [x] Make real-time events safe to replay or ignore when duplicated.
 
 ## P1 — Notes system
 

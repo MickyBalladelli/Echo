@@ -6,6 +6,8 @@ import { env } from './config/env.js'
 import { logger } from './config/logger.js'
 import { pool } from './db/pool.js'
 import { setNotificationEmitter } from './notifications/realtime.js'
+import { initializeSocketRooms } from './realtime/rooms.js'
+import { realtimeEnvelope, setRealtimePublisher } from './realtime/events.js'
 
 const app = createApp()
 const httpServer = http.createServer(app)
@@ -18,12 +20,23 @@ const io = new Server(httpServer, {
 
 io.use(authenticateSocket)
 setNotificationEmitter((recipientId, event) => {
-  io.to(`user:${recipientId}`).emit('notification:new', event)
+  io.to(`user:${recipientId}`).emit(
+    'notification:new',
+    realtimeEnvelope('notification:new', event, `notification:${event.id}`)
+  )
 })
+setRealtimePublisher((room, type, envelope) => io.to(room).emit(type, envelope))
 
-io.on('connection', socket => {
-  socket.join(`user:${socket.data.auth.userId}`)
+io.on('connection', async socket => {
   logger.info({ socketId: socket.id, userId: socket.data.auth.userId }, 'Socket connected')
+
+  try {
+    await initializeSocketRooms(socket)
+  } catch (error) {
+    logger.error({ err: error, socketId: socket.id }, 'Socket room setup failed')
+    socket.disconnect(true)
+    return
+  }
 
   socket.on('disconnect', reason => {
     logger.info({ socketId: socket.id, reason }, 'Socket disconnected')
