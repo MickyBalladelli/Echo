@@ -6,6 +6,7 @@ export {
   Button,
   Card,
   EmptyState,
+  Alert,
   Footer,
   FormField,
   Header,
@@ -13,6 +14,8 @@ export {
   Layout,
   Navigator,
   Separator,
+  Stack,
+  Tabs,
   TextField,
   prismTheme
 } from '@mickyballadelli/prism'

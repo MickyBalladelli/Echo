@@ -178,11 +178,20 @@ textarea {
   background: rgba(20, 23, 28, 0.82);
 }
 
+.reply-composer {
+  display: grid;
+  gap: 18px;
+  padding: 18px 20px;
+  border: 1px solid rgba(142, 208, 183, 0.3);
+  border-radius: 18px;
+  background: rgba(24, 31, 32, 0.78);
+}
+
 .post-composer-heading,
+.reply-composer-heading,
 .post-composer-footer,
 .post-card-header,
 .post-card-footer,
-.post-detail-stack,
 .post-replies-heading {
   display: flex;
   align-items: center;
@@ -190,6 +199,7 @@ textarea {
 }
 
 .post-composer-heading,
+.reply-composer-heading,
 .post-composer-footer,
 .post-card-header,
 .post-card-footer,
@@ -200,6 +210,11 @@ textarea {
 .post-composer-heading h2 {
   margin: 8px 0 0;
   font-size: 20px;
+}
+
+.reply-composer-heading h2 {
+  margin: 8px 0 0;
+  font-size: 18px;
 }
 
 .post-character-count,
@@ -245,6 +260,18 @@ textarea {
 .post-detail-stack {
   display: grid;
   gap: 12px;
+}
+
+.post-reply {
+  min-width: 0;
+}
+
+.post-reply-depth-2 {
+  margin-left: 22px;
+}
+
+.post-reply-depth-3 {
+  margin-left: 44px;
 }
 
 .feed-status-card {
@@ -449,31 +476,34 @@ textarea {
 }
 
 .auth-card h1 {
-  margin-top: 14px;
+  margin: 0;
   font-size: clamp(36px, 7vw, 56px);
 }
 
 .auth-description {
-  margin: 14px 0 24px;
+  margin: 0;
   color: #b9c1ca;
   line-height: 1.6;
 }
 
 .auth-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
+  width: 100%;
+}
+
+.auth-tabs .prism-tabs-list {
+  margin-inline: -4px;
+}
+
+.auth-tabs .prism-tabs-panels {
+  padding-top: 1.5rem;
 }
 
 .auth-form {
-  display: grid;
-  gap: 14px;
+  margin: 0;
 }
 
 .auth-error {
-  min-height: 20px;
-  color: #ef9999;
-  font-size: 14px;
+  margin-top: 2px;
 }
 
 .profile-card {
@@ -611,6 +641,11 @@ textarea {
 
   .context-rail {
     grid-template-columns: 1fr;
+  }
+
+  .post-reply-depth-2,
+  .post-reply-depth-3 {
+    margin-left: 0;
   }
 }
 

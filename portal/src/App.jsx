@@ -6,7 +6,9 @@ import {
   Background,
   Button,
   Card,
+  Alert,
   Label,
+  Stack,
   computed,
   onMount,
   signal
@@ -26,7 +28,7 @@ export function App() {
   })
   const authView = computed(() => {
     if (authStatus.value === 'checking') {
-      return <Card class="auth-card"><Label size="small" tone="accent">ECHO / ACCOUNT</Label><h1>Checking session</h1><p class="auth-description">One moment.</p></Card>
+      return <Card class="auth-card"><Stack gap="medium"><Label size="small" tone="accent">ECHO / ACCOUNT</Label><h1>Checking session</h1><Label tone="muted">One moment.</Label></Stack></Card>
     }
 
     if (authStatus.value === 'anonymous') {
@@ -38,7 +40,7 @@ export function App() {
     }
 
     if (authStatus.value === 'offline') {
-      return <Card class="auth-card"><Label size="small" tone="accent">ECHO / ACCOUNT</Label><h1>Server offline</h1><p class="auth-description">Echo cannot check your session right now.</p><Button onClick={() => window.location.reload()}>Try again</Button></Card>
+      return <Card class="auth-card"><Stack gap="medium"><Label size="small" tone="accent">ECHO / ACCOUNT</Label><h1>Server offline</h1><Alert tone="error" title="Connection problem">Echo cannot check your session right now.</Alert><Button onClick={() => window.location.reload()}>Try again</Button></Stack></Card>
     }
 
     return <AppShell

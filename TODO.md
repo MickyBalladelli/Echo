@@ -1,7 +1,7 @@
 # Echo TODO
 
 Twitter-like app built with JavaScript, Vite, PostgreSQL, Node.js, Express, Socket.IO, `@mickyballadelli/prism`, and `@mickyballadelli/matrix`.
-
+learn and use components in Prism for all your UI
 ## Priority rules
 
 - **P0 — Must have:** App cannot work without it.
@@ -88,12 +88,12 @@ Twitter-like app built with JavaScript, Vite, PostgreSQL, Node.js, Express, Sock
 
 ### Replies and conversations
 
-- [ ] Add reply composer on post detail.
-- [ ] Add nested or threaded replies with a safe depth limit.
-- [ ] Add reply count updates.
-- [ ] Add reply notifications to the post author.
-- [ ] Add conversation view for a post and its replies.
-- [ ] Add reply deletion for the reply owner.
+- [x] Add reply composer on post detail.
+- [x] Add nested or threaded replies with a safe depth limit.
+- [x] Add reply count updates.
+- [x] Add reply notifications to the post author.
+- [x] Add conversation view for a post and its replies.
+- [x] Add reply deletion for the reply owner.
 
 ### Likes
 

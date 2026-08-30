@@ -22,7 +22,7 @@ function authorInitial(post) {
   return (post.author.displayName || post.author.username).slice(0, 1).toUpperCase()
 }
 
-export function PostCard({ post, router, currentUserId, onDeleted }) {
+export function PostCard({ post, router, currentUserId, onDeleted, onReply }) {
   const deleting = signal(false)
   const error = signal('')
   const isOwnPost = post.author.id === currentUserId
@@ -69,6 +69,7 @@ export function PostCard({ post, router, currentUserId, onDeleted }) {
           <span aria-hidden="true">♡</span>
           <span>{post.likeCount} {post.likeCount === 1 ? 'like' : 'likes'}</span>
         </span>
+        {onReply && <Button variant="tertiary" size="small" onClick={() => onReply(post)}>Reply</Button>}
         {isOwnPost && <Button variant="tertiary" size="small" loading={deleting} onClick={deleteOwnPost}>Delete</Button>}
       </div>
       <div class="post-card-error" role="alert" aria-live="polite">{error}</div>

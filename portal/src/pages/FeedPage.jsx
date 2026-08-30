@@ -3,6 +3,7 @@ import { Button, Card, EmptyState, Label } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { PostCard } from '../components/PostCard.jsx'
 import { PostComposer } from '../components/PostComposer.jsx'
+import { ReplyComposer } from '../components/ReplyComposer.jsx'
 import { PageFrame } from './PageFrame.jsx'
 
 function getRequestMessage(error) {
@@ -117,6 +118,7 @@ export function FeedPage({ router, currentUserId }) {
 
 export function PostDetailPage({ id, router, currentUserId }) {
   const post = signal(null)
+  const replyTarget = signal(null)
   const state = signal('loading')
   const error = signal('')
 
@@ -127,6 +129,7 @@ export function PostDetailPage({ id, router, currentUserId }) {
     try {
       const result = await apiRequest(`/api/posts/${encodeURIComponent(id)}`)
       post.value = result.data.post
+      replyTarget.value = post.value
       state.value = 'ready'
     } catch (requestError) {
       error.value = getRequestMessage(requestError)
@@ -136,6 +139,37 @@ export function PostDetailPage({ id, router, currentUserId }) {
 
   function handleDeleted() {
     router.navigate('/')
+  }
+
+  function sortReplies(replies) {
+    return [...replies].sort((left, right) => {
+      const timeDifference = new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
+      return timeDifference || left.id.localeCompare(right.id)
+    })
+  }
+
+  function selectReplyTarget(target) {
+    replyTarget.value = target
+  }
+
+  function resetReplyTarget() {
+    replyTarget.value = post.value
+  }
+
+  function addReply(reply) {
+    const target = replyTarget.value
+    const nextReply = {
+      ...reply,
+      depth: reply.depth || (target?.depth || 0) + 1
+    }
+    const nextPost = {
+      ...post.value,
+      replyCount: post.value.replyCount + 1,
+      replies: sortReplies([...post.value.replies, nextReply])
+    }
+
+    post.value = nextPost
+    replyTarget.value = nextPost
   }
 
   const detailContent = computed(() => {
@@ -158,7 +192,14 @@ export function PostDetailPage({ id, router, currentUserId }) {
 
     return (
       <div class="post-detail-stack">
-        <PostCard post={post.value} router={router} currentUserId={currentUserId} onDeleted={handleDeleted} />
+        <PostCard
+          post={post.value}
+          router={router}
+          currentUserId={currentUserId}
+          onDeleted={handleDeleted}
+          onReply={selectReplyTarget}
+        />
+        <ReplyComposer replyTarget={replyTarget} onCreated={addReply} onCancel={resetReplyTarget} />
         <div class="post-replies-heading">
           <Label size="small" tone="accent">REPLIES</Label>
           <span>{post.value.replies.length ? `${post.value.replies.length} in this thread` : 'No replies yet'}</span>
@@ -166,13 +207,15 @@ export function PostDetailPage({ id, router, currentUserId }) {
         {post.value.replies.length > 0 && (
           <div class="post-feed">
             {post.value.replies.map(reply => (
-              <PostCard
-                key={reply.id}
-                post={reply}
-                router={router}
-                currentUserId={currentUserId}
-                onDeleted={loadPost}
-              />
+              <div key={reply.id} class={`post-reply post-reply-depth-${Math.min(reply.depth || 1, 3)}`}>
+                <PostCard
+                  post={reply}
+                  router={router}
+                  currentUserId={currentUserId}
+                  onDeleted={loadPost}
+                  onReply={selectReplyTarget}
+                />
+              </div>
             ))}
           </div>
         )}

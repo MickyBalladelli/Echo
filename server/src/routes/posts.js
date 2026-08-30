@@ -2,8 +2,8 @@ import { Router } from 'express'
 import { ok, cursorMeta } from '../http/api.js'
 import { decodeCursor } from '../http/pagination.js'
 import { idSchema, paginationSchema, parse } from '../http/validation.js'
-import { createPostSchema } from '../posts/schemas.js'
-import { createPost, deletePost, getPostById, listPosts } from '../posts/service.js'
+import { createPostSchema, createReplySchema } from '../posts/schemas.js'
+import { createPost, createReply, deletePost, getPostById, listPosts } from '../posts/service.js'
 
 export const postsRouter = Router()
 
@@ -25,6 +25,17 @@ postsRouter.post('/', async (request, response, next) => {
     const input = parse(createPostSchema, request.body, 'post request')
     const post = await createPost(request.auth.userId, input)
     response.status(201).json(ok({ post }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+postsRouter.post('/:id/replies', async (request, response, next) => {
+  try {
+    const parentPostId = parse(idSchema, request.params.id, 'parent post id')
+    const input = parse(createReplySchema, request.body, 'reply request')
+    const reply = await createReply(request.auth.userId, parentPostId, input)
+    response.status(201).json(ok({ reply }))
   } catch (error) {
     next(error)
   }
