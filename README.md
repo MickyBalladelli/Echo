@@ -25,6 +25,8 @@ npm run dev
 
 Portal runs at `http://localhost:5000`. Server runs at `http://localhost:3000`.
 
+The authenticated portal shell has routes for `/`, `/explore`, `/notifications`, `/notes`, `/channels`, `/chat`, and `/profile`. Unknown routes show an accessible 404 state.
+
 ## Production shape
 
 ```sh

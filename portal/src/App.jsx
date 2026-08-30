@@ -1,16 +1,14 @@
 import { io } from 'socket.io-client'
 import { clientEnv } from './config/env.js'
 import { AuthPanel } from './components/AuthPanel.jsx'
-import { ProfileCard } from './components/ProfileCard.jsx'
+import { AppShell } from './components/AppShell.jsx'
 import {
   Background,
-  Badge,
   Button,
   Card,
   Label,
   computed,
   onMount,
-  prismTheme,
   signal
 } from './lib/vendor.js'
 
@@ -26,7 +24,6 @@ export function App() {
     if (status.value === 'offline') return 'API offline'
     return 'Checking API'
   })
-  const statusClass = computed(() => `status status-${status.value}`)
   const authView = computed(() => {
     if (authStatus.value === 'checking') {
       return <Card class="auth-card"><Label size="small" tone="accent">ECHO / ACCOUNT</Label><h1>Checking session</h1><p class="auth-description">One moment.</p></Card>
@@ -44,33 +41,13 @@ export function App() {
       return <Card class="auth-card"><Label size="small" tone="accent">ECHO / ACCOUNT</Label><h1>Server offline</h1><p class="auth-description">Echo cannot check your session right now.</p><Button onClick={() => window.location.reload()}>Try again</Button></Card>
     }
 
-    return (
-      <main class="shell" use:style={prismTheme}>
-        <section class="hero-card" aria-labelledby="app-title">
-          <div class="hero-meta">
-            <Label size="small" tone="accent">ECHO / FOUNDATION</Label>
-            <Badge>AUTHENTICATED</Badge>
-          </div>
-          <h1 id="app-title">Your people. Your notes. Your signal.</h1>
-          <p class="lede">
-            The Matrix app shell is ready. Posts, channels, notes, notifications, and chat come next.
-          </p>
-          <div class={statusClass} role="status">
-            <span aria-hidden="true" />
-            {statusLabel}
-          </div>
-          <p class="socket-status">Socket: {socketStatus}</p>
-          <ProfileCard user={currentUser.value} onLogout={logout} onUpdated={user => currentUser.value = user} />
-          <Card class="next-card">
-            <strong>Next build step</strong>
-            <span>Postgres models and authenticated user sessions.</span>
-          </Card>
-          <Button variant="secondary" onClick={() => window.location.reload()}>
-            Refresh connection
-          </Button>
-        </section>
-      </main>
-    )
+    return <AppShell
+      userState={currentUser}
+      apiStatus={statusLabel}
+      socketStatus={socketStatus}
+      onLogout={logout}
+      onUpdated={user => currentUser.value = user}
+    />
   })
 
   onMount(() => {

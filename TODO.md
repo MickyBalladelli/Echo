@@ -65,12 +65,12 @@ Twitter-like app built with JavaScript, Vite, PostgreSQL, Node.js, Express, Sock
 
 ### App shell
 
-- [ ] Build authenticated and unauthenticated route states.
-- [ ] Build responsive layout: sidebar, main feed, and secondary panel.
-- [ ] Add navigation for Home, Explore, Notifications, Notes, Channels, Chat, and Profile.
-- [ ] Add loading, empty, and error states.
-- [ ] Add accessible keyboard focus and semantic controls.
-- [ ] Add sign-up, login, and logout screens.
+- [x] Build authenticated and unauthenticated route states.
+- [x] Build responsive layout: sidebar, main feed, and secondary panel.
+- [x] Add navigation for Home, Explore, Notifications, Notes, Channels, Chat, and Profile.
+- [x] Add loading, empty, and error states.
+- [x] Add accessible keyboard focus and semantic controls.
+- [x] Add sign-up, login, and logout screens.
 
 ### Basic posts
 
