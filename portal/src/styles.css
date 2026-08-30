@@ -17,6 +17,10 @@ body {
   background: radial-gradient(circle at 50% 0%, #26303a 0%, #101114 52%);
 }
 
+.echo-root {
+  min-height: 100vh;
+}
+
 a {
   color: inherit;
 }

@@ -1,5 +1,5 @@
 import { createRouter, html, onMount, routerView } from '../lib/vendor.js'
-import { Badge, Footer, Header, Label, Layout, prismTheme } from '../lib/vendor.js'
+import { Badge, Footer, Header, Label, Layout } from '../lib/vendor.js'
 import { ContextRail } from './ContextRail.jsx'
 import { ShellNavigation } from './ShellNavigation.jsx'
 import { UserProfilePage } from '../pages/UserProfilePage.jsx'
@@ -63,7 +63,7 @@ export function AppShell({ userState, apiStatus, socketStatus, onLogout, onUpdat
   onMount(() => router.start())
 
   return (
-    <div class="echo-shell" use:style={prismTheme}>
+    <div class="echo-shell">
       <a class="skip-link" href="#main-content">Skip to content</a>
       <Layout
         class="echo-layout"

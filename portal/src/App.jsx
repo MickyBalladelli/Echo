@@ -11,6 +11,7 @@ import {
   Stack,
   computed,
   onMount,
+  prismTheme,
   signal
 } from './lib/vendor.js'
 
@@ -117,5 +118,11 @@ export function App() {
     window.location.reload()
   }
 
-  return <Background palette="midnight" animation="veil" intensity={0.65} grain={0.018} minHeight="100vh">{authView}</Background>
+  return (
+    <div class="echo-root" use:style={prismTheme}>
+      <Background palette="midnight" animation="veil" intensity={0.65} grain={0.018} minHeight="100vh">
+        {authView}
+      </Background>
+    </div>
+  )
 }
