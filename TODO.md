@@ -74,15 +74,15 @@ Twitter-like app built with JavaScript, Vite, PostgreSQL, Node.js, Express, Sock
 
 ### Basic posts
 
-- [ ] Add create-post composer.
-- [ ] Enforce post length limit.
-- [ ] Add create-post API endpoint.
-- [ ] Add home feed API endpoint with cursor pagination.
-- [ ] Show posts newest first.
-- [ ] Show author, avatar, text, time, reply count, like count, and follow state.
-- [ ] Add post detail page.
-- [ ] Add delete own post.
-- [ ] Add basic text escaping and input sanitization.
+- [x] Add create-post composer.
+- [x] Enforce post length limit.
+- [x] Add create-post API endpoint.
+- [x] Add home feed API endpoint with cursor pagination.
+- [x] Show posts newest first.
+- [x] Show author, avatar, text, time, reply count, like count, and follow state.
+- [x] Add post detail page.
+- [x] Add delete own post.
+- [x] Add basic text escaping and input sanitization.
 
 ## P1 — Core social product
 

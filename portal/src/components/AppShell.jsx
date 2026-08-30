@@ -10,12 +10,13 @@ import {
   NotFoundPage,
   NotificationsPage,
   NotesPage,
+  PostDetailPage,
   ProfilePage
 } from '../pages/ShellPages.jsx'
 
 export function AppShell({ userState, apiStatus, socketStatus, onLogout, onUpdated }) {
   const router = createRouter([
-    { path: '/', title: 'Home', view: HomePage },
+    { path: '/', title: 'Home', view: () => HomePage({ router, currentUserId: userState.value.id }) },
     { path: '/explore', title: 'Explore', view: ExplorePage },
     { path: '/notifications', title: 'Notifications', view: NotificationsPage },
     { path: '/notes', title: 'Notes', view: NotesPage },
@@ -25,6 +26,11 @@ export function AppShell({ userState, apiStatus, socketStatus, onLogout, onUpdat
       path: '/profile',
       title: 'Profile',
       view: () => ProfilePage({ userState, onLogout, onUpdated })
+    },
+    {
+      path: '/posts/:id',
+      title: 'Post',
+      view: ({ id }) => PostDetailPage({ id, router, currentUserId: userState.value.id })
     },
     {
       path: '*path',
