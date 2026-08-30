@@ -547,6 +547,88 @@ textarea {
   font-size: 13px;
 }
 
+.notes-workspace {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.75fr) minmax(0, 1.5fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.notes-sidebar,
+.note-editor,
+.note-editor-fields,
+.notes-filter-form {
+  display: grid;
+  gap: 14px;
+}
+
+.notes-sidebar-heading,
+.note-editor-heading,
+.note-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.notes-list {
+  display: grid;
+  gap: 6px;
+  max-height: 560px;
+  overflow-y: auto;
+}
+
+.note-list-item {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: #d9dfe5;
+  text-decoration: none;
+}
+
+.note-list-item:hover,
+.note-list-item-active {
+  border-color: #52606c;
+  background: rgba(54, 87, 214, 0.12);
+}
+
+.note-list-item span,
+.note-list-item small {
+  overflow: hidden;
+  color: #84909b;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-body-input {
+  width: 100%;
+  min-height: 320px;
+  padding: 14px;
+  border: 1px solid #52606c;
+  border-radius: 12px;
+  background: #171b20;
+  color: #f5f7fb;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.shared-note-body p {
+  color: #d9dfe5;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.notes-empty-editor {
+  min-height: 320px;
+}
+
+.note-save-status-error {
+  color: #ef9999;
+}
+
 .explore-posts-heading {
   padding-top: 12px;
   border-top: 1px solid rgba(104, 119, 132, 0.3);
@@ -973,6 +1055,10 @@ textarea {
   .channel-grid,
   .channel-owner-grid,
   .channel-hero-card {
+    grid-template-columns: 1fr;
+  }
+
+  .notes-workspace {
     grid-template-columns: 1fr;
   }
 

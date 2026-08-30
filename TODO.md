@@ -161,18 +161,18 @@ learn and use components in Prism for all your UI
 
 ## P1 — Notes system
 
-- [ ] Define notes product rules: private by default, shared, or both.
-- [ ] Add create, read, update, and delete note APIs.
-- [ ] Add note title, body, tags, owner, timestamps, and archive state.
-- [ ] Add Notes list page.
-- [ ] Add note editor.
-- [ ] Add autosave with debounce.
-- [ ] Add draft and saved states.
-- [ ] Add note search and filtering.
-- [ ] Add note pinning or favorites.
-- [ ] Add note permissions if notes can be shared.
-- [ ] Add note conflict handling for multiple tabs or devices.
-- [ ] Decide whether notes can become posts, and implement if wanted.
+- [x] Define notes product rules: private by default, shared, or both.
+- [x] Add create, read, update, and delete note APIs.
+- [x] Add note title, body, tags, owner, timestamps, and archive state.
+- [x] Add Notes list page.
+- [x] Add note editor.
+- [x] Add autosave with debounce.
+- [x] Add draft and saved states.
+- [x] Add note search and filtering.
+- [x] Add note pinning or favorites.
+- [x] Add note permissions if notes can be shared.
+- [x] Add note conflict handling for multiple tabs or devices.
+- [x] Decide whether notes can become posts, and implement if wanted.
 
 ## P1 — Chat system
 

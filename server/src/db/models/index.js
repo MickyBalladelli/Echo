@@ -155,6 +155,8 @@ export const Note = sequelize.define('Note', {
   userId: { type: DataTypes.UUID, allowNull: false, field: 'user_id' },
   title: { type: DataTypes.STRING(200), allowNull: false, defaultValue: '' },
   body: { type: DataTypes.TEXT, allowNull: false, defaultValue: '' },
+  tags: { type: DataTypes.ARRAY(DataTypes.TEXT), allowNull: false, defaultValue: [] },
+  version: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 1 },
   visibility: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'private' },
   isArchived: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false, field: 'is_archived' },
   isPinned: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false, field: 'is_pinned' },

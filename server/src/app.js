@@ -15,6 +15,7 @@ import { usersRouter } from './routes/users.js'
 import { searchRouter } from './routes/search.js'
 import { notificationsRouter } from './routes/notifications.js'
 import { channelsRouter } from './routes/channels.js'
+import { notesRouter } from './routes/notes.js'
 
 export function createApp() {
   const app = express()
@@ -45,6 +46,7 @@ export function createApp() {
   app.use('/api/search', requireAuth, searchRouter)
   app.use('/api/notifications', requireAuth, notificationsRouter)
   app.use('/api/channels', requireAuth, channelsRouter)
+  app.use('/api/notes', requireAuth, notesRouter)
   app.use(express.static(portalDist, { index: 'index.html' }))
   app.use((request, response, next) => {
     if (request.method !== 'GET' || request.path.startsWith('/api')) {

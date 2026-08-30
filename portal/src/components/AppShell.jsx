@@ -46,7 +46,12 @@ export function AppShell({
         notificationVersion
       })
     },
-    { path: '/notes', title: 'Notes', view: NotesPage },
+    { path: '/notes', title: 'Notes', view: () => NotesPage({ router }) },
+    {
+      path: '/notes/:id',
+      title: 'Note',
+      view: ({ id }) => NotesPage({ router, noteId: id })
+    },
     { path: '/channels', title: 'Channels', view: () => ChannelsPage({ router }) },
     {
       path: '/channels/:slug',

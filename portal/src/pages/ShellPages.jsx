@@ -3,6 +3,7 @@ import { UserSocialContent } from '../components/UserSocialContent.jsx'
 import { ExploreContent } from '../components/ExploreContent.jsx'
 import { NotificationCenter } from '../components/NotificationCenter.jsx'
 import { ChannelDirectory } from '../components/ChannelDirectory.jsx'
+import { NotesWorkspace } from '../components/NotesWorkspace.jsx'
 import { Card, EmptyState, Button } from '../lib/vendor.js'
 import { ComingSoon, PageFrame } from './PageFrame.jsx'
 import { FeedPage, PostDetailPage } from './FeedPage.jsx'
@@ -31,14 +32,14 @@ export function NotificationsPage({ router, unreadCount, notificationVersion }) 
   )
 }
 
-export function NotesPage() {
+export function NotesPage({ router, noteId = null }) {
   return (
     <PageFrame
       eyebrow="PRIVATE / NOTES"
       title="Notes"
       description="Keep private thoughts close, then turn the good ones into posts."
     >
-      <ComingSoon title="No notes yet" description="Your notes list and editor will appear here." />
+      <NotesWorkspace router={router} noteId={noteId} />
     </PageFrame>
   )
 }
