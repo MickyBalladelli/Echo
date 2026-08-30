@@ -16,7 +16,7 @@ export const notificationTypes = Object.freeze({
 function notificationHref(row) {
   if (row.post_id) return `/posts/${row.post_id}`
   if (row.type === notificationTypes.follow && row.actor_username) return `/users/${row.actor_username}`
-  if (row.channel_id) return '/channels'
+  if (row.channel_slug) return `/channels/${row.channel_slug}`
   if (row.conversation_id) return '/chat'
   return '/notifications'
 }
@@ -180,10 +180,11 @@ export async function listNotifications(recipientId, { cursor, limit }) {
 
   const rows = await sequelize.query(`
     SELECT n.*, actor.username AS actor_username, profile.display_name AS actor_display_name,
-      profile.avatar_url AS actor_avatar_url
+      profile.avatar_url AS actor_avatar_url, channel.slug AS channel_slug
     FROM notifications n
     LEFT JOIN users actor ON actor.id = n.actor_id
     LEFT JOIN profiles profile ON profile.user_id = actor.id
+    LEFT JOIN channels channel ON channel.id = n.channel_id AND channel.deleted_at IS NULL
     WHERE ${where.join(' AND ')}
     ORDER BY n.created_at DESC, n.id DESC
     LIMIT :limit

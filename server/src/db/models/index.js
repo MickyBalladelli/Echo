@@ -64,6 +64,7 @@ export const Channel = sequelize.define('Channel', {
   name: { type: DataTypes.STRING(80), allowNull: false },
   slug: { type: DataTypes.STRING(80), allowNull: false },
   description: { type: DataTypes.STRING(280), allowNull: false, defaultValue: '' },
+  imageUrl: { type: DataTypes.TEXT, field: 'image_url' },
   visibility: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'public' },
   deletedAt: { type: DataTypes.DATE, field: 'deleted_at' }
 }, {
@@ -80,6 +81,19 @@ export const ChannelMember = sequelize.define('ChannelMember', {
 }, {
   tableName: 'channel_members',
   timestamps: false
+})
+
+export const ChannelInvite = sequelize.define('ChannelInvite', {
+  channelId: { type: DataTypes.UUID, allowNull: false, primaryKey: true, field: 'channel_id' },
+  userId: { type: DataTypes.UUID, allowNull: false, primaryKey: true, field: 'user_id' },
+  invitedBy: { type: DataTypes.UUID, allowNull: false, field: 'invited_by' },
+  acceptedAt: { type: DataTypes.DATE, field: 'accepted_at' }
+}, {
+  tableName: 'channel_invites',
+  timestamps: true,
+  createdAt: 'createdAt',
+  updatedAt: false,
+  underscored: true
 })
 
 export const Post = sequelize.define('Post', {
@@ -203,6 +217,10 @@ Channel.hasMany(ChannelMember, { as: 'members', foreignKey: 'channelId' })
 ChannelMember.belongsTo(Channel, { as: 'channel', foreignKey: 'channelId' })
 User.hasMany(ChannelMember, { as: 'channelMemberships', foreignKey: 'userId' })
 ChannelMember.belongsTo(User, { as: 'user', foreignKey: 'userId' })
+Channel.hasMany(ChannelInvite, { as: 'invites', foreignKey: 'channelId' })
+ChannelInvite.belongsTo(Channel, { as: 'channel', foreignKey: 'channelId' })
+ChannelInvite.belongsTo(User, { as: 'user', foreignKey: 'userId' })
+ChannelInvite.belongsTo(User, { as: 'inviter', foreignKey: 'invitedBy' })
 
 User.hasMany(Post, { as: 'posts', foreignKey: 'authorId' })
 Post.belongsTo(User, { as: 'author', foreignKey: 'authorId' })
@@ -252,6 +270,7 @@ export const models = Object.freeze({
   Session,
   Channel,
   ChannelMember,
+  ChannelInvite,
   Post,
   PostLike,
   Follow,

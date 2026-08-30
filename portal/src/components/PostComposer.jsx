@@ -4,7 +4,7 @@ import { apiRequest } from '../lib/api.js'
 
 const maxPostLength = 280
 
-export function PostComposer({ onCreated }) {
+export function PostComposer({ onCreated, channelId = null }) {
   const body = signal('')
   const busy = signal(false)
   const error = signal('')
@@ -25,7 +25,7 @@ export function PostComposer({ onCreated }) {
     try {
       const result = await apiRequest('/api/posts', {
         method: 'POST',
-        body: JSON.stringify({ body: trimmedBody })
+        body: JSON.stringify({ body: trimmedBody, ...(channelId ? { channelId } : {}) })
       })
       body.value = ''
       onCreated(result.data.post)
@@ -40,8 +40,8 @@ export function PostComposer({ onCreated }) {
     <Card class="post-composer">
       <div class="post-composer-heading">
         <div>
-          <Label size="small" tone="accent">WRITE / POST</Label>
-          <h2>Send a signal</h2>
+          <Label size="small" tone="accent">{channelId ? 'WRITE / CHANNEL POST' : 'WRITE / POST'}</Label>
+          <h2>{channelId ? 'Post to channel' : 'Send a signal'}</h2>
         </div>
         <span class={computed(() => remaining.value < 40 ? 'post-character-count post-character-count-warning' : 'post-character-count')}>
           {remaining} left

@@ -2,6 +2,7 @@ import { ProfileCard } from '../components/ProfileCard.jsx'
 import { UserSocialContent } from '../components/UserSocialContent.jsx'
 import { ExploreContent } from '../components/ExploreContent.jsx'
 import { NotificationCenter } from '../components/NotificationCenter.jsx'
+import { ChannelDirectory } from '../components/ChannelDirectory.jsx'
 import { Card, EmptyState, Button } from '../lib/vendor.js'
 import { ComingSoon, PageFrame } from './PageFrame.jsx'
 import { FeedPage, PostDetailPage } from './FeedPage.jsx'
@@ -42,14 +43,14 @@ export function NotesPage() {
   )
 }
 
-export function ChannelsPage() {
+export function ChannelsPage({ router }) {
   return (
     <PageFrame
       eyebrow="COMMUNITIES / CHANNELS"
       title="Channels"
       description="Browse focused spaces and join the conversations that fit."
     >
-      <ComingSoon title="No channels yet" description="Public channel discovery and membership are next." />
+      <ChannelDirectory router={router} />
     </PageFrame>
   )
 }

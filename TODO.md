@@ -138,17 +138,17 @@ learn and use components in Prism for all your UI
 
 ### Channels
 
-- [ ] Add public channel creation.
-- [ ] Add channel name, slug, description, image placeholder, and owner.
-- [ ] Add channel list endpoint and page.
-- [ ] Add channel detail page.
-- [ ] Add join and leave channel actions.
-- [ ] Add channel member list and member count.
-- [ ] Add channel feed of posts.
-- [ ] Add create-post-in-channel behavior.
-- [ ] Add channel join notifications where appropriate.
-- [ ] Add channel owner controls.
-- [ ] Add private channels and invite rules after public channels work.
+- [x] Add public channel creation.
+- [x] Add channel name, slug, description, image placeholder, and owner.
+- [x] Add channel list endpoint and page.
+- [x] Add channel detail page.
+- [x] Add join and leave channel actions.
+- [x] Add channel member list and member count.
+- [x] Add channel feed of posts.
+- [x] Add create-post-in-channel behavior.
+- [x] Add channel join notifications where appropriate.
+- [x] Add channel owner controls.
+- [x] Add private channels and invite rules after public channels work.
 
 ### Real-time foundation
 

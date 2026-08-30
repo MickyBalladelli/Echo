@@ -5,6 +5,7 @@ export {
   Badge,
   Button,
   Card,
+  CheckBox,
   EmptyState,
   Alert,
   Footer,

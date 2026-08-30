@@ -3,6 +3,7 @@ import { Badge, Footer, Header, Label, Layout } from '../lib/vendor.js'
 import { ContextRail } from './ContextRail.jsx'
 import { ShellNavigation } from './ShellNavigation.jsx'
 import { UserProfilePage } from '../pages/UserProfilePage.jsx'
+import { ChannelDetailPage } from '../pages/ChannelDetailPage.jsx'
 import {
   ChannelsPage,
   ChatPage,
@@ -46,7 +47,12 @@ export function AppShell({
       })
     },
     { path: '/notes', title: 'Notes', view: NotesPage },
-    { path: '/channels', title: 'Channels', view: ChannelsPage },
+    { path: '/channels', title: 'Channels', view: () => ChannelsPage({ router }) },
+    {
+      path: '/channels/:slug',
+      title: 'Channel',
+      view: ({ slug }) => ChannelDetailPage({ slug, router, currentUserId: userState.value.id })
+    },
     { path: '/chat', title: 'Chat', view: ChatPage },
     {
       path: '/profile',

@@ -424,6 +424,129 @@ textarea {
   font-size: 13px;
 }
 
+.channels-stack,
+.channel-detail-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.channel-create-card,
+.channel-form {
+  display: grid;
+  gap: 14px;
+}
+
+.channel-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.channel-card-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.channel-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  height: 100%;
+}
+
+.channel-card-link:hover .channel-card {
+  border-color: #687784;
+}
+
+.channel-card-image,
+.channel-card-placeholder {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+}
+
+.channel-card-image,
+.channel-hero-image {
+  object-fit: cover;
+}
+
+.channel-card-placeholder,
+.channel-hero-placeholder {
+  display: grid;
+  place-items: center;
+  background: #3657d6;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.channel-card p,
+.channel-hero-card p {
+  margin: 6px 0;
+  color: #b9c1ca;
+}
+
+.channel-slug,
+.channel-card-counts {
+  color: #84909b;
+  font-size: 13px;
+}
+
+.channel-card-counts {
+  grid-column: 1 / -1;
+}
+
+.channel-hero-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 18px;
+  align-items: center;
+}
+
+.channel-hero-image,
+.channel-hero-placeholder {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+}
+
+.channel-owner-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.channel-owner-grid .prism-card,
+.channel-members-card {
+  display: grid;
+  gap: 14px;
+}
+
+.channel-member-list {
+  display: grid;
+  gap: 8px;
+}
+
+.channel-member-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(104, 119, 132, 0.2);
+}
+
+.channel-member-row a {
+  color: #f5f7fb;
+  text-decoration: none;
+}
+
+.channel-member-row a span,
+.channel-member-row > span {
+  color: #84909b;
+  font-size: 13px;
+}
+
 .explore-posts-heading {
   padding-top: 12px;
   border-top: 1px solid rgba(104, 119, 132, 0.3);
@@ -846,8 +969,19 @@ textarea {
   }
 
   .explore-search-form,
-  .search-result-grid {
+  .search-result-grid,
+  .channel-grid,
+  .channel-owner-grid,
+  .channel-hero-card {
     grid-template-columns: 1fr;
+  }
+
+  .channel-member-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .channel-member-row .prism-button {
+    grid-column: 1 / -1;
   }
 }
 

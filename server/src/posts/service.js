@@ -6,6 +6,16 @@ import { notifyLike, notifyReply } from '../notifications/service.js'
 
 export const MAX_REPLY_DEPTH = 3
 const MAX_THREAD_REPLIES = 500
+const channelAccess = alias => `(
+  ${alias}.channel_id IS NULL OR EXISTS (
+    SELECT 1 FROM channels access_channel
+    LEFT JOIN channel_members access_member ON access_member.channel_id = access_channel.id
+      AND access_member.user_id = :viewerId AND access_member.left_at IS NULL
+    WHERE access_channel.id = ${alias}.channel_id
+      AND access_channel.deleted_at IS NULL
+      AND (access_channel.visibility = 'public' OR access_member.user_id IS NOT NULL)
+  )
+)`
 
 const postSelect = (extraSelect = '') => `
   SELECT
@@ -101,11 +111,13 @@ export async function listPosts(viewerId, {
   limit,
   feed = 'home',
   authorId = null,
+  channelId = null,
   searchQuery = null
 }) {
   const where = [
     "p.deleted_at IS NULL",
-    "p.visibility = 'public'"
+    "p.visibility = 'public'",
+    channelAccess('p')
   ]
   const replacements = {}
 
@@ -122,6 +134,11 @@ export async function listPosts(viewerId, {
   if (authorId) {
     where.push('p.author_id = :authorId')
     replacements.authorId = authorId
+  }
+
+  if (channelId) {
+    where.push('p.channel_id = :channelId')
+    replacements.channelId = channelId
   }
 
   if (searchQuery) {
@@ -154,7 +171,7 @@ export async function listPosts(viewerId, {
 export async function listPopularPosts(viewerId, limit) {
   return selectPosts({
     viewerId,
-    where: "p.deleted_at IS NULL AND p.visibility = 'public'",
+    where: `p.deleted_at IS NULL AND p.visibility = 'public' AND ${channelAccess('p')}`,
     replacements: {},
     limit,
     orderBy: 'like_count DESC, reply_count DESC, p.created_at DESC, p.id DESC'
@@ -198,7 +215,7 @@ async function listThreadReplies(viewerId, postId, transaction) {
     extraFrom: 'JOIN reply_tree ON reply_tree.id = p.id',
     extraSelect: ', reply_tree.depth AS reply_depth',
     extraGroupBy: 'reply_tree.depth',
-    where: "p.deleted_at IS NULL AND p.visibility = 'public'",
+    where: `p.deleted_at IS NULL AND p.visibility = 'public' AND ${channelAccess('p')}`,
     replacements: {
       rootPostId: postId,
       maxReplyDepth: MAX_REPLY_DEPTH
@@ -212,7 +229,7 @@ async function listThreadReplies(viewerId, postId, transaction) {
 export async function getPostById(viewerId, postId, transaction) {
   const posts = await selectPosts({
     viewerId,
-    where: "p.id = :postId AND p.deleted_at IS NULL AND p.visibility = 'public'",
+    where: `p.id = :postId AND p.deleted_at IS NULL AND p.visibility = 'public' AND ${channelAccess('p')}`,
     replacements: { postId },
     limit: 1,
     transaction
@@ -232,14 +249,19 @@ export async function createPost(authorId, input) {
   const postId = await withTransaction(async transaction => {
     if (input.channelId) {
       const channel = await sequelize.query(
-        "SELECT id FROM channels WHERE id = :id AND deleted_at IS NULL LIMIT 1",
+        `SELECT c.id, member.user_id AS member_id
+         FROM channels c
+         LEFT JOIN channel_members member ON member.channel_id = c.id
+           AND member.user_id = :authorId AND member.left_at IS NULL
+         WHERE c.id = :id AND c.deleted_at IS NULL LIMIT 1`,
         {
-          replacements: { id: input.channelId },
+          replacements: { id: input.channelId, authorId },
           type: QueryTypes.SELECT,
           transaction
         }
       )
       if (!channel[0]) throw new HttpError(400, 'CHANNEL_NOT_FOUND', 'Channel not found')
+      if (!channel[0].member_id) throw new HttpError(403, 'CHANNEL_MEMBERSHIP_REQUIRED', 'Join channel before posting')
     }
 
     const rows = await sequelize.query(`
@@ -266,15 +288,16 @@ export async function createPost(authorId, input) {
 export async function createReply(authorId, parentPostId, input) {
   const reply = await withTransaction(async transaction => {
     const parentRows = await sequelize.query(`
-      SELECT p.id, p.author_id
+      SELECT p.id, p.author_id, p.channel_id
       FROM posts p
       JOIN users u ON u.id = p.author_id AND u.deleted_at IS NULL AND u.status = 'active'
       WHERE p.id = :parentPostId
         AND p.deleted_at IS NULL
         AND p.visibility = 'public'
+        AND ${channelAccess('p')}
       LIMIT 1
     `, {
-      replacements: { parentPostId },
+      replacements: { parentPostId, viewerId: authorId },
       type: QueryTypes.SELECT,
       transaction
     })
@@ -325,11 +348,11 @@ export async function createReply(authorId, parentPostId, input) {
     }
 
     const replyRows = await sequelize.query(`
-      INSERT INTO posts (author_id, parent_post_id, body, visibility)
-      VALUES (:authorId, :parentPostId, :body, 'public')
+      INSERT INTO posts (author_id, parent_post_id, channel_id, body, visibility)
+      VALUES (:authorId, :parentPostId, :channelId, :body, 'public')
       RETURNING id
     `, {
-      replacements: { authorId, parentPostId, body: input.body },
+      replacements: { authorId, parentPostId, channelId: parent.channel_id || null, body: input.body },
       type: QueryTypes.SELECT,
       transaction
     })
@@ -347,7 +370,7 @@ export async function createReply(authorId, parentPostId, input) {
 
   const rows = await selectPosts({
     viewerId: authorId,
-    where: 'p.id = :replyId AND p.deleted_at IS NULL AND p.visibility = \'public\'',
+    where: `p.id = :replyId AND p.deleted_at IS NULL AND p.visibility = 'public' AND ${channelAccess('p')}`,
     replacements: { replyId: reply.replyId },
     limit: 1
   })
@@ -392,9 +415,10 @@ async function getLikeState(userId, postId, transaction) {
     WHERE posts.id = :postId
       AND posts.deleted_at IS NULL
       AND posts.visibility = 'public'
+      AND ${channelAccess('posts')}
     GROUP BY posts.id
   `, {
-    replacements: { userId, postId },
+    replacements: { userId, postId, viewerId: userId },
     type: QueryTypes.SELECT,
     transaction
   })
@@ -419,9 +443,10 @@ export async function likePost(userId, postId) {
       WHERE p.id = :postId
         AND p.deleted_at IS NULL
         AND p.visibility = 'public'
+        AND ${channelAccess('p')}
       LIMIT 1
     `, {
-      replacements: { postId },
+      replacements: { postId, viewerId: userId },
       type: QueryTypes.SELECT,
       transaction
     })
