@@ -8,6 +8,7 @@ import { pool } from './db/pool.js'
 import { setNotificationEmitter } from './notifications/realtime.js'
 import { initializeSocketRooms } from './realtime/rooms.js'
 import { realtimeEnvelope, setRealtimePublisher } from './realtime/events.js'
+import { initializeChatSocket } from './chat/socket.js'
 
 const app = createApp()
 const httpServer = http.createServer(app)
@@ -32,6 +33,7 @@ io.on('connection', async socket => {
 
   try {
     await initializeSocketRooms(socket)
+    initializeChatSocket(socket)
   } catch (error) {
     logger.error({ err: error, socketId: socket.id }, 'Socket room setup failed')
     socket.disconnect(true)

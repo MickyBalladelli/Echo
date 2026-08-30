@@ -170,6 +170,8 @@ export const ChatConversation = sequelize.define('ChatConversation', {
   id: { ...uuid, primaryKey: true },
   createdBy: { type: DataTypes.UUID, allowNull: false, field: 'created_by' },
   kind: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'direct' },
+  title: { type: DataTypes.STRING(100) },
+  directKey: { type: DataTypes.STRING(73), field: 'direct_key' },
   deletedAt: { type: DataTypes.DATE, field: 'deleted_at' }
 }, {
   tableName: 'chat_conversations',
@@ -181,7 +183,9 @@ export const ChatMember = sequelize.define('ChatMember', {
   userId: { type: DataTypes.UUID, allowNull: false, primaryKey: true, field: 'user_id' },
   role: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'member' },
   joinedAt: { type: DataTypes.DATE, allowNull: false, field: 'joined_at' },
-  leftAt: { type: DataTypes.DATE, field: 'left_at' }
+  leftAt: { type: DataTypes.DATE, field: 'left_at' },
+  mutedUntil: { type: DataTypes.DATE, field: 'muted_until' },
+  notificationsEnabled: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true, field: 'notifications_enabled' }
 }, {
   tableName: 'chat_members',
   timestamps: false
@@ -192,6 +196,8 @@ export const ChatMessage = sequelize.define('ChatMessage', {
   conversationId: { type: DataTypes.UUID, allowNull: false, field: 'conversation_id' },
   senderId: { type: DataTypes.UUID, allowNull: false, field: 'sender_id' },
   body: { type: DataTypes.TEXT, allowNull: false },
+  editedAt: { type: DataTypes.DATE, field: 'edited_at' },
+  moderationStatus: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'active', field: 'moderation_status' },
   deletedAt: { type: DataTypes.DATE, field: 'deleted_at' }
 }, {
   tableName: 'chat_messages',

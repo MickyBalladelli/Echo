@@ -58,7 +58,12 @@ export function AppShell({
       title: 'Channel',
       view: ({ slug }) => ChannelDetailPage({ slug, router, currentUserId: userState.value.id })
     },
-    { path: '/chat', title: 'Chat', view: ChatPage },
+    { path: '/chat', title: 'Chat', view: () => ChatPage({ router, currentUserId: userState.value.id }) },
+    {
+      path: '/chat/:id',
+      title: 'Chat',
+      view: ({ id }) => ChatPage({ router, conversationId: id, currentUserId: userState.value.id })
+    },
     {
       path: '/profile',
       title: 'Profile',

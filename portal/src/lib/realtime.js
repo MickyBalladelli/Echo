@@ -40,3 +40,26 @@ export function acceptRealtimeEvent(envelope) {
   }
   return true
 }
+
+export function onRealtimeEvent(type, handler) {
+  if (!socket) return () => {}
+  const listener = envelope => {
+    if (acceptRealtimeEvent(envelope)) handler(envelope.data, envelope)
+  }
+  socket.on(type, listener)
+  return () => socket?.off(type, listener)
+}
+
+export function onRealtimeControl(type, handler) {
+  if (!socket) return () => {}
+  socket.on(type, handler)
+  return () => socket?.off(type, handler)
+}
+
+export function emitRealtime(type, payload, acknowledge) {
+  if (!socket?.connected) {
+    acknowledge?.({ ok: false, error: 'SOCKET_DISCONNECTED' })
+    return
+  }
+  socket.emit(type, payload, acknowledge)
+}

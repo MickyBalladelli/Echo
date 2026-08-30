@@ -176,22 +176,22 @@ learn and use components in Prism for all your UI
 
 ## P1 — Chat system
 
-- [ ] Add one-to-one conversation creation.
-- [ ] Add group conversation creation.
-- [ ] Add conversation member management.
-- [ ] Add send and receive text messages through Socket.IO.
-- [ ] Persist every message in PostgreSQL.
-- [ ] Add message history API with cursor pagination.
-- [ ] Add conversation list sorted by recent activity.
-- [ ] Add unread message counts.
-- [ ] Add read receipts or last-read state.
-- [ ] Add typing indicators.
-- [ ] Add online/offline presence.
-- [ ] Add reconnect and missed-message sync.
-- [ ] Add edit or delete own message rules.
-- [ ] Add block and mute behavior for chat.
-- [ ] Add chat notifications with user controls.
-- [ ] Add message and conversation moderation hooks.
+- [x] Add one-to-one conversation creation.
+- [x] Add group conversation creation.
+- [x] Add conversation member management.
+- [x] Add send and receive text messages through Socket.IO.
+- [x] Persist every message in PostgreSQL.
+- [x] Add message history API with cursor pagination.
+- [x] Add conversation list sorted by recent activity.
+- [x] Add unread message counts.
+- [x] Add read receipts or last-read state.
+- [x] Add typing indicators.
+- [x] Add online/offline presence.
+- [x] Add reconnect and missed-message sync.
+- [x] Add edit or delete own message rules.
+- [x] Add block and mute behavior for chat.
+- [x] Add chat notifications with user controls.
+- [x] Add message and conversation moderation hooks.
 
 ## P2 — Product depth
 

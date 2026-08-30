@@ -4,6 +4,7 @@ import { ExploreContent } from '../components/ExploreContent.jsx'
 import { NotificationCenter } from '../components/NotificationCenter.jsx'
 import { ChannelDirectory } from '../components/ChannelDirectory.jsx'
 import { NotesWorkspace } from '../components/NotesWorkspace.jsx'
+import { ChatWorkspace } from '../components/ChatWorkspace.jsx'
 import { Card, EmptyState, Button } from '../lib/vendor.js'
 import { ComingSoon, PageFrame } from './PageFrame.jsx'
 import { FeedPage, PostDetailPage } from './FeedPage.jsx'
@@ -56,14 +57,14 @@ export function ChannelsPage({ router }) {
   )
 }
 
-export function ChatPage() {
+export function ChatPage({ router, conversationId = null, currentUserId }) {
   return (
     <PageFrame
       eyebrow="DIRECT / CHAT"
       title="Chat"
       description="Private conversations and real-time messages will live here."
     >
-      <ComingSoon title="No conversations yet" description="Start a conversation when chat persistence is connected." />
+      <ChatWorkspace router={router} conversationId={conversationId} currentUserId={currentUserId} />
     </PageFrame>
   )
 }
