@@ -116,13 +116,13 @@ learn and use components in Prism for all your UI
 
 ### Explore and search
 
-- [ ] Add Explore page.
-- [ ] Add recent and popular posts view.
-- [ ] Add user search.
-- [ ] Add post search.
-- [ ] Add channel search.
-- [ ] Add search pagination.
-- [ ] Add empty search state.
+- [x] Add Explore page.
+- [x] Add recent and popular posts view.
+- [x] Add user search.
+- [x] Add post search.
+- [x] Add channel search.
+- [x] Add search pagination.
+- [x] Add empty search state.
 
 ### Notifications
 

@@ -1,17 +1,18 @@
 import { ProfileCard } from '../components/ProfileCard.jsx'
 import { UserSocialContent } from '../components/UserSocialContent.jsx'
+import { ExploreContent } from '../components/ExploreContent.jsx'
 import { Card, EmptyState, Button } from '../lib/vendor.js'
 import { ComingSoon, PageFrame } from './PageFrame.jsx'
 import { FeedPage, PostDetailPage } from './FeedPage.jsx'
 
-export function ExplorePage() {
+export function ExplorePage({ router, currentUserId }) {
   return (
     <PageFrame
       eyebrow="DISCOVER / EXPLORE"
       title="Explore"
       description="Find people, posts, and channels worth your attention."
     >
-      <ComingSoon title="Nothing trending yet" description="Explore will show search, popular posts, and new voices." />
+      <ExploreContent router={router} currentUserId={currentUserId} />
     </PageFrame>
   )
 }

@@ -23,7 +23,11 @@ export function AppShell({ userState, apiStatus, socketStatus, onLogout, onUpdat
       title: 'Following',
       view: () => HomePage({ router, currentUserId: userState.value.id, feed: 'following' })
     },
-    { path: '/explore', title: 'Explore', view: ExplorePage },
+    {
+      path: '/explore',
+      title: 'Explore',
+      view: () => ExplorePage({ router, currentUserId: userState.value.id })
+    },
     { path: '/notifications', title: 'Notifications', view: NotificationsPage },
     { path: '/notes', title: 'Notes', view: NotesPage },
     { path: '/channels', title: 'Channels', view: ChannelsPage },
