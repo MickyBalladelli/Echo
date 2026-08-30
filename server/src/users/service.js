@@ -3,6 +3,7 @@ import { sequelize, withTransaction } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
 import { encodeCursor } from '../http/pagination.js'
 import { listPosts } from '../posts/service.js'
+import { notifyFollow } from '../notifications/service.js'
 
 function mapUser(row) {
   return {
@@ -111,13 +112,7 @@ export async function followUser(viewerId, userId) {
     })
 
     if (inserted[0]) {
-      await sequelize.query(`
-        INSERT INTO notifications (recipient_id, actor_id, type, payload)
-        VALUES (:userId, :viewerId, 'follow', CAST(:payload AS JSONB))
-      `, {
-        replacements: { userId, viewerId, payload: JSON.stringify({ userId: viewerId }) },
-        transaction
-      })
+      await notifyFollow({ recipientId: userId, actorId: viewerId }, transaction)
     }
 
     return getFollowState(viewerId, userId, transaction)

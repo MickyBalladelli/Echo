@@ -13,6 +13,7 @@ import { meRouter } from './routes/me.js'
 import { postsRouter } from './routes/posts.js'
 import { usersRouter } from './routes/users.js'
 import { searchRouter } from './routes/search.js'
+import { notificationsRouter } from './routes/notifications.js'
 
 export function createApp() {
   const app = express()
@@ -41,6 +42,7 @@ export function createApp() {
   app.use('/api/posts', requireAuth, postsRouter)
   app.use('/api/users', requireAuth, usersRouter)
   app.use('/api/search', requireAuth, searchRouter)
+  app.use('/api/notifications', requireAuth, notificationsRouter)
   app.use(express.static(portalDist, { index: 'index.html' }))
   app.use((request, response, next) => {
     if (request.method !== 'GET' || request.path.startsWith('/api')) {

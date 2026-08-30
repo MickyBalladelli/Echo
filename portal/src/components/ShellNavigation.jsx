@@ -12,10 +12,15 @@ const navItems = Object.freeze([
   { path: '/profile', label: 'Profile', mark: '◎' }
 ])
 
-function NavigationLink({ item, router }) {
+function NavigationLink({ item, router, unreadNotifications }) {
   const active = computed(() => router.path.value === item.path)
   const className = computed(() => active.value ? 'shell-nav-link shell-nav-link-active' : 'shell-nav-link')
   const ariaCurrent = computed(() => active.value ? 'page' : undefined)
+  const unreadBadge = item.path === '/notifications'
+    ? computed(() => unreadNotifications.value > 0
+      ? html`<span class="shell-nav-count" aria-label="${unreadNotifications.value} unread">${unreadNotifications.value > 99 ? '99+' : unreadNotifications.value}</span>`
+      : null)
+    : null
 
   return html`
     <a
@@ -26,12 +31,13 @@ function NavigationLink({ item, router }) {
     >
       <span class="shell-nav-mark" aria-hidden="true">${item.mark}</span>
       <span>${item.label}</span>
+      ${unreadBadge}
     </a>
   `
 }
 
-export function ShellNavigation({ router, user }) {
-  const links = navItems.map(item => NavigationLink({ item, router }))
+export function ShellNavigation({ router, user, unreadNotifications }) {
+  const links = navItems.map(item => NavigationLink({ item, router, unreadNotifications }))
 
   return Navigator({
     ariaLabel: 'Echo primary navigation',

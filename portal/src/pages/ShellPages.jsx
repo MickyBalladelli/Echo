@@ -1,6 +1,7 @@
 import { ProfileCard } from '../components/ProfileCard.jsx'
 import { UserSocialContent } from '../components/UserSocialContent.jsx'
 import { ExploreContent } from '../components/ExploreContent.jsx'
+import { NotificationCenter } from '../components/NotificationCenter.jsx'
 import { Card, EmptyState, Button } from '../lib/vendor.js'
 import { ComingSoon, PageFrame } from './PageFrame.jsx'
 import { FeedPage, PostDetailPage } from './FeedPage.jsx'
@@ -17,14 +18,14 @@ export function ExplorePage({ router, currentUserId }) {
   )
 }
 
-export function NotificationsPage() {
+export function NotificationsPage({ router, unreadCount, notificationVersion }) {
   return (
     <PageFrame
       eyebrow="INBOX / NOTIFICATIONS"
       title="Notifications"
       description="Replies, likes, follows, and channel activity will land here."
     >
-      <ComingSoon title="All quiet" description="You have no notifications yet." />
+      <NotificationCenter router={router} unreadCount={unreadCount} notificationVersion={notificationVersion} />
     </PageFrame>
   )
 }

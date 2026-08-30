@@ -126,6 +126,7 @@ export const Notification = sequelize.define('Notification', {
   channelId: { type: DataTypes.UUID, field: 'channel_id' },
   conversationId: { type: DataTypes.UUID, field: 'conversation_id' },
   payload: { type: DataTypes.JSONB, allowNull: false, defaultValue: {} },
+  dedupeKey: { type: DataTypes.STRING(255), field: 'dedupe_key' },
   readAt: { type: DataTypes.DATE, field: 'read_at' }
 }, {
   tableName: 'notifications',

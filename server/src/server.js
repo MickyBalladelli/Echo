@@ -5,6 +5,7 @@ import { authenticateSocket } from './auth/middleware.js'
 import { env } from './config/env.js'
 import { logger } from './config/logger.js'
 import { pool } from './db/pool.js'
+import { setNotificationEmitter } from './notifications/realtime.js'
 
 const app = createApp()
 const httpServer = http.createServer(app)
@@ -16,8 +17,12 @@ const io = new Server(httpServer, {
 })
 
 io.use(authenticateSocket)
+setNotificationEmitter((recipientId, event) => {
+  io.to(`user:${recipientId}`).emit('notification:new', event)
+})
 
 io.on('connection', socket => {
+  socket.join(`user:${socket.data.auth.userId}`)
   logger.info({ socketId: socket.id, userId: socket.data.auth.userId }, 'Socket connected')
 
   socket.on('disconnect', reason => {

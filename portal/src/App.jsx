@@ -22,6 +22,8 @@ export function App() {
   const authStatus = signal('checking')
   const currentUser = signal(null)
   const socketStatus = signal('connecting')
+  const unreadNotifications = signal(0)
+  const notificationVersion = signal(0)
   const statusLabel = computed(() => {
     if (status.value === 'ready') return 'API online'
     if (status.value === 'offline') return 'API offline'
@@ -48,6 +50,8 @@ export function App() {
       userState={currentUser}
       apiStatus={statusLabel}
       socketStatus={socketStatus}
+      unreadNotifications={unreadNotifications}
+      notificationVersion={notificationVersion}
       onLogout={logout}
       onUpdated={user => currentUser.value = user}
     />
@@ -67,6 +71,10 @@ export function App() {
       })
       socket.on('connect_error', error => {
         socketStatus.value = error.message === 'AUTH_REQUIRED' ? 'auth required' : 'error'
+      })
+      socket.on('notification:new', event => {
+        unreadNotifications.value = event.unreadCount
+        notificationVersion.value += 1
       })
     }
 
@@ -98,6 +106,12 @@ export function App() {
         if (!result || !active) return
         currentUser.value = result.data.user
         authStatus.value = 'authenticated'
+        fetch(`${apiUrl}/api/notifications/unread-count`, { credentials: 'include' })
+          .then(response => response.ok ? response.json() : null)
+          .then(countResult => {
+            if (countResult?.ok) unreadNotifications.value = countResult.data.unreadCount
+          })
+          .catch(() => {})
         connectSocket()
       })
       .catch(() => {

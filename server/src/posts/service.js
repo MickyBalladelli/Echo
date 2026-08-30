@@ -2,6 +2,7 @@ import { QueryTypes } from 'sequelize'
 import { sequelize, withTransaction } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
 import { encodeCursor } from '../http/pagination.js'
+import { notifyLike, notifyReply } from '../notifications/service.js'
 
 export const MAX_REPLY_DEPTH = 3
 const MAX_THREAD_REPLIES = 500
@@ -334,20 +335,12 @@ export async function createReply(authorId, parentPostId, input) {
     })
     const replyId = replyRows[0].id
 
-    if (parent.author_id !== authorId) {
-      await sequelize.query(`
-        INSERT INTO notifications (recipient_id, actor_id, type, post_id, payload)
-        VALUES (:recipientId, :actorId, 'reply', :postId, CAST(:payload AS JSONB))
-      `, {
-        replacements: {
-          recipientId: parent.author_id,
-          actorId: authorId,
-          postId: parentPostId,
-          payload: JSON.stringify({ replyId, parentPostId })
-        },
-        transaction
-      })
-    }
+    await notifyReply({
+      recipientId: parent.author_id,
+      actorId: authorId,
+      postId: parentPostId,
+      replyId
+    }, transaction)
 
     return { replyId, depth: parentDepth + 1 }
   })
@@ -449,19 +442,8 @@ export async function likePost(userId, postId) {
       transaction
     })
 
-    if (insertedRows[0] && post.author_id !== userId) {
-      await sequelize.query(`
-        INSERT INTO notifications (recipient_id, actor_id, type, post_id, payload)
-        VALUES (:recipientId, :actorId, 'like', :postId, CAST(:payload AS JSONB))
-      `, {
-        replacements: {
-          recipientId: post.author_id,
-          actorId: userId,
-          postId,
-          payload: JSON.stringify({ postId })
-        },
-        transaction
-      })
+    if (insertedRows[0]) {
+      await notifyLike({ recipientId: post.author_id, actorId: userId, postId }, transaction)
     }
 
     return getLikeState(userId, postId, transaction)

@@ -15,7 +15,15 @@ import {
   ProfilePage
 } from '../pages/ShellPages.jsx'
 
-export function AppShell({ userState, apiStatus, socketStatus, onLogout, onUpdated }) {
+export function AppShell({
+  userState,
+  apiStatus,
+  socketStatus,
+  unreadNotifications,
+  notificationVersion,
+  onLogout,
+  onUpdated
+}) {
   const router = createRouter([
     { path: '/', title: 'Home', view: () => HomePage({ router, currentUserId: userState.value.id }) },
     {
@@ -28,7 +36,15 @@ export function AppShell({ userState, apiStatus, socketStatus, onLogout, onUpdat
       title: 'Explore',
       view: () => ExplorePage({ router, currentUserId: userState.value.id })
     },
-    { path: '/notifications', title: 'Notifications', view: NotificationsPage },
+    {
+      path: '/notifications',
+      title: 'Notifications',
+      view: () => NotificationsPage({
+        router,
+        unreadCount: unreadNotifications,
+        notificationVersion
+      })
+    },
     { path: '/notes', title: 'Notes', view: NotesPage },
     { path: '/channels', title: 'Channels', view: ChannelsPage },
     { path: '/chat', title: 'Chat', view: ChatPage },
@@ -74,7 +90,7 @@ export function AppShell({ userState, apiStatus, socketStatus, onLogout, onUpdat
           children: html`<div class="echo-header-content"><Label size="large">Echo</Label><span>Small signals. Real people.</span></div>`,
           trailing: Badge({ children: 'SIGNED IN', tone: 'success' })
         })}
-        navigator={ShellNavigation({ router, user })}
+        navigator={ShellNavigation({ router, user, unreadNotifications })}
         footer={Footer({
           leading: 'Echo',
           trailing: html`<span>Built for conversation</span>`

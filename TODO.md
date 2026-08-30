@@ -126,15 +126,15 @@ learn and use components in Prism for all your UI
 
 ### Notifications
 
-- [ ] Create notification event service.
-- [ ] Notify on replies, likes, follows, channel invites/joins, and chat messages.
-- [ ] Add notifications API with cursor pagination.
-- [ ] Add unread notification count.
-- [ ] Add mark-one-read action.
-- [ ] Add mark-all-read action.
-- [ ] Add real-time notification delivery through Socket.IO.
-- [ ] Link each notification to its post, profile, channel, or chat.
-- [ ] Avoid duplicate notifications for repeated events.
+- [x] Create notification event service.
+- [x] Notify on replies, likes, follows, channel invites/joins, and chat messages.
+- [x] Add notifications API with cursor pagination.
+- [x] Add unread notification count.
+- [x] Add mark-one-read action.
+- [x] Add mark-all-read action.
+- [x] Add real-time notification delivery through Socket.IO.
+- [x] Link each notification to its post, profile, channel, or chat.
+- [x] Avoid duplicate notifications for repeated events.
 
 ### Channels
 
