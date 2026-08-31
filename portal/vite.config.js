@@ -3,6 +3,9 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
 
   return {
+    resolve: {
+      dedupe: ['@mickyballadelli/matrix']
+    },
     esbuild: {
       jsx: 'automatic',
       jsxImportSource: '@mickyballadelli/matrix'

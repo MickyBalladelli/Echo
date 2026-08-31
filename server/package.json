@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "predev": "npm run db:migrate",
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "db:migrate": "node src/db/migrate.js",

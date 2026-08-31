@@ -167,7 +167,6 @@ export function AuthPanel({ onAuthenticated }) {
               required
             />
           </FormField>
-          {errorView}
           <Button type="submit" fullWidth loading={busy}>Log in</Button>
           <Button type="button" variant="tertiary" onClick={() => recoveryOpen.value = !recoveryOpen.value}>Forgot password?</Button>
           {oauthProviders.value.some(provider => provider.configured) && <div class="auth-oauth-buttons">
@@ -239,7 +238,6 @@ export function AuthPanel({ onAuthenticated }) {
               required
             />
           </FormField>
-          {errorView}
           <Button type="submit" fullWidth loading={busy}>Create account</Button>
         </Stack>
       </form>
@@ -259,7 +257,6 @@ export function AuthPanel({ onAuthenticated }) {
         <FormField id="auth-two-factor-code" label="Authenticator code" required>
           <TextField id="auth-two-factor-code" value={twoFactorCode} inputmode="numeric" pattern="[0-9]{6}" maxLength={6} required autofocus />
         </FormField>
-        {errorView}
         <Button type="submit" fullWidth loading={busy}>Verify and log in</Button>
         <Button type="button" variant="tertiary" onClick={() => twoFactorChallenge.value = ''}>Use another account</Button>
       </Stack>
@@ -304,6 +301,7 @@ export function AuthPanel({ onAuthenticated }) {
           <h1>{title}</h1>
           <p class="auth-description">{description}</p>
         </Stack>
+        {errorView}
         {twoFactorForm}
         {recoveryForm}
       </Stack>

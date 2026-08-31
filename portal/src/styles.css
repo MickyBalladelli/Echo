@@ -1456,7 +1456,11 @@ textarea {
 }
 
 .auth-error {
-  margin-top: 2px;
+  position: sticky;
+  top: 16px;
+  z-index: 2;
+  margin: 0;
+  box-shadow: var(--prism-shadow-card);
 }
 
 .profile-card {

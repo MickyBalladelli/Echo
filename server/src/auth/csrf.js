@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import { fail } from '../http/api.js'
-import { cookieFromRequest, sessionCookieName } from './cookies.js'
+import { cookieFromRequest } from './cookies.js'
 
 export const csrfCookieName = 'echo_csrf'
 const unsafeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
@@ -32,10 +32,9 @@ export function ensureCsrfCookie(request, response, next) {
 export function csrfProtection(request, response, next) {
   if (!unsafeMethods.has(request.method)) return next()
 
-  const sessionToken = cookieFromRequest(request, sessionCookieName)
   const csrfCookie = cookieFromRequest(request, csrfCookieName)
   const csrfHeader = request.get('x-csrf-token')
-  if (!sessionToken || !csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
+  if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
     return response.status(403).json(fail('CSRF_REQUIRED', 'A valid CSRF token is required'))
   }
 
