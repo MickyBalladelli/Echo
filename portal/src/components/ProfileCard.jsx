@@ -27,7 +27,12 @@ export function ProfileCard({ user, onLogout, onUpdated }) {
       onCancel={() => editing.value = false}
     />
     : <>
-      <div class="profile-avatar" aria-hidden="true">{initials}</div>
+      <div class="profile-card-media">
+        {profile.bannerUrl && <img class="profile-banner" src={profile.bannerUrl} alt="" />}
+        {profile.avatarUrl
+          ? <img class="profile-avatar" src={profile.avatarUrl} alt="" />
+          : <div class="profile-avatar" aria-hidden="true">{initials}</div>}
+      </div>
       <div class="profile-copy">
         <Label size="large">{profile.displayName || user.username}</Label>
         <span class="profile-handle">@{user.username}</span>

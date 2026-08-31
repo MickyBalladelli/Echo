@@ -18,10 +18,14 @@ export function UserList({ title, users, router }) {
               href={`/users/${user.username}`}
               onClick={router.link(`/users/${user.username}`)}
             >
-              <span class="social-user-avatar" aria-hidden="true">{initial(user)}</span>
+              {user.profile.avatarUrl
+                ? <img class="social-user-avatar" src={user.profile.avatarUrl} alt="" loading="lazy" />
+                : <span class="social-user-avatar" aria-hidden="true">{initial(user)}</span>}
               <span>
                 <strong>{user.profile.displayName}</strong>
                 <small>@{user.username}</small>
+                {user.mutual && <small class="social-user-mutual">Mutual follow</small>}
+                {!user.mutual && user.mutualCount > 0 && <small class="social-user-mutual">{user.mutualCount} mutual follows</small>}
               </span>
             </a>
           ))}

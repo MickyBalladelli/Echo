@@ -42,6 +42,28 @@ async function canJoinPost(userId, postId) {
         OR (post.visibility = 'private' AND post.author_id = :userId)
       )
       AND (post.channel_id IS NULL OR channel.visibility = 'public' OR member.user_id IS NOT NULL)
+      AND NOT EXISTS (
+        SELECT 1 FROM user_blocks blocked
+        WHERE (blocked.blocker_id = :userId AND blocked.blocked_id = post.author_id)
+           OR (blocked.blocker_id = post.author_id AND blocked.blocked_id = :userId)
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM user_mutes muted
+        WHERE muted.user_id = :userId AND muted.muted_user_id = post.author_id
+      )
+      AND (
+        post.author_id = :userId
+        OR NOT EXISTS (
+          SELECT 1 FROM profiles private_profile
+          WHERE private_profile.user_id = post.author_id
+            AND private_profile.profile_visibility = 'followers'
+        )
+        OR EXISTS (
+          SELECT 1 FROM follows profile_follow
+          WHERE profile_follow.follower_id = :userId
+            AND profile_follow.following_id = post.author_id
+        )
+      )
     LIMIT 1
   `, { replacements: { userId, postId }, type: QueryTypes.SELECT })
   return Boolean(rows[0])
@@ -54,6 +76,17 @@ async function canJoinConversation(userId, conversationId) {
     JOIN chat_members member ON member.conversation_id = conversation.id
       AND member.user_id = :userId AND member.left_at IS NULL
     WHERE conversation.id = :conversationId AND conversation.deleted_at IS NULL
+      AND (conversation.kind <> 'direct' OR NOT EXISTS (
+        SELECT 1
+        FROM chat_members other_member
+        JOIN user_blocks blocked ON (
+          (blocked.blocker_id = :userId AND blocked.blocked_id = other_member.user_id)
+          OR (blocked.blocker_id = other_member.user_id AND blocked.blocked_id = :userId)
+        )
+        WHERE other_member.conversation_id = conversation.id
+          AND other_member.user_id <> :userId
+          AND other_member.left_at IS NULL
+      ))
     LIMIT 1
   `, { replacements: { userId, conversationId }, type: QueryTypes.SELECT })
   return Boolean(rows[0])

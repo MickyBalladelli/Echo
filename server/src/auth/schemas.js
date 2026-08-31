@@ -9,6 +9,10 @@ const username = z.string()
 
 const email = z.string().trim().toLowerCase().email().max(320)
 
+const imageUrl = z.string().max(1900000).refine(value => {
+  return /^https?:\/\//i.test(value) || /^data:image\/(png|jpe?g|webp|gif);base64,/i.test(value)
+}, 'Image must be a URL or an image data URL')
+
 export const registerSchema = z.object({
   username,
   email,
@@ -25,6 +29,9 @@ export const loginSchema = z.object({
 export const profileSchema = z.object({
   displayName: z.string().trim().min(1).max(80),
   bio: z.string().trim().max(280).default(''),
-  avatarUrl: z.string().url().max(2000).nullable().optional(),
-  bannerUrl: z.string().url().max(2000).nullable().optional()
+  avatarUrl: imageUrl.nullable().optional(),
+  bannerUrl: imageUrl.nullable().optional(),
+  profileVisibility: z.enum(['public', 'followers']).default('public'),
+  showFollowers: z.boolean().default(true),
+  showFollowing: z.boolean().default(true)
 })

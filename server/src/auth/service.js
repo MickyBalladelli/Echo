@@ -14,7 +14,10 @@ function publicUser(row) {
       displayName: row.display_name || row.username,
       bio: row.bio || '',
       avatarUrl: row.avatar_url || null,
-      bannerUrl: row.banner_url || null
+      bannerUrl: row.banner_url || null,
+      profileVisibility: row.profile_visibility || 'public',
+      showFollowers: row.show_followers !== false,
+      showFollowing: row.show_following !== false
     }
   }
 }
@@ -31,7 +34,10 @@ async function findUserByIdentifier(identifier, transaction) {
       p.display_name,
       p.bio,
       p.avatar_url,
-      p.banner_url
+      p.banner_url,
+      p.profile_visibility,
+      p.show_followers,
+      p.show_following
     FROM users u
     LEFT JOIN profiles p ON p.user_id = u.id
     WHERE (LOWER(u.username) = LOWER(:identifier) OR LOWER(u.email) = LOWER(:identifier))
@@ -108,22 +114,34 @@ export async function loginUser(input, requestInfo = {}) {
 
 export async function updateUserProfile(userId, input) {
   const rows = await sequelize.query(`
-    INSERT INTO profiles (user_id, display_name, bio, avatar_url, banner_url)
-    VALUES (:userId, :displayName, :bio, :avatarUrl, :bannerUrl)
+    INSERT INTO profiles (
+      user_id, display_name, bio, avatar_url, banner_url,
+      profile_visibility, show_followers, show_following
+    )
+    VALUES (
+      :userId, :displayName, :bio, :avatarUrl, :bannerUrl,
+      :profileVisibility, :showFollowers, :showFollowing
+    )
     ON CONFLICT (user_id) DO UPDATE SET
       display_name = EXCLUDED.display_name,
       bio = EXCLUDED.bio,
       avatar_url = EXCLUDED.avatar_url,
       banner_url = EXCLUDED.banner_url,
+      profile_visibility = EXCLUDED.profile_visibility,
+      show_followers = EXCLUDED.show_followers,
+      show_following = EXCLUDED.show_following,
       updated_at = CURRENT_TIMESTAMP
-    RETURNING display_name, bio, avatar_url, banner_url
+    RETURNING display_name, bio, avatar_url, banner_url, profile_visibility, show_followers, show_following
   `, {
     replacements: {
       userId,
       displayName: input.displayName,
       bio: input.bio,
       avatarUrl: input.avatarUrl ?? null,
-      bannerUrl: input.bannerUrl ?? null
+      bannerUrl: input.bannerUrl ?? null,
+      profileVisibility: input.profileVisibility,
+      showFollowers: input.showFollowers,
+      showFollowing: input.showFollowing
     },
     type: QueryTypes.SELECT
   })

@@ -18,15 +18,39 @@ const channelAccess = alias => `(
   )
 )`
 const postVisibilityAccess = alias => `(
-  ${alias}.visibility = 'public'
-  OR (${alias}.visibility = 'followers' AND (
-    ${alias}.author_id = :viewerId OR EXISTS (
-      SELECT 1 FROM follows visibility_follow
-      WHERE visibility_follow.follower_id = :viewerId
-        AND visibility_follow.following_id = ${alias}.author_id
+  (
+    ${alias}.visibility = 'public'
+    OR (${alias}.visibility = 'followers' AND (
+      ${alias}.author_id = :viewerId OR EXISTS (
+        SELECT 1 FROM follows visibility_follow
+        WHERE visibility_follow.follower_id = :viewerId
+          AND visibility_follow.following_id = ${alias}.author_id
+      )
+    ))
+    OR (${alias}.visibility = 'private' AND ${alias}.author_id = :viewerId)
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM user_blocks visibility_block
+    WHERE (visibility_block.blocker_id = :viewerId AND visibility_block.blocked_id = ${alias}.author_id)
+       OR (visibility_block.blocker_id = ${alias}.author_id AND visibility_block.blocked_id = :viewerId)
+  )
+  AND NOT EXISTS (
+    SELECT 1 FROM user_mutes visibility_mute
+    WHERE visibility_mute.user_id = :viewerId AND visibility_mute.muted_user_id = ${alias}.author_id
+  )
+  AND (
+    ${alias}.author_id = :viewerId
+    OR NOT EXISTS (
+      SELECT 1 FROM profiles private_profile
+      WHERE private_profile.user_id = ${alias}.author_id
+        AND private_profile.profile_visibility = 'followers'
     )
-  ))
-  OR (${alias}.visibility = 'private' AND ${alias}.author_id = :viewerId)
+    OR EXISTS (
+      SELECT 1 FROM follows private_follow
+      WHERE private_follow.follower_id = :viewerId
+        AND private_follow.following_id = ${alias}.author_id
+    )
+  )
 )`
 
 const postSelect = (extraSelect = '') => `
@@ -83,6 +107,8 @@ const postSelect = (extraSelect = '') => `
       LEFT JOIN profiles source_profile ON source_profile.user_id = source_user.id
       WHERE source.id = p.repost_of_post_id
         AND source.deleted_at IS NULL
+        AND ${postVisibilityAccess('source')}
+        AND ${channelAccess('source')}
     ) AS repost_of
     ${extraSelect}
   FROM posts p
@@ -395,6 +421,7 @@ export async function createPost(authorId, input) {
         WHERE p.id = :sourcePostId
           AND p.deleted_at IS NULL
           AND p.visibility = 'public'
+          AND ${postVisibilityAccess('p')}
           AND ${channelAccess('p')}
         LIMIT 1
       `, {

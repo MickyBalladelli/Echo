@@ -38,7 +38,10 @@ export const Profile = sequelize.define('Profile', {
   bio: { type: DataTypes.STRING(280), allowNull: false, defaultValue: '' },
   avatarUrl: { type: DataTypes.TEXT, field: 'avatar_url' },
   bannerUrl: { type: DataTypes.TEXT, field: 'banner_url' },
-  pinnedPostId: { type: DataTypes.UUID, field: 'pinned_post_id' }
+  pinnedPostId: { type: DataTypes.UUID, field: 'pinned_post_id' },
+  profileVisibility: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'public', field: 'profile_visibility' },
+  showFollowers: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true, field: 'show_followers' },
+  showFollowing: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true, field: 'show_following' }
 }, {
   tableName: 'profiles',
   ...timestamps

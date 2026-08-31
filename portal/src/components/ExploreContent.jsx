@@ -2,6 +2,7 @@ import { computed, onMount, signal } from '../lib/vendor.js'
 import { Button, Card, EmptyState, FormField, Label, Tabs, TextField } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { PostCard } from './PostCard.jsx'
+import { SuggestedUsers } from './SuggestedUsers.jsx'
 
 const searchTypes = Object.freeze([
   { id: 'users', label: 'People' },
@@ -152,11 +153,14 @@ export function ExploreContent({ router, currentUserId }) {
         {results.value.map(item => searchType.value === 'users'
           ? (
             <Card key={item.id} class="search-result-card">
-              <span class="social-user-avatar" aria-hidden="true">{userInitial(item)}</span>
+              {item.profile.avatarUrl
+                ? <img class="social-user-avatar" src={item.profile.avatarUrl} alt="" loading="lazy" />
+                : <span class="social-user-avatar" aria-hidden="true">{userInitial(item)}</span>}
               <div>
                 <Label size="large">{item.profile.displayName}</Label>
                 <p class="search-result-handle">@{item.username}</p>
                 <p>{item.profile.bio || 'No bio yet.'}</p>
+                {item.mutualCount > 0 && <p class="search-result-mutual">{item.mutualCount} mutual follows</p>}
               </div>
               <a class="back-link" href={`/users/${item.username}`} onClick={router.link(`/users/${item.username}`)}>View profile →</a>
             </Card>
@@ -212,6 +216,7 @@ export function ExploreContent({ router, currentUserId }) {
 
   return (
     <div class="explore-stack">
+      <SuggestedUsers router={router} />
       <Card class="explore-search-card">
         <form class="explore-search-form" onSubmit={submit}>
           <FormField id="explore-search" label="Search">

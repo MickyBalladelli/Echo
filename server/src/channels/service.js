@@ -39,11 +39,21 @@ const channelSelect = `
     COUNT(DISTINCT posts.id)::INTEGER AS post_count
   FROM channels c
   JOIN users owner ON owner.id = c.owner_id AND owner.deleted_at IS NULL AND owner.status = 'active'
+    AND NOT EXISTS (
+      SELECT 1 FROM user_blocks owner_block
+      WHERE (owner_block.blocker_id = :viewerId AND owner_block.blocked_id = owner.id)
+         OR (owner_block.blocker_id = owner.id AND owner_block.blocked_id = :viewerId)
+    )
   LEFT JOIN profiles owner_profile ON owner_profile.user_id = owner.id
   LEFT JOIN channel_members viewer_membership ON viewer_membership.channel_id = c.id
     AND viewer_membership.user_id = :viewerId AND viewer_membership.left_at IS NULL
   LEFT JOIN channel_members members ON members.channel_id = c.id AND members.left_at IS NULL
   LEFT JOIN posts ON posts.channel_id = c.id AND posts.deleted_at IS NULL
+    AND NOT EXISTS (
+      SELECT 1 FROM user_blocks channel_block
+      WHERE (channel_block.blocker_id = :viewerId AND channel_block.blocked_id = posts.author_id)
+         OR (channel_block.blocker_id = posts.author_id AND channel_block.blocked_id = :viewerId)
+    )
 `
 
 async function getChannelRow(viewerId, slug, transaction, { requireMember = false } = {}) {

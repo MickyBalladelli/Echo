@@ -48,6 +48,15 @@ export async function getUnreadCount(recipientId, transaction) {
     SELECT COUNT(*)::INTEGER AS count
     FROM notifications
     WHERE recipient_id = :recipientId AND read_at IS NULL
+      AND (actor_id IS NULL OR NOT EXISTS (
+        SELECT 1 FROM user_blocks hidden_block
+        WHERE (hidden_block.blocker_id = :recipientId AND hidden_block.blocked_id = notifications.actor_id)
+           OR (hidden_block.blocker_id = notifications.actor_id AND hidden_block.blocked_id = :recipientId)
+      ))
+      AND (actor_id IS NULL OR NOT EXISTS (
+        SELECT 1 FROM user_mutes hidden_mute
+        WHERE hidden_mute.user_id = :recipientId AND hidden_mute.muted_user_id = notifications.actor_id
+      ))
   `, {
     replacements: { recipientId },
     type: QueryTypes.SELECT,
@@ -67,6 +76,24 @@ export async function createNotification({
   dedupeKey
 }, transaction) {
   if (actorId && recipientId === actorId) return null
+
+  if (actorId) {
+    const hidden = await sequelize.query(`
+      SELECT 1
+      FROM user_blocks hidden_block
+      WHERE (hidden_block.blocker_id = :recipientId AND hidden_block.blocked_id = :actorId)
+         OR (hidden_block.blocker_id = :actorId AND hidden_block.blocked_id = :recipientId)
+      UNION ALL
+      SELECT 1 FROM user_mutes hidden_mute
+      WHERE hidden_mute.user_id = :recipientId AND hidden_mute.muted_user_id = :actorId
+      LIMIT 1
+    `, {
+      replacements: { recipientId, actorId },
+      type: QueryTypes.SELECT,
+      ...(transaction ? { transaction } : {})
+    })
+    if (hidden[0]) return null
+  }
 
   const rows = await sequelize.query(`
     INSERT INTO notifications (
@@ -186,6 +213,15 @@ export async function listNotifications(recipientId, { cursor, limit }) {
     LEFT JOIN profiles profile ON profile.user_id = actor.id
     LEFT JOIN channels channel ON channel.id = n.channel_id AND channel.deleted_at IS NULL
     WHERE ${where.join(' AND ')}
+      AND (n.actor_id IS NULL OR NOT EXISTS (
+        SELECT 1 FROM user_blocks hidden_block
+        WHERE (hidden_block.blocker_id = :recipientId AND hidden_block.blocked_id = n.actor_id)
+           OR (hidden_block.blocker_id = n.actor_id AND hidden_block.blocked_id = :recipientId)
+      ))
+      AND (n.actor_id IS NULL OR NOT EXISTS (
+        SELECT 1 FROM user_mutes hidden_mute
+        WHERE hidden_mute.user_id = :recipientId AND hidden_mute.muted_user_id = n.actor_id
+      ))
     ORDER BY n.created_at DESC, n.id DESC
     LIMIT :limit
   `, {

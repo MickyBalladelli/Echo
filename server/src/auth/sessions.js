@@ -52,7 +52,10 @@ export async function findSessionByToken(token, transaction) {
       p.display_name,
       p.bio,
       p.avatar_url,
-      p.banner_url
+      p.banner_url,
+      p.profile_visibility,
+      p.show_followers,
+      p.show_following
     FROM sessions s
     JOIN users u ON u.id = s.user_id
     LEFT JOIN profiles p ON p.user_id = u.id
@@ -95,7 +98,10 @@ export async function findSessionByToken(token, transaction) {
         displayName: row.display_name || row.username,
         bio: row.bio || '',
         avatarUrl: row.avatar_url,
-        bannerUrl: row.banner_url
+        bannerUrl: row.banner_url,
+        profileVisibility: row.profile_visibility || 'public',
+        showFollowers: row.show_followers !== false,
+        showFollowing: row.show_following !== false
       }
     }
   }

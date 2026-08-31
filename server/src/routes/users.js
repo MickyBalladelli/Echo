@@ -2,8 +2,8 @@ import { Router } from 'express'
 import { ok, cursorMeta } from '../http/api.js'
 import { decodeCursor } from '../http/pagination.js'
 import { idSchema, paginationSchema, parse } from '../http/validation.js'
-import { usernameSchema } from '../users/schemas.js'
-import { followUser, getPublicProfile, listConnections, listUserPosts, unfollowUser } from '../users/service.js'
+import { suggestionQuerySchema, usernameSchema } from '../users/schemas.js'
+import { getPublicProfile, listConnections, listSuggestedUsers, listUserPosts, followUser, setRelationship, unfollowUser } from '../users/service.js'
 
 export const usersRouter = Router()
 
@@ -20,6 +20,34 @@ usersRouter.delete('/:id/follow', async (request, response, next) => {
   try {
     const userId = parse(idSchema, request.params.id, 'user id')
     response.json(ok({ follow: await unfollowUser(request.auth.userId, userId) }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+for (const [path, kind] of [['block', 'block'], ['mute', 'mute'], ['restrict', 'restrict']]) {
+  usersRouter.put(`/:id/${path}`, async (request, response, next) => {
+    try {
+      const userId = parse(idSchema, request.params.id, 'user id')
+      response.json(ok({ relationship: await setRelationship(request.auth.userId, userId, kind, true) }))
+    } catch (error) {
+      next(error)
+    }
+  })
+  usersRouter.delete(`/:id/${path}`, async (request, response, next) => {
+    try {
+      const userId = parse(idSchema, request.params.id, 'user id')
+      response.json(ok({ relationship: await setRelationship(request.auth.userId, userId, kind, false) }))
+    } catch (error) {
+      next(error)
+    }
+  })
+}
+
+usersRouter.get('/suggestions', async (request, response, next) => {
+  try {
+    const query = parse(suggestionQuerySchema, request.query, 'suggestions query')
+    response.json(ok({ users: await listSuggestedUsers(request.auth.userId, query.limit) }))
   } catch (error) {
     next(error)
   }
@@ -44,7 +72,7 @@ for (const kind of ['followers', 'following']) {
     try {
       const username = parse(usernameSchema, request.params.username, 'username')
       const page = parse(paginationSchema, request.query, `${kind} query`)
-      const result = await listConnections(username, kind, {
+      const result = await listConnections(request.auth.userId, username, kind, {
         cursor: decodeCursor(page.cursor),
         limit: page.limit
       })

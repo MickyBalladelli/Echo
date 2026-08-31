@@ -212,13 +212,13 @@ learn and use components in Prism for all your UI
 
 ### Profiles and social graph
 
-- [ ] Add avatar and banner uploads.
-- [ ] Add profile privacy settings.
+- [x] Add avatar and banner uploads.
+- [x] Add profile privacy settings.
 - [ ] Add verified or staff badge model if needed.
-- [ ] Add block, mute, and restrict users.
-- [ ] Hide blocked-user content from feeds, search, channels, chat, and notifications.
-- [ ] Add suggested users to follow.
-- [ ] Add mutual-follow indicators.
+- [x] Add block, mute, and restrict users.
+- [x] Hide blocked-user content from feeds, search, channels, chat, and notifications.
+- [x] Add suggested users to follow.
+- [x] Add mutual-follow indicators.
 
 ### Channels depth
 
