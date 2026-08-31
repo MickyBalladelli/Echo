@@ -4,6 +4,9 @@ export default defineConfig(({ mode }) => {
 
   return {
     resolve: {
+      alias: {
+        '@mickyballadelli/matrix': '/Users/micky/dev/Echo-Project/Echo/node_modules/@mickyballadelli/matrix/dist/src'
+      },
       dedupe: ['@mickyballadelli/matrix']
     },
     esbuild: {
