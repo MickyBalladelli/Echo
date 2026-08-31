@@ -1,5 +1,5 @@
 import { computed, onMount, signal } from '../lib/vendor.js'
-import { Button, Card, CheckBox, EmptyState, FormField, Label, TextField } from '../lib/vendor.js'
+import { Button, Card, CheckBox, EmptyState, FormField, Label, Select, TextField } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 
 function channelInitial(channel) {
@@ -19,7 +19,7 @@ export function ChannelDirectory({ router }) {
   const imageUrl = signal('')
   const rules = signal('')
   const postApprovalRequired = signal(false)
-  const privateChannel = signal(false)
+  const visibility = signal('public')
 
   async function load({ append = false } = {}) {
     if (append) loadingMore.value = true
@@ -51,7 +51,7 @@ export function ChannelDirectory({ router }) {
           ...(slug.value.trim() ? { slug: slug.value } : {}),
           description: description.value,
           imageUrl: imageUrl.value.trim() || null,
-          visibility: privateChannel.value ? 'private' : 'public',
+          visibility: visibility.value,
           rules: rules.value,
           postApprovalRequired: postApprovalRequired.value
         })
@@ -114,7 +114,17 @@ export function ChannelDirectory({ router }) {
           <FormField id="channel-rules" label="Rules" hint="One rule per line. Up to 2,000 characters.">
             <textarea id="channel-rules" class="post-composer-input" use:bind={rules} maxlength="2000" rows="4" />
           </FormField>
-          <CheckBox checked={privateChannel}>Private channel</CheckBox>
+          <FormField id="channel-visibility" label="Visibility" hint="Public channels are discoverable and need no invites.">
+            <Select
+              id="channel-visibility"
+              value={visibility}
+              ariaLabel="Channel visibility"
+              options={[
+                { value: 'public', label: 'Public — anyone can join' },
+                { value: 'private', label: 'Private — invite only' }
+              ]}
+            />
+          </FormField>
           <CheckBox checked={postApprovalRequired}>Approve member posts before publishing</CheckBox>
           <Button type="submit" loading={creating}>Create channel</Button>
         </form>
