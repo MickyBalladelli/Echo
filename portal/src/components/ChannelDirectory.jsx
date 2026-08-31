@@ -1,6 +1,8 @@
 import { computed, onMount, signal } from '../lib/vendor.js'
-import { Button, Card, EmptyState, Label } from '../lib/vendor.js'
+import { Card, EmptyState, Label } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
+import { ChannelDiscoveryDialog } from './ChannelDiscoveryDialog.jsx'
+import { ChannelManagementDialog } from './ChannelManagementDialog.jsx'
 
 function channelInitial(channel) {
   return channel.name.slice(0, 1).toUpperCase()
@@ -18,6 +20,10 @@ function channelAccessLabel(channel) {
   if (channel.membershipRole) return 'You are a member'
   if (channel.invited) return 'You have an invite'
   return channel.visibility === 'public' ? 'Public · anyone can join' : 'Private · invite only'
+}
+
+function channelMemberLabel(channel) {
+  return `${channel.memberCount} member${channel.memberCount === 1 ? '' : 's'}`
 }
 
 export function ChannelDirectory({ router }) {
@@ -45,29 +51,42 @@ export function ChannelDirectory({ router }) {
     }
   }
 
-  const renderChannelCard = channel => (
-    <a key={channel.id} class="channel-card-link" href={`/channels/${channel.slug}`} onClick={router.link(`/channels/${channel.slug}`)}>
+  function updateChannel(updatedChannel) {
+    channels.value = channels.value.map(channel => channel.id === updatedChannel.id ? { ...channel, ...updatedChannel } : channel)
+  }
+
+  const renderChannelCard = channel => {
+    const card = (
       <Card class="channel-card">
-        {channel.imageUrl
-          ? <img class="channel-card-image" src={channel.imageUrl} alt="" loading="lazy" decoding="async" />
-          : <span class="channel-card-placeholder" aria-hidden="true">{channelInitial(channel)}</span>}
-        <div class="channel-card-copy">
-          <Label size="large">{channel.name}</Label>
-          <span class="channel-slug">/{channel.slug}</span>
-          <p>{channel.description || 'No description yet.'}</p>
-          <span class="channel-card-access">{channelAccessLabel(channel)}</span>
+        <div class="channel-card-preview">
+          {channel.imageUrl
+            ? <img class="channel-card-image" src={channel.imageUrl} alt="" loading="lazy" decoding="async" />
+            : <span class="channel-card-placeholder" aria-hidden="true">{channelInitial(channel)}</span>}
+          <div class="channel-card-copy">
+            <div class="channel-card-title-row">
+              <a class="channel-card-title-link" href={`/channels/${channel.slug}`} onClick={router.link(`/channels/${channel.slug}`)}><Label size="large">{channel.name}</Label></a>
+              <p>{channel.description || 'No description yet.'}</p>
+            </div>
+            <div class="channel-card-description-row">
+              <a class="channel-card-slug-link channel-slug" href={`/channels/${channel.slug}`} onClick={router.link(`/channels/${channel.slug}`)}>/{channel.slug}</a>
+              <span class="channel-card-counts">{channelMemberLabel(channel)}</span>
+              <span class="channel-card-access">{channelAccessLabel(channel)}</span>
+            </div>
+          </div>
         </div>
-        <span class="channel-card-action">{channelActionLabel(channel)} →</span>
-        <span class="channel-card-counts">{channel.memberCount} members</span>
+        {channel.isOwner
+          ? <ChannelManagementDialog channel={channel} onUpdated={updateChannel} />
+          : <button class="channel-card-action channel-card-action-button" type="button" onClick={() => router.navigate(`/channels/${channel.slug}`)}>{channelActionLabel(channel)} →</button>}
       </Card>
-    </a>
-  )
+    )
+
+    return <div key={channel.id} class="channel-card-shell">{card}</div>
+  }
 
   const list = computed(() => {
     if (state.value === 'loading') return <Card><div role="status">Loading channels…</div></Card>
     if (state.value === 'error') return <Card><EmptyState status="error" title="Channels unavailable" description={error.value} /></Card>
     const ownedChannels = channels.value.filter(channel => channel.isOwner)
-    const discoverableChannels = channels.value.filter(channel => !channel.isOwner)
 
     return (
       <>
@@ -81,29 +100,26 @@ export function ChannelDirectory({ router }) {
             <div class="channel-grid">{ownedChannels.map(renderChannelCard)}</div>
           </section>
         )}
-        <section class="channel-list-section" aria-labelledby="discover-channels-title">
-          <div class="channel-section-heading">
-            <Label size="small" tone="accent">DISCOVER & JOIN</Label>
-            <h2 id="discover-channels-title">Find a channel</h2>
-            <p>Open a public channel to join the chat. Private channels need an invite.</p>
-          </div>
-          {discoverableChannels.length > 0
-            ? <div class="channel-grid">{discoverableChannels.map(renderChannelCard)}</div>
-            : <Card><EmptyState title="No channels to discover" description="Create a public channel and start the first conversation." /></Card>}
-        </section>
+        {ownedChannels.length === 0 && (
+          <Card><EmptyState title="No channels yet" description="Create a channel or find one to join." /></Card>
+        )}
       </>
     )
   })
-  const pagination = computed(() => nextCursor.value
-    ? <div class="feed-load-more"><Button variant="secondary" loading={loadingMore} onClick={() => load({ append: true })}>Load more</Button></div>
-    : null)
-
   onMount(() => load())
 
   return (
     <div class="channels-stack">
+      <ChannelDiscoveryDialog
+        channels={channels}
+        state={state}
+        error={error}
+        loadingMore={loadingMore}
+        nextCursor={nextCursor}
+        onLoadMore={() => load({ append: true })}
+        router={router}
+      />
       {list}
-      {pagination}
     </div>
   )
 }
