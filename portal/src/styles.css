@@ -69,6 +69,7 @@ textarea {
   display: block;
   position: sticky;
   top: 0;
+  padding-left: 232px;
   z-index: 40;
   border-bottom: 1px solid color-mix(in srgb, var(--prism-color-border-strong) 34%, transparent);
 }
@@ -80,17 +81,22 @@ textarea {
 .echo-layout .prism-layout-body {
   display: grid;
   grid-template-columns: 232px minmax(0, 1fr);
+  gap: 0;
+  padding: 0;
+  align-items: stretch;
   min-height: calc(100vh - 4.45rem);
 }
 
 .echo-layout .prism-layout-navigator {
   display: block;
-  position: sticky;
+  position: fixed;
+  left: 0;
   top: 4.45rem;
-  align-self: start;
+  width: 232px;
   height: calc(100vh - 4.45rem);
   max-height: calc(100vh - 4.45rem);
   overflow-y: auto;
+  overscroll-behavior: contain;
   z-index: 30;
   border-right: 1px solid color-mix(in srgb, var(--prism-color-border-strong) 30%, transparent);
   background: color-mix(in srgb, var(--prism-color-page) 94%, transparent);
@@ -103,6 +109,7 @@ textarea {
 }
 
 .echo-layout .prism-layout-content {
+  grid-column: 2;
   min-width: 0;
   min-height: auto;
   overflow: visible;
@@ -1852,17 +1859,27 @@ textarea {
 }
 
 @media (max-width: 900px) {
+  .echo-layout .prism-layout-header {
+    padding-left: 0;
+  }
+
   .echo-layout .prism-layout-navigator {
     position: static;
+    width: auto;
     height: auto;
     max-height: none;
     overflow: visible;
+    overscroll-behavior: auto;
     border-right: 0;
     border-bottom: 1px solid color-mix(in srgb, var(--prism-color-border-strong) 30%, transparent);
   }
 
   .echo-layout .prism-layout-body {
     grid-template-columns: 1fr;
+  }
+
+  .echo-layout .prism-layout-content {
+    grid-column: auto;
   }
 
   .shell-navigator {
@@ -2031,6 +2048,11 @@ h1 {
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
+}
+
+/* Timeline scroll hands off to the page when it reaches either edge. */
+.post-feed-keyboard .virtual-list {
+  overscroll-behavior-y: auto;
 }
 
 .virtual-list-item {
