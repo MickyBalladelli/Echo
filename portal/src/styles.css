@@ -67,9 +67,10 @@ textarea {
 
 .echo-layout .prism-layout-header {
   display: block;
-  position: sticky;
+  position: fixed;
   top: 0;
-  padding-left: 232px;
+  left: 0;
+  width: 100%;
   z-index: 40;
   border-bottom: 1px solid color-mix(in srgb, var(--prism-color-border-strong) 34%, transparent);
 }
@@ -78,23 +79,27 @@ textarea {
   position: static !important;
 }
 
+.echo-layout .prism-layout-header .prism-header-bar {
+  padding-left: calc(232px + 1.2rem);
+}
+
 .echo-layout .prism-layout-body {
   display: grid;
   grid-template-columns: 232px minmax(0, 1fr);
   gap: 0;
-  padding: 0;
+  padding: 3.7rem 0 0;
   align-items: stretch;
-  min-height: calc(100vh - 4.45rem);
+  min-height: calc(100vh - 3.7rem);
 }
 
 .echo-layout .prism-layout-navigator {
   display: block;
   position: fixed;
   left: 0;
-  top: 4.45rem;
+  top: 3.7rem;
   width: 232px;
-  height: calc(100vh - 4.45rem);
-  max-height: calc(100vh - 4.45rem);
+  height: calc(100vh - 3.7rem);
+  max-height: calc(100vh - 3.7rem);
   overflow-y: auto;
   overscroll-behavior: contain;
   z-index: 30;
@@ -1861,6 +1866,10 @@ textarea {
 @media (max-width: 900px) {
   .echo-layout .prism-layout-header {
     padding-left: 0;
+  }
+
+  .echo-layout .prism-layout-header .prism-header-bar {
+    padding-left: 1.2rem;
   }
 
   .echo-layout .prism-layout-navigator {

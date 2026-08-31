@@ -134,7 +134,7 @@ export function ShellNavigation({ router, user, unreadNotifications }) {
     title: 'Echo',
     description: `@${user.username}`,
     sticky: true,
-    stickyTop: '4.45rem',
+    stickyTop: '3.7rem',
     class: 'shell-navigator',
     children: TreeView({
       id: 'echo-navigation-tree',
