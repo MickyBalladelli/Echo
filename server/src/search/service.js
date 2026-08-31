@@ -161,6 +161,43 @@ export async function search(viewerId, query, type, options) {
   return { items: result.posts, nextCursor: result.nextCursor }
 }
 
+export async function listTrendingTopics(viewerId, { limit = 10 } = {}) {
+  const rows = await profiledQuery('trending_topics', `
+    SELECT hashtag.id, hashtag.tag, COUNT(*)::INTEGER AS post_count,
+      MAX(post.created_at) AS last_used_at
+    FROM hashtags hashtag
+    JOIN post_hashtags tagged ON tagged.hashtag_id = hashtag.id
+    JOIN posts post ON post.id = tagged.post_id
+    WHERE post.deleted_at IS NULL
+      AND post.created_at >= CURRENT_TIMESTAMP - INTERVAL '7 days'
+      AND post.visibility = 'public'
+      AND post.moderation_status IN ('active', 'flagged', 'appeal_accepted')
+      AND (
+        post.author_id = :viewerId
+        OR NOT EXISTS (SELECT 1 FROM profiles protected_profile WHERE protected_profile.user_id = post.author_id AND protected_profile.profile_visibility = 'followers')
+        OR EXISTS (SELECT 1 FROM follows protected_follow WHERE protected_follow.follower_id = :viewerId AND protected_follow.following_id = post.author_id)
+      )
+      AND (
+        post.channel_id IS NULL
+        OR EXISTS (
+          SELECT 1 FROM channels trend_channel
+          LEFT JOIN channel_members trend_member ON trend_member.channel_id = trend_channel.id AND trend_member.user_id = :viewerId AND trend_member.left_at IS NULL
+          WHERE trend_channel.id = post.channel_id AND (trend_channel.visibility = 'public' OR trend_member.user_id IS NOT NULL)
+        )
+      )
+      AND NOT EXISTS (SELECT 1 FROM user_mutes trend_mute WHERE trend_mute.user_id = :viewerId AND trend_mute.muted_user_id = post.author_id)
+      AND NOT EXISTS (
+        SELECT 1 FROM user_blocks blocked
+        WHERE (blocked.blocker_id = :viewerId AND blocked.blocked_id = post.author_id)
+           OR (blocked.blocker_id = post.author_id AND blocked.blocked_id = :viewerId)
+      )
+    GROUP BY hashtag.id
+    ORDER BY post_count DESC, last_used_at DESC, hashtag.tag ASC
+    LIMIT :limit
+  `, { replacements: { viewerId, limit }, type: QueryTypes.SELECT })
+  return rows.map(row => ({ id: row.id, tag: row.tag, postCount: Number(row.post_count), lastUsedAt: row.last_used_at }))
+}
+
 export async function explorePosts(viewerId, sort, { cursor, limit }) {
   if (sort === 'popular') {
     return { posts: await listPopularPosts(viewerId, limit), nextCursor: null }

@@ -26,6 +26,24 @@ export const loginSchema = z.object({
   password: z.string().min(1).max(128)
 })
 
+export const twoFactorCodeSchema = z.object({
+  code: z.string().trim().regex(/^\d{6}$/),
+  challengeToken: z.string().min(20).max(200).optional()
+})
+
+export const tokenSchema = z.object({
+  token: z.string().min(20).max(200)
+})
+
+export const passwordResetRequestSchema = z.object({
+  identifier: z.string().trim().min(3).max(320)
+})
+
+export const passwordResetConfirmSchema = z.object({
+  token: z.string().min(20).max(200),
+  password: z.string().min(8).max(128)
+})
+
 export const profileSchema = z.object({
   displayName: z.string().trim().min(1).max(80),
   bio: z.string().trim().max(280).default(''),
@@ -34,4 +52,8 @@ export const profileSchema = z.object({
   profileVisibility: z.enum(['public', 'followers']).default('public'),
   showFollowers: z.boolean().default(true),
   showFollowing: z.boolean().default(true)
+})
+
+export const localeSchema = z.object({
+  locale: z.enum(['en', 'fr', 'de', 'es', 'it', 'ja'])
 })

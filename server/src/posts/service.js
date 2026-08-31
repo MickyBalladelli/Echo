@@ -80,6 +80,7 @@ const postSelect = (extraSelect = '') => `
   SELECT
     p.id,
     p.body,
+    p.post_format,
     p.author_id,
     p.parent_post_id,
     p.repost_of_post_id,
@@ -115,6 +116,26 @@ const postSelect = (extraSelect = '') => `
       SELECT 1 FROM post_bookmarks own_bookmark
       WHERE own_bookmark.post_id = p.id AND own_bookmark.user_id = :viewerId
     ) AS bookmarked
+    , (
+      SELECT jsonb_build_object(
+        'id', post_poll.id,
+        'question', post_poll.question,
+        'expiresAt', post_poll.expires_at,
+        'totalVotes', (SELECT COUNT(*)::INTEGER FROM poll_votes total_vote WHERE total_vote.poll_id = post_poll.id),
+        'viewerOptionId', (SELECT viewer_vote.option_id FROM poll_votes viewer_vote WHERE viewer_vote.poll_id = post_poll.id AND viewer_vote.user_id = :viewerId LIMIT 1),
+        'options', COALESCE((
+          SELECT jsonb_agg(jsonb_build_object(
+            'id', poll_option.id,
+            'label', poll_option.label,
+            'position', poll_option.position,
+            'votes', (SELECT COUNT(*)::INTEGER FROM poll_votes option_vote WHERE option_vote.option_id = poll_option.id)
+          ) ORDER BY poll_option.position)
+          FROM poll_options poll_option WHERE poll_option.poll_id = post_poll.id
+        ), '[]'::JSONB)
+      )
+      FROM post_polls post_poll
+      WHERE post_poll.post_id = p.id
+    ) AS poll
     , (
       SELECT jsonb_build_object(
         'id', source.id,
@@ -157,6 +178,7 @@ function mapPost(row) {
   const post = {
     id: row.id,
     body: row.body,
+    postFormat: row.post_format || 'short',
     author: {
       id: row.author_id,
       username: row.username,
@@ -176,6 +198,7 @@ function mapPost(row) {
     imageAltText: row.image_alt_text || null,
     contentWarning: row.content_warning || null,
     linkPreview: row.link_preview || null,
+    poll: row.poll || null,
     likeCount: Number(row.like_count),
     replyCount: Number(row.reply_count),
     liked: Boolean(row.liked),
@@ -513,6 +536,7 @@ export async function createPost(authorId, input) {
         author_id,
         channel_id,
         body,
+        post_format,
         visibility,
         repost_of_post_id,
         image_url,
@@ -526,6 +550,7 @@ export async function createPost(authorId, input) {
         :authorId,
         :channelId,
         :body,
+        :postFormat,
         :visibility,
         :repostOfPostId,
         :imageUrl,
@@ -541,6 +566,7 @@ export async function createPost(authorId, input) {
         authorId,
         channelId: input.channelId || null,
         body: input.body || '',
+        postFormat: input.postFormat || 'short',
         visibility: input.visibility,
         repostOfPostId: input.repostOfPostId || null,
         imageUrl: input.imageUrl || null,
@@ -741,7 +767,7 @@ export async function deletePost(authorId, postId) {
 export async function updatePost(authorId, postId, input) {
   return withTransaction(async transaction => {
     const rows = await sequelize.query(`
-      SELECT id, body, visibility, image_url, image_alt_text, content_warning, repost_of_post_id, created_at
+      SELECT id, body, post_format, visibility, image_url, image_alt_text, content_warning, repost_of_post_id, created_at
       FROM posts
       WHERE id = :postId AND author_id = :authorId AND deleted_at IS NULL
       LIMIT 1
@@ -764,6 +790,7 @@ export async function updatePost(authorId, postId, input) {
     const contentSignal = await inspectContent({ userId: authorId, action: 'post_edit', body, transaction })
     const next = {
       body,
+      postFormat: input.postFormat || current.post_format || 'short',
       visibility: input.visibility || current.visibility,
       imageUrl: Object.hasOwn(input, 'imageUrl') ? input.imageUrl : current.image_url,
       imageAltText: Object.hasOwn(input, 'imageAltText') ? input.imageAltText : current.image_alt_text,
@@ -772,9 +799,9 @@ export async function updatePost(authorId, postId, input) {
 
     await sequelize.query(`
       INSERT INTO post_edits (
-        post_id, editor_id, body, visibility, image_url, image_alt_text, content_warning
+        post_id, editor_id, body, post_format, visibility, image_url, image_alt_text, content_warning
       )
-      VALUES (:postId, :authorId, :body, :visibility, :imageUrl, :imageAltText, :contentWarning)
+      VALUES (:postId, :authorId, :body, :postFormat, :visibility, :imageUrl, :imageAltText, :contentWarning)
     `, {
       replacements: { postId, authorId, ...current, ...next },
       transaction
@@ -782,6 +809,7 @@ export async function updatePost(authorId, postId, input) {
     await sequelize.query(`
       UPDATE posts
       SET body = :body,
+          post_format = :postFormat,
           visibility = :visibility,
           image_url = :imageUrl,
           image_alt_text = :imageAltText,
@@ -808,7 +836,7 @@ export async function updatePost(authorId, postId, input) {
 export async function getPostEditHistory(viewerId, postId) {
   await getPostById(viewerId, postId)
   const rows = await sequelize.query(`
-    SELECT id, body, visibility, image_url, image_alt_text, content_warning, created_at
+    SELECT id, body, post_format, visibility, image_url, image_alt_text, content_warning, created_at
     FROM post_edits
     WHERE post_id = :postId
     ORDER BY created_at DESC, id DESC
@@ -820,6 +848,7 @@ export async function getPostEditHistory(viewerId, postId) {
   return rows.map(row => ({
     id: row.id,
     body: row.body,
+    postFormat: row.post_format || 'short',
     visibility: row.visibility,
     imageUrl: row.image_url || null,
     imageAltText: row.image_alt_text || null,

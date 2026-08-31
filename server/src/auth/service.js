@@ -4,6 +4,8 @@ import { sequelize, withTransaction } from '../db/pool.js'
 import { createSession } from './sessions.js'
 import { DUMMY_PASSWORD_HASH, hashPassword, verifyPassword } from './password.js'
 import { recordSuspiciousLogin } from '../moderation/signals.js'
+import { createEmailVerificationToken } from './tokens.js'
+import { createTwoFactorChallenge } from './two-factor.js'
 
 function publicUser(row) {
   return {
@@ -19,9 +21,11 @@ function publicUser(row) {
       bannerUrl: row.banner_url || null,
       profileVisibility: row.profile_visibility || 'public',
       showFollowers: row.show_followers !== false,
-      showFollowing: row.show_following !== false
+      showFollowing: row.show_following !== false,
+      locale: row.locale || 'en'
     },
-    badges: row.badges || []
+    badges: row.badges || [],
+    emailVerified: Boolean(row.email_verified_at)
   }
 }
 
@@ -35,6 +39,9 @@ async function findUserByIdentifier(identifier, transaction) {
       u.status,
       u.global_role,
       u.created_at,
+      u.email_verified_at,
+      u.locale,
+      EXISTS (SELECT 1 FROM user_two_factor factor WHERE factor.user_id = u.id AND factor.enabled = TRUE) AS two_factor_enabled,
       p.display_name,
       p.bio,
       p.avatar_url,
@@ -89,10 +96,12 @@ export async function registerUser(input, requestInfo = {}) {
       })
 
       const session = await createSession(user.id, requestInfo, transaction)
+      const emailVerificationToken = await createEmailVerificationToken(user.id, transaction)
 
       return {
         user: publicUser({ ...user, display_name: input.displayName, bio: input.bio }),
-        session
+        session,
+        emailVerificationToken
       }
     })
   } catch (error) {
@@ -125,6 +134,14 @@ export async function loginUser(input, requestInfo = {}) {
     userAgent: requestInfo.userAgent,
     success: true
   })
+
+  if (user.two_factor_enabled) {
+    return {
+      user: publicUser(user),
+      twoFactorRequired: true,
+      challengeToken: await createTwoFactorChallenge(user.id, requestInfo)
+    }
+  }
 
   const session = await createSession(user.id, requestInfo)
 
@@ -169,4 +186,11 @@ export async function updateUserProfile(userId, input) {
   })
 
   return rows[0]
+}
+
+export async function updateUserLocale(userId, locale) {
+  await sequelize.query('UPDATE users SET locale = :locale WHERE id = :userId AND deleted_at IS NULL', {
+    replacements: { userId, locale }
+  })
+  return { locale }
 }

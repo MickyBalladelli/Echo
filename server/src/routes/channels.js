@@ -30,6 +30,8 @@ import { ok, cursorMeta } from '../http/api.js'
 import { decodeCursor } from '../http/pagination.js'
 import { idSchema, paginationSchema, parse } from '../http/validation.js'
 import { abuseRateLimit } from '../moderation/rate-limit.js'
+import { channelChatMessageSchema } from '../channels/chat-schemas.js'
+import { listChannelChatMessages, markChannelChatRead, sendChannelChatMessage } from '../channels/chat.js'
 
 export const channelsRouter = Router()
 
@@ -64,6 +66,42 @@ channelsRouter.get('/:slug/posts', async (request, response, next) => {
       limit: page.limit
     })
     response.json(ok(result.posts, cursorMeta(result.nextCursor)))
+  } catch (error) {
+    next(error)
+  }
+})
+
+channelsRouter.get('/:slug/chat', async (request, response, next) => {
+  try {
+    const slug = parse(channelSlugSchema, request.params.slug, 'channel slug')
+    const page = parse(paginationSchema, request.query, 'channel chat query')
+    const channel = await getChannel(request.auth.userId, slug)
+    const result = await listChannelChatMessages(request.auth.userId, channel.id, {
+      cursor: decodeCursor(page.cursor), limit: page.limit
+    })
+    response.json(ok(result.messages, cursorMeta(result.nextCursor)))
+  } catch (error) {
+    next(error)
+  }
+})
+
+channelsRouter.post('/:slug/chat', abuseRateLimit('message'), async (request, response, next) => {
+  try {
+    const slug = parse(channelSlugSchema, request.params.slug, 'channel slug')
+    const input = parse(channelChatMessageSchema, request.body, 'channel chat message')
+    const channel = await getChannel(request.auth.userId, slug)
+    response.status(201).json(ok({ message: await sendChannelChatMessage(request.auth.userId, channel.id, input.body) }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+channelsRouter.put('/:slug/chat/read/:messageId', async (request, response, next) => {
+  try {
+    const slug = parse(channelSlugSchema, request.params.slug, 'channel slug')
+    const messageId = parse(idSchema, request.params.messageId, 'channel chat message id')
+    const channel = await getChannel(request.auth.userId, slug)
+    response.json(ok(await markChannelChatRead(request.auth.userId, channel.id, messageId)))
   } catch (error) {
     next(error)
   }

@@ -1,9 +1,11 @@
 import { getConversation, markConversationRead, sendMessage } from './service.js'
+import { sendChannelChatMessage } from '../channels/chat.js'
 import { realtimeEnvelope } from '../realtime/events.js'
 import { logger } from '../config/logger.js'
 import { allowSocketEvent } from '../realtime/rate-limit.js'
 import {
   chatMessageEventSchema,
+  channelChatMessageEventSchema,
   parseSocketEvent,
   presenceListEventSchema,
   readEventSchema,
@@ -45,6 +47,25 @@ export function initializeChatSocket(socket) {
     try {
       const message = await sendMessage(userId, input.conversationId, input.body)
       logger.info({ socketId: socket.id, userId, conversationId: input.conversationId, messageId: message.id }, 'Socket message sent')
+      acknowledge({ ok: true, message })
+    } catch (error) {
+      acknowledge({ ok: false, error: error.code || 'MESSAGE_SEND_FAILED', message: error.message })
+    }
+  })
+
+  socket.on('channel:chat:message:send', async (request = {}, acknowledge = () => {}) => {
+    const limit = allowSocketEvent(socket, 'channel:chat:message:send')
+    const input = parseSocketEvent(channelChatMessageEventSchema, request)
+    if (!limit.allowed) {
+      acknowledge({ ok: false, error: 'RATE_LIMITED', retryAfterSeconds: limit.retryAfterSeconds })
+      return
+    }
+    if (!input) {
+      acknowledge({ ok: false, error: 'INVALID_MESSAGE' })
+      return
+    }
+    try {
+      const message = await sendChannelChatMessage(userId, input.channelId, input.body)
       acknowledge({ ok: true, message })
     } catch (error) {
       acknowledge({ ok: false, error: error.code || 'MESSAGE_SEND_FAILED', message: error.message })

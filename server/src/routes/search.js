@@ -3,9 +3,17 @@ import { ok, cursorMeta } from '../http/api.js'
 import { decodeCursor } from '../http/pagination.js'
 import { parse } from '../http/validation.js'
 import { explorePostsSchema, searchSchema } from '../search/schemas.js'
-import { explorePosts, search } from '../search/service.js'
+import { explorePosts, listTrendingTopics, search } from '../search/service.js'
 
 export const searchRouter = Router()
+
+searchRouter.get('/trending', async (request, response, next) => {
+  try {
+    response.json(ok({ topics: await listTrendingTopics(request.auth.userId, { limit: 10 }) }))
+  } catch (error) {
+    next(error)
+  }
+})
 
 searchRouter.get('/', async (request, response, next) => {
   try {

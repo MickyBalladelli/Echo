@@ -6,6 +6,7 @@ import { NotificationPreferences } from '../components/NotificationPreferences.j
 import { ChannelDirectory } from '../components/ChannelDirectory.jsx'
 import { NotesWorkspace } from '../components/NotesWorkspace.jsx'
 import { ChatWorkspace } from '../components/ChatWorkspace.jsx'
+import { AdvancedSettings } from '../components/AdvancedSettings.jsx'
 import { Card, EmptyState, Button } from '../lib/vendor.js'
 import { ComingSoon, PageFrame } from './PageFrame.jsx'
 import { FeedPage, PostDetailPage } from './FeedPage.jsx'
@@ -34,7 +35,7 @@ export function NotificationsPage({ router, unreadCount, notificationVersion }) 
   )
 }
 
-export function PreferencesPage() {
+export function PreferencesPage({ user, onDeleted }) {
   return (
     <PageFrame
       eyebrow="YOU / PREFERENCES"
@@ -42,6 +43,7 @@ export function PreferencesPage() {
       description="Choose which signals reach your inbox, browser, and future email digest."
     >
       <NotificationPreferences />
+      <AdvancedSettings user={user} onDeleted={onDeleted} />
     </PageFrame>
   )
 }

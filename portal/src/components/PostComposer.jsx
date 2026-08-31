@@ -1,8 +1,10 @@
 import { computed, onMount, signal } from '../lib/vendor.js'
 import { Button, Card, Label } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
+import { clearOfflineDraft, readOfflineDraft, writeOfflineDraft } from '../lib/offline-drafts.js'
 
 const maxPostLength = 280
+const maxLongPostLength = 20000
 const maxImageBytes = 10 * 1024 * 1024
 
 function resizeImage(file) {
@@ -29,6 +31,7 @@ function resizeImage(file) {
 
 export function PostComposer({ onCreated, channelId = null }) {
   const body = signal('')
+  const postFormat = signal('short')
   const visibility = signal('public')
   const contentWarning = signal('')
   const imageUrl = signal('')
@@ -40,9 +43,30 @@ export function PostComposer({ onCreated, channelId = null }) {
   const draftStatus = signal('loading')
   const mentionSuggestions = signal([])
   const mentionLoading = signal(false)
-  const remaining = computed(() => maxPostLength - body.value.length)
+  const scheduledAt = signal('')
+  const pollQuestion = signal('')
+  const pollOptions = signal(['', ''])
+  const pollEnabled = signal(false)
+  const maxLength = computed(() => postFormat.value === 'long' ? maxLongPostLength : maxPostLength)
+  const remaining = computed(() => maxLength.value - body.value.length)
   let draftTimer
   let loaded = false
+
+  function offlineScope() {
+    return channelId || 'home'
+  }
+
+  function currentDraft() {
+    return {
+      body: body.value,
+      postFormat: postFormat.value,
+      channelId,
+      visibility: visibility.value,
+      imageUrl: imageUrl.value || null,
+      imageAltText: imageAltText.value.trim() || null,
+      contentWarning: contentWarning.value.trim() || null
+    }
+  }
 
   function draftPath() {
     const query = channelId ? `?channelId=${encodeURIComponent(channelId)}` : ''
@@ -57,11 +81,13 @@ export function PostComposer({ onCreated, channelId = null }) {
       return
     }
     draftStatus.value = 'saving'
+    writeOfflineDraft(offlineScope(), currentDraft())
     try {
       await apiRequest(draftPath(), {
         method: 'PUT',
         body: JSON.stringify({
           body: body.value,
+          postFormat: postFormat.value,
           channelId,
           visibility: visibility.value,
           imageUrl: imageUrl.value || null,
@@ -79,6 +105,7 @@ export function PostComposer({ onCreated, channelId = null }) {
     if (!loaded) return
     clearTimeout(draftTimer)
     draftStatus.value = 'draft'
+    writeOfflineDraft(offlineScope(), currentDraft())
     draftTimer = setTimeout(saveDraft, 700)
   }
 
@@ -90,11 +117,17 @@ export function PostComposer({ onCreated, channelId = null }) {
       draftStatus.value = 'error'
     }
     body.value = ''
+    postFormat.value = 'short'
     visibility.value = 'public'
     contentWarning.value = ''
     imageUrl.value = ''
     imageAltText.value = ''
     imageName.value = ''
+    scheduledAt.value = ''
+    pollQuestion.value = ''
+    pollOptions.value = ['', '']
+    pollEnabled.value = false
+    clearOfflineDraft(offlineScope())
     draftStatus.value = 'saved'
   }
 
@@ -162,26 +195,53 @@ export function PostComposer({ onCreated, channelId = null }) {
     busy.value = true
 
     try {
-      const result = await apiRequest('/api/posts', {
+      const cleanOptions = pollOptions.value.map(option => option.trim()).filter(Boolean)
+      if (pollEnabled.value && (!pollQuestion.value.trim() || cleanOptions.length < 2)) {
+        error.value = 'Add a poll question and at least two options.'
+        busy.value = false
+        return
+      }
+      const wasScheduled = Boolean(scheduledAt.value)
+      const hadPoll = pollEnabled.value
+      const pollPayload = { question: pollQuestion.value.trim(), options: cleanOptions }
+      const payload = {
+        body: trimmedBody,
+        ...(channelId ? { channelId } : {}),
+        postFormat: postFormat.value,
+        visibility: visibility.value,
+        imageUrl: imageUrl.value || null,
+        imageAltText: imageAltText.value.trim() || null,
+        contentWarning: contentWarning.value.trim() || null
+      }
+      const result = await apiRequest(wasScheduled ? '/api/posts/scheduled' : '/api/posts', {
         method: 'POST',
-        body: JSON.stringify({
-          body: trimmedBody,
-          ...(channelId ? { channelId } : {}),
-          visibility: visibility.value,
-          imageUrl: imageUrl.value || null,
-          imageAltText: imageAltText.value.trim() || null,
-          contentWarning: contentWarning.value.trim() || null
-        })
+        body: JSON.stringify(wasScheduled
+          ? { ...payload, scheduledAt: new Date(scheduledAt.value).toISOString() }
+          : payload)
       })
       await apiRequest(draftPath(), { method: 'DELETE' }).catch(() => {})
+      clearOfflineDraft(offlineScope())
+      let createdPost = result.data.post
+      if (!wasScheduled && hadPoll && createdPost) {
+        const pollResult = await apiRequest(`/api/posts/${encodeURIComponent(createdPost.id)}/poll`, {
+          method: 'POST',
+          body: JSON.stringify(pollPayload)
+        })
+        createdPost = { ...createdPost, poll: pollResult.data.poll }
+      }
       body.value = ''
+      postFormat.value = 'short'
       visibility.value = 'public'
       contentWarning.value = ''
       imageUrl.value = ''
       imageAltText.value = ''
       imageName.value = ''
+      scheduledAt.value = ''
+      pollQuestion.value = ''
+      pollOptions.value = ['', '']
+      pollEnabled.value = false
       draftStatus.value = 'saved'
-      onCreated(result.data.post)
+      if (createdPost) onCreated(createdPost)
     } catch (requestError) {
       error.value = requestError.message || 'Could not publish post'
     } finally {
@@ -191,13 +251,25 @@ export function PostComposer({ onCreated, channelId = null }) {
 
   onMount(() => {
     let active = true
-    const unsubscribers = [body, visibility, contentWarning, imageUrl, imageAltText].map(value => value.subscribe(scheduleDraft))
+    const localDraft = readOfflineDraft(offlineScope())
+    if (localDraft) {
+      body.value = localDraft.body || ''
+      postFormat.value = localDraft.postFormat || 'short'
+      visibility.value = localDraft.visibility || 'public'
+      contentWarning.value = localDraft.contentWarning || ''
+      imageUrl.value = localDraft.imageUrl || ''
+      imageAltText.value = localDraft.imageAltText || ''
+      imageName.value = localDraft.imageUrl ? 'Offline saved image' : ''
+      draftStatus.value = 'Offline draft restored'
+    }
+    const unsubscribers = [body, postFormat, visibility, contentWarning, imageUrl, imageAltText].map(value => value.subscribe(scheduleDraft))
     apiRequest(draftPath())
       .then(result => {
         if (!active) return
         const draft = result.data.draft
-        if (draft) {
+        if (draft && !localDraft) {
           body.value = draft.body || ''
+          postFormat.value = draft.postFormat || 'short'
           visibility.value = draft.visibility || 'public'
           contentWarning.value = draft.contentWarning || ''
           imageUrl.value = draft.imageUrl || ''
@@ -209,7 +281,7 @@ export function PostComposer({ onCreated, channelId = null }) {
         }
       })
       .catch(() => {
-        draftStatus.value = 'error'
+        draftStatus.value = localDraft ? 'Offline draft' : 'error'
       })
       .finally(() => {
         loaded = true
@@ -229,7 +301,7 @@ export function PostComposer({ onCreated, channelId = null }) {
     saving: 'Saving…',
     saved: 'Draft saved',
     error: 'Draft unavailable'
-  })[draftStatus.value])
+  })[draftStatus.value] || draftStatus.value)
 
   return (
     <Card class="post-composer">
@@ -249,7 +321,7 @@ export function PostComposer({ onCreated, channelId = null }) {
         <textarea
           class="post-composer-input"
           use:bind={body}
-          maxlength={maxPostLength}
+          maxlength={maxLength}
           rows="4"
           placeholder="What is happening? Add #hashtags or a link."
           aria-label="Post text"
@@ -268,6 +340,13 @@ export function PostComposer({ onCreated, channelId = null }) {
         )}
         <div class="post-composer-options">
           <label>
+            Format
+            <select use:bind={postFormat} aria-label="Post format">
+              <option value="short">Short post</option>
+              <option value="long">Long-form post</option>
+            </select>
+          </label>
+          <label>
             Visibility
             <select use:bind={visibility} aria-label="Post visibility">
               <option value="public">Public</option>
@@ -283,7 +362,30 @@ export function PostComposer({ onCreated, channelId = null }) {
             Content warning
             <input type="text" use:bind={contentWarning} maxlength="120" placeholder="Optional" aria-label="Content warning" />
           </label>
+          <label class="post-warning-toggle">
+            Schedule
+            <input type="datetime-local" use:bind={scheduledAt} aria-label="Schedule post" />
+          </label>
+          {!channelId && <label class="post-poll-toggle">
+            <input type="checkbox" checked={pollEnabled} onChange={event => pollEnabled.value = event.target.checked} />
+            Add poll
+          </label>}
         </div>
+        {pollEnabled.value && <div class="post-poll-composer">
+          <input type="text" use:bind={pollQuestion} maxlength="240" placeholder="Poll question" aria-label="Poll question" />
+          {pollOptions.value.map((option, index) => (
+            <input
+              key={index}
+              type="text"
+              value={option}
+              maxlength="120"
+              placeholder={`Option ${index + 1}`}
+              aria-label={`Poll option ${index + 1}`}
+              onInput={event => pollOptions.value = pollOptions.value.map((item, itemIndex) => itemIndex === index ? event.target.value : item)}
+            />
+          ))}
+          {pollOptions.value.length < 4 && <Button type="button" variant="tertiary" size="small" onClick={() => pollOptions.value = [...pollOptions.value, '']}>Add option</Button>}
+        </div>}
         {imageBusy.value && <div role="status">Preparing image…</div>}
         {imageUrl.value && (
           <div class="post-image-preview">
@@ -299,7 +401,7 @@ export function PostComposer({ onCreated, channelId = null }) {
           <div class="post-composer-error" role="alert" aria-live="polite">{error}</div>
           <div class="post-composer-actions">
             <Button type="button" variant="tertiary" size="small" onClick={clearDraft}>Clear draft</Button>
-            <Button type="submit" loading={busy}>Post</Button>
+            <Button type="submit" loading={busy}>{scheduledAt.value ? 'Schedule' : 'Post'}</Button>
           </div>
         </div>
       </form>

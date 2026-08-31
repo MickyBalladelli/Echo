@@ -10,6 +10,7 @@ import { ReportButton } from '../components/ReportButton.jsx'
 import { LiveRegion } from '../components/LiveRegion.jsx'
 import { KeyboardList } from '../components/KeyboardList.jsx'
 import { VirtualList } from '../components/VirtualList.jsx'
+import { ChannelChat } from '../components/ChannelChat.jsx'
 
 export function ChannelDetailPage({ slug, router, currentUserId }) {
   const channel = signal(null)
@@ -236,6 +237,7 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
           </div>
         </Card>
         {channel.value.rules && <Card class="channel-rules-card"><Label size="small" tone="accent">CHANNEL RULES</Label><pre>{channel.value.rules}</pre></Card>}
+        <ChannelChat slug={slug} channel={channel.value} currentUserId={currentUserId} />
         {channel.value.isOwner && (
           <div class="channel-owner-grid">
             <Card>

@@ -1,19 +1,6 @@
+import { getAppLocale } from './i18n.js'
+
 const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
-const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-  timeZone: userTimeZone
-})
-const monthYearFormatter = new Intl.DateTimeFormat(undefined, {
-  month: 'long',
-  year: 'numeric',
-  timeZone: userTimeZone
-})
-const clockFormatter = new Intl.DateTimeFormat(undefined, {
-  hour: '2-digit',
-  minute: '2-digit',
-  timeZone: userTimeZone
-})
 
 function parseDate(value) {
   const date = new Date(value)
@@ -22,17 +9,17 @@ function parseDate(value) {
 
 export function formatDateTime(value) {
   const date = parseDate(value)
-  return date ? dateTimeFormatter.format(date) : 'recently'
+  return date ? new Intl.DateTimeFormat(getAppLocale(), { dateStyle: 'medium', timeStyle: 'short', timeZone: userTimeZone }).format(date) : 'recently'
 }
 
 export function formatMonthYear(value) {
   const date = parseDate(value)
-  return date ? monthYearFormatter.format(date) : 'recently'
+  return date ? new Intl.DateTimeFormat(getAppLocale(), { month: 'long', year: 'numeric', timeZone: userTimeZone }).format(date) : 'recently'
 }
 
 export function formatClockTime(value) {
   const date = parseDate(value)
-  return date ? clockFormatter.format(date) : '—'
+  return date ? new Intl.DateTimeFormat(getAppLocale(), { hour: '2-digit', minute: '2-digit', timeZone: userTimeZone }).format(date) : '—'
 }
 
 export function formatRelativeTime(value) {
@@ -44,7 +31,7 @@ export function formatRelativeTime(value) {
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`
   if (seconds < 604800) return `${Math.floor(seconds / 86400)}d`
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(getAppLocale(), {
     month: 'short',
     day: 'numeric',
     timeZone: userTimeZone

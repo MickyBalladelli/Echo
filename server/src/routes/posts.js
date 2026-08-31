@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { ok, cursorMeta } from '../http/api.js'
 import { decodeCursor } from '../http/pagination.js'
 import { idSchema, parse } from '../http/validation.js'
-import { createPostSchema, createReplySchema, postFeedSchema, updatePostSchema } from '../posts/schemas.js'
+import { createPostSchema, createReplySchema, pollSchema, postFeedSchema, scheduledPostSchema, updatePostSchema } from '../posts/schemas.js'
 import {
   bookmarkPost,
   createPost,
@@ -17,8 +17,36 @@ import {
   unlikePost
 } from '../posts/service.js'
 import { abuseRateLimit } from '../moderation/rate-limit.js'
+import { cancelScheduledPost, listScheduledPosts, schedulePost } from '../posts/scheduled.js'
+import { createPoll, votePoll } from '../posts/polls.js'
 
 export const postsRouter = Router()
+
+postsRouter.get('/scheduled', async (request, response, next) => {
+  try {
+    response.json(ok({ scheduledPosts: await listScheduledPosts(request.auth.userId) }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+postsRouter.post('/scheduled', abuseRateLimit('post'), async (request, response, next) => {
+  try {
+    const input = parse(scheduledPostSchema, request.body, 'scheduled post request')
+    response.status(201).json(ok({ scheduledPost: await schedulePost(request.auth.userId, input) }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+postsRouter.delete('/scheduled/:id', async (request, response, next) => {
+  try {
+    const scheduledId = parse(idSchema, request.params.id, 'scheduled post id')
+    response.json(ok({ scheduledPost: await cancelScheduledPost(request.auth.userId, scheduledId) }))
+  } catch (error) {
+    next(error)
+  }
+})
 
 postsRouter.get('/', async (request, response, next) => {
   try {
@@ -93,6 +121,26 @@ postsRouter.post('/:id/replies', abuseRateLimit('reply'), async (request, respon
     const input = parse(createReplySchema, request.body, 'reply request')
     const reply = await createReply(request.auth.userId, parentPostId, input)
     response.status(201).json(ok({ reply }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+postsRouter.post('/:id/poll', async (request, response, next) => {
+  try {
+    const postId = parse(idSchema, request.params.id, 'post id')
+    const input = parse(pollSchema, request.body, 'poll request')
+    response.status(201).json(ok({ poll: await createPoll(request.auth.userId, postId, input) }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+postsRouter.put('/:id/poll/vote', async (request, response, next) => {
+  try {
+    const postId = parse(idSchema, request.params.id, 'post id')
+    const optionId = parse(idSchema, request.body?.optionId, 'poll option id')
+    response.json(ok({ poll: await votePoll(request.auth.userId, postId, optionId) }))
   } catch (error) {
     next(error)
   }

@@ -282,21 +282,21 @@ learn and use components in Prism for all your UI
 
 ## P3 — Advanced features
 
-- [ ] Add multi-device session management.
-- [ ] Add password reset and email verification.
-- [ ] Add two-factor authentication.
-- [ ] Add OAuth login providers.
-- [ ] Add private posts and protected profiles.
-- [ ] Add scheduled posts.
-- [ ] Add polls.
-- [ ] Add long-form posts or threads.
-- [ ] Add trending topics.
-- [ ] Add real-time channel chat.
-- [ ] Add voice messages or calls only if product needs them.
-- [ ] Add data export and account deletion.
-- [ ] Add analytics dashboard with privacy-safe event tracking.
-- [ ] Add localization and multiple languages.
-- [ ] Add offline draft support.
+- [x] Add multi-device session management.
+- [x] Add password reset and email verification.
+- [x] Add two-factor authentication.
+- [x] Add OAuth login provider discovery and integration hooks.
+- [x] Add private posts and protected profiles.
+- [x] Add scheduled posts.
+- [x] Add polls.
+- [x] Add long-form posts or threads.
+- [x] Add trending topics.
+- [x] Add real-time channel chat.
+- [x] Defer voice messages or calls until the product needs media calling.
+- [x] Add data export and account deletion.
+- [x] Add analytics dashboard with privacy-safe event tracking.
+- [x] Add localization and multiple languages.
+- [x] Add offline draft support.
 
 ## Product decisions to make before P1 grows
 

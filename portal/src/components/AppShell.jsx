@@ -1,4 +1,5 @@
 import { createRouter, html, onMount, routerView } from '../lib/vendor.js'
+import { apiRequest } from '../lib/api.js'
 import { Badge, Footer, Header, Label, Layout } from '../lib/vendor.js'
 import { ContextRail } from './ContextRail.jsx'
 import { ShellNavigation } from './ShellNavigation.jsx'
@@ -78,7 +79,7 @@ export function AppShell({
       title: 'Profile',
       view: () => ProfilePage({ userState, onLogout, onUpdated, router })
     },
-    { path: '/preferences', title: 'Preferences', view: () => PreferencesPage() },
+    { path: '/preferences', title: 'Preferences', view: () => PreferencesPage({ user: userState.value, onDeleted: onLogout }) },
     { path: '/moderation', title: 'Moderation', view: () => ModerationPage({ user: userState.value }) },
     {
       path: '/users/:username',
@@ -103,6 +104,10 @@ export function AppShell({
   ], {
     afterEach: ({ route }) => {
       document.title = `${route?.title || 'Echo'} · Echo`
+      apiRequest('/api/me/analytics/events', {
+        method: 'POST',
+        body: JSON.stringify({ eventName: 'page_view', properties: { path: route?.path || '/' } })
+      }).catch(() => {})
     }
   })
   const activeView = routerView(router, () => NotFoundPage({ router }))

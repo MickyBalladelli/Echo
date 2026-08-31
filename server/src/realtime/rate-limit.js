@@ -6,7 +6,8 @@ const limits = Object.freeze({
   'chat:message:send': { windowMs: 60 * 1000, max: 60 },
   'chat:typing': { windowMs: 10 * 1000, max: 30 },
   'chat:read': { windowMs: 60 * 1000, max: 120 },
-  'chat:presence:list': { windowMs: 60 * 1000, max: 30 }
+  'chat:presence:list': { windowMs: 60 * 1000, max: 30 },
+  'channel:chat:message:send': { windowMs: 60 * 1000, max: 60 }
 })
 
 export function allowSocketEvent(socket, eventName) {

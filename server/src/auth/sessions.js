@@ -50,6 +50,8 @@ export async function findSessionByToken(token, transaction) {
       u.username,
       u.email,
       u.created_at AS user_created_at,
+      u.email_verified_at,
+      u.locale,
       p.display_name,
       p.bio,
       p.avatar_url,
@@ -109,8 +111,10 @@ export async function findSessionByToken(token, transaction) {
         profileVisibility: row.profile_visibility || 'public',
         showFollowers: row.show_followers !== false,
         showFollowing: row.show_following !== false
+        ,locale: row.locale || 'en'
       },
-      badges: row.badges || []
+      badges: row.badges || [],
+      emailVerified: Boolean(row.email_verified_at)
     }
   }
 }
@@ -126,4 +130,49 @@ export async function revokeSession(token, transaction) {
     replacements: { tokenHash: hashToken(token) },
     ...queryOptions(transaction)
   })
+}
+
+export async function listUserSessions(userId, currentSessionId) {
+  const rows = await sequelize.query(`
+    SELECT id, created_at, last_seen_at, expires_at, user_agent, ip_address,
+      (id = :currentSessionId) AS current
+    FROM sessions
+    WHERE user_id = :userId AND revoked_at IS NULL AND expires_at > CURRENT_TIMESTAMP
+    ORDER BY last_seen_at DESC, created_at DESC
+  `, {
+    replacements: { userId, currentSessionId: currentSessionId || null },
+    type: QueryTypes.SELECT
+  })
+
+  return rows.map(row => ({
+    id: row.id,
+    createdAt: row.created_at,
+    lastSeenAt: row.last_seen_at,
+    expiresAt: row.expires_at,
+    userAgent: row.user_agent || 'Unknown device',
+    ipAddress: row.ip_address || null,
+    current: Boolean(row.current)
+  }))
+}
+
+export async function revokeSessionById(userId, sessionId) {
+  const rows = await sequelize.query(`
+    UPDATE sessions
+    SET revoked_at = COALESCE(revoked_at, CURRENT_TIMESTAMP)
+    WHERE id = :sessionId AND user_id = :userId AND revoked_at IS NULL
+    RETURNING id
+  `, {
+    replacements: { userId, sessionId },
+    type: QueryTypes.SELECT
+  })
+  return { sessionId, revoked: Boolean(rows[0]) }
+}
+
+export async function revokeOtherSessions(userId, currentSessionId) {
+  const result = await sequelize.query(`
+    UPDATE sessions
+    SET revoked_at = COALESCE(revoked_at, CURRENT_TIMESTAMP)
+    WHERE user_id = :userId AND id <> :currentSessionId AND revoked_at IS NULL
+  `, { replacements: { userId, currentSessionId } })
+  return { revokedCount: result[1] || 0 }
 }

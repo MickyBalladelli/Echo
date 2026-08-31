@@ -12,6 +12,11 @@ export const chatMessageEventSchema = z.object({
   body: z.string().trim().min(1).max(4000)
 })
 
+export const channelChatMessageEventSchema = z.object({
+  channelId: uuid,
+  body: z.string().trim().min(1).max(4000)
+})
+
 export const typingEventSchema = z.object({
   conversationId: uuid,
   typing: z.boolean()

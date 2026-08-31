@@ -10,6 +10,7 @@ import { initializeSocketRooms } from './realtime/rooms.js'
 import { realtimeEnvelope, setRealtimePublisher } from './realtime/events.js'
 import { initializeChatSocket } from './chat/socket.js'
 import { heavyWorkJobQueue, notificationJobQueue } from './jobs/queue.js'
+import { startScheduledPostWorker } from './posts/scheduled.js'
 
 const app = createApp()
 const httpServer = http.createServer(app)
@@ -25,6 +26,7 @@ const io = new Server(httpServer, {
   },
   maxHttpBufferSize: env.maxSocketBufferBytes
 })
+const stopScheduledPostWorker = startScheduledPostWorker()
 
 io.use(authenticateSocket)
 setNotificationEmitter((recipientId, event) => {
@@ -75,6 +77,7 @@ async function shutdown(signal) {
     resolve()
   }))
   await Promise.all([notificationJobQueue.close(), heavyWorkJobQueue.close()])
+  stopScheduledPostWorker()
   await pool.close()
   clearTimeout(timeout)
   logger.info('Shutdown complete')

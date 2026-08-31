@@ -21,6 +21,7 @@ function userInitial(user) {
 export function ExploreContent({ router, currentUserId }) {
   const recentPosts = signal([])
   const popularPosts = signal([])
+  const trendingTopics = signal([])
   const exploreState = signal('loading')
   const query = signal('')
   const submittedQuery = signal('')
@@ -34,12 +35,14 @@ export function ExploreContent({ router, currentUserId }) {
   async function loadExplore() {
     exploreState.value = 'loading'
     try {
-      const [recent, popular] = await Promise.all([
+      const [recent, popular, trending] = await Promise.all([
         apiRequest('/api/search/explore/posts?sort=recent&limit=12'),
-        apiRequest('/api/search/explore/posts?sort=popular&limit=12')
+        apiRequest('/api/search/explore/posts?sort=popular&limit=12'),
+        apiRequest('/api/search/trending')
       ])
       recentPosts.value = recent.data
       popularPosts.value = popular.data
+      trendingTopics.value = trending.data.topics
       exploreState.value = 'ready'
     } catch {
       exploreState.value = 'error'
@@ -225,6 +228,12 @@ export function ExploreContent({ router, currentUserId }) {
   return (
     <div class="explore-stack">
       <SuggestedUsers router={router} />
+      <Card class="trending-topics-card">
+        <Label size="small" tone="accent">TRENDING THIS WEEK</Label>
+        {trendingTopics.value.length
+          ? <div class="trending-topic-list">{trendingTopics.value.map(topic => <a key={topic.id} href={`/hashtags/${encodeURIComponent(topic.tag)}`} onClick={router.link(`/hashtags/${encodeURIComponent(topic.tag)}`)}>#{topic.tag} <span>{topic.postCount}</span></a>)}</div>
+          : <p>No topics trending yet.</p>}
+      </Card>
       <Card class="explore-search-card">
         <form class="explore-search-form" onSubmit={submit}>
           <FormField id="explore-search" label="Search">

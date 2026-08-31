@@ -7,6 +7,7 @@ function mapDraft(row) {
     id: row.id,
     channelId: row.channel_id,
     body: row.body,
+    postFormat: row.post_format || 'short',
     visibility: row.visibility,
     imageUrl: row.image_url || null,
     imageAltText: row.image_alt_text || null,
@@ -17,7 +18,7 @@ function mapDraft(row) {
 
 export async function getPostDraft(userId, channelId = null) {
   const rows = await sequelize.query(`
-    SELECT id, channel_id, body, visibility, image_url, image_alt_text, content_warning, updated_at
+    SELECT id, channel_id, body, post_format, visibility, image_url, image_alt_text, content_warning, updated_at
     FROM post_drafts
     WHERE user_id = :userId AND channel_id IS NOT DISTINCT FROM :channelId
     LIMIT 1
@@ -34,6 +35,7 @@ export async function savePostDraft(userId, input) {
     const updated = await sequelize.query(`
       UPDATE post_drafts
       SET body = :body,
+          post_format = :postFormat,
           visibility = :visibility,
           image_url = :imageUrl,
           image_alt_text = :imageAltText,
@@ -50,9 +52,9 @@ export async function savePostDraft(userId, input) {
     if (!updated[0]) {
       await sequelize.query(`
         INSERT INTO post_drafts (
-          user_id, channel_id, body, visibility, image_url, image_alt_text, content_warning
+          user_id, channel_id, body, post_format, visibility, image_url, image_alt_text, content_warning
         )
-        VALUES (:userId, :channelId, :body, :visibility, :imageUrl, :imageAltText, :contentWarning)
+        VALUES (:userId, :channelId, :body, :postFormat, :visibility, :imageUrl, :imageAltText, :contentWarning)
       `, {
         replacements: { userId, ...draft, imageUrl: draft.imageUrl || null, imageAltText: draft.imageAltText || null, contentWarning: draft.contentWarning || null },
         transaction

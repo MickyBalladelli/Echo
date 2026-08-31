@@ -6,6 +6,7 @@ import { ReportButton } from './ReportButton.jsx'
 import { AppealButton } from './AppealButton.jsx'
 import { LiveRegion } from './LiveRegion.jsx'
 import { formatDateTime, formatRelativeTime } from '../lib/dates.js'
+import { Poll } from './Poll.jsx'
 
 function authorInitial(post) {
   return (post.author.displayName || post.author.username).slice(0, 1).toUpperCase()
@@ -251,6 +252,7 @@ export function PostCard({
             <small>{linkPreview.value.url}</small>
           </a>
         )}
+        {post.poll && <Poll postId={post.id} poll={post.poll} />}
       </>
     )
     : (

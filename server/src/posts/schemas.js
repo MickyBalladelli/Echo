@@ -9,7 +9,8 @@ const imageUrl = z.string()
 const hashtag = z.string().trim().toLowerCase().regex(/^[a-z0-9_]{1,64}$/)
 
 const postInput = z.object({
-  body: z.string().trim().max(280).default(''),
+  body: z.string().trim().max(20000).default(''),
+  postFormat: z.enum(['short', 'long']).default('short'),
   channelId: optionalId,
   visibility: visibility.default('public'),
   repostOfPostId: optionalId,
@@ -18,19 +19,28 @@ const postInput = z.object({
   contentWarning: z.string().trim().max(120).optional().nullable()
 })
 
-export const createPostSchema = postInput.superRefine((value, context) => {
+function withPostFormatRules(schema) {
+  return schema.superRefine((value, context) => {
+  if (value.postFormat === 'short' && value.body.length > 280) {
+    context.addIssue({ code: 'custom', path: ['body'], message: 'Short posts are limited to 280 characters' })
+  }
+  })
+}
+
+export const createPostSchema = withPostFormatRules(postInput).superRefine((value, context) => {
   if (!value.body && !value.repostOfPostId) {
     context.addIssue({ code: 'custom', path: ['body'], message: 'Write something or choose a post to repost' })
   }
 })
 
-export const updatePostSchema = z.object({
-  body: z.string().trim().max(280),
+export const updatePostSchema = withPostFormatRules(z.object({
+  body: z.string().trim().max(20000),
+  postFormat: z.enum(['short', 'long']).optional(),
   visibility: visibility.optional(),
   imageUrl: imageUrl.optional().nullable(),
   imageAltText: z.string().trim().max(120).optional().nullable(),
   contentWarning: z.string().trim().max(120).optional().nullable()
-})
+}))
 
 export const createReplySchema = z.object({
   body: z.string().trim().min(1).max(280)
@@ -49,12 +59,26 @@ export const draftQuerySchema = z.object({
   channelId: optionalId
 })
 
-export const draftSchema = postInput.omit({ repostOfPostId: true }).extend({
-  body: z.string().trim().max(280).default('')
-})
+export const draftSchema = withPostFormatRules(postInput.omit({ repostOfPostId: true }).extend({
+  body: z.string().trim().max(20000).default('')
+}))
 
 export const pinnedPostSchema = z.object({
   postId: z.string().uuid().nullable()
 })
 
-export { hashtag }
+export const scheduledPostSchema = withPostFormatRules(postInput.extend({
+  scheduledAt: z.string().datetime({ offset: true })
+}))
+
+export const pollSchema = z.object({
+  question: z.string().trim().min(1).max(240),
+  options: z.array(z.string().trim().min(1).max(120)).min(2).max(4),
+  expiresAt: z.string().datetime({ offset: true }).optional().nullable()
+}).superRefine((value, context) => {
+  if (new Set(value.options.map(option => option.toLowerCase())).size !== value.options.length) {
+    context.addIssue({ code: 'custom', path: ['options'], message: 'Poll options must be unique' })
+  }
+})
+
+export { hashtag, postInput }
