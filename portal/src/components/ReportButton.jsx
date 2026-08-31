@@ -1,5 +1,5 @@
 import { signal } from '../lib/vendor.js'
-import { Button } from '../lib/vendor.js'
+import { Button, IconButton } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 
 export function ReportButton({ targetType, targetId, label = 'Report' }) {
@@ -38,7 +38,7 @@ export function ReportButton({ targetType, targetId, label = 'Report' }) {
 
   return (
     <span class="moderation-action">
-      {!result.value && <Button variant="tertiary" size="small" onClick={() => open.value = !open.value}>{open.value ? 'Cancel' : label}</Button>}
+      {!result.value && <IconButton icon={open.value ? '×' : '⚑'} ariaLabel={open.value ? 'Cancel report' : label} title={open.value ? 'Cancel report' : label} onClick={() => open.value = !open.value} />}
       {result.value && <span class="moderation-action-result">{result.value}</span>}
       {open.value && (
         <form class="moderation-action-form" role="dialog" aria-label={`Report ${targetType}`} onSubmit={submit} onKeyDown={closeOnEscape}>

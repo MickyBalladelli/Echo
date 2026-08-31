@@ -1379,10 +1379,28 @@ textarea {
 }
 
 .post-card-footer .prism-button {
-  margin-left: auto;
+  margin-left: 0;
 }
 
 .post-card-footer .post-like-button {
+  margin-left: 0;
+}
+
+.post-card-footer .prism-button-icon-only {
+  min-width: 36px;
+  min-height: 36px;
+  padding: 7px;
+}
+
+.post-card-footer .prism-button-icon-only .prism-button-icon {
+  font-size: 18px;
+}
+
+.post-action-menu {
+  display: inline-flex;
+}
+
+.post-action-menu .prism-button {
   margin-left: 0;
 }
 

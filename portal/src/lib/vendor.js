@@ -15,6 +15,8 @@ export {
   Footer,
   FormField,
   Header,
+  DropdownMenu,
+  IconButton,
   Label,
   Layout,
   Navigator,
@@ -25,4 +27,9 @@ export {
   Tabs,
   TextField,
   TreeView,
+  AlertIcon,
+  ChatIcon,
+  ClockIcon,
+  MapPinIcon,
+  MoreHorizontalIcon,
 } from '@mickyballadelli/prism'

@@ -1,5 +1,5 @@
 import { signal } from '../lib/vendor.js'
-import { Button } from '../lib/vendor.js'
+import { Button, IconButton } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 
 export function AppealButton({ targetType, targetId }) {
@@ -38,7 +38,7 @@ export function AppealButton({ targetType, targetId }) {
 
   return (
     <span class="moderation-action">
-      {!result.value && <Button variant="tertiary" size="small" onClick={() => open.value = !open.value}>{open.value ? 'Cancel appeal' : 'Appeal'}</Button>}
+      {!result.value && <IconButton icon={open.value ? '×' : '↗'} ariaLabel={open.value ? 'Cancel appeal' : 'Appeal moderation decision'} title={open.value ? 'Cancel appeal' : 'Appeal'} onClick={() => open.value = !open.value} />}
       {result.value && <span class="moderation-action-result">{result.value}</span>}
       {open.value && (
         <form class="moderation-action-form" role="dialog" aria-label={`Appeal ${targetType}`} onSubmit={submit} onKeyDown={closeOnEscape}>

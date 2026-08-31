@@ -1,5 +1,19 @@
 import { computed, signal } from '../lib/vendor.js'
-import { Badge, Button, Card, FormField, Label, Select, TextField } from '../lib/vendor.js'
+import {
+  Badge,
+  Button,
+  Card,
+  ChatIcon,
+  ClockIcon,
+  DropdownMenu,
+  FormField,
+  IconButton,
+  Label,
+  MapPinIcon,
+  MoreHorizontalIcon,
+  Select,
+  TextField
+} from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { UserBadges } from './UserBadges.jsx'
 import { ReportButton } from './ReportButton.jsx'
@@ -323,41 +337,45 @@ export function PostCard({
         )
         : content}
       <div class="post-card-footer">
-        <a class="post-card-action" href={`/posts/${post.id}`} onClick={router.link(`/posts/${post.id}`)}>
-          <span aria-hidden="true">↩</span>
-          <span>{post.replyCount} {post.replyCount === 1 ? 'reply' : 'replies'}</span>
-        </a>
-        <Button
-          variant="tertiary"
-          size="small"
+        <IconButton
+          class="post-card-action-button"
+          icon={ChatIcon()}
+          ariaLabel={`Open replies. ${post.replyCount} ${post.replyCount === 1 ? 'reply' : 'replies'}`}
+          title={`Replies (${post.replyCount})`}
+          onClick={() => router.navigate(`/posts/${post.id}`)}
+        />
+        <IconButton
           class={computed(() => liked.value ? 'post-like-button post-like-button-active' : 'post-like-button')}
+          icon={computed(() => liked.value ? '♥' : '♡')}
           pressed={liked}
           ariaLabel={computed(() => `${liked.value ? 'Unlike' : 'Like'} this post. ${likeLabel.value}`)}
+          title={computed(() => `${liked.value ? 'Unlike' : 'Like'} post (${likeCount.value})`)}
           loading={updatingLike}
           onClick={toggleLike}
-        >
-          <span aria-hidden="true">{computed(() => liked.value ? '♥' : '♡')}</span>
-          <span>{likeLabel}</span>
-        </Button>
-        <Button
-          variant="tertiary"
-          size="small"
-          pressed={bookmarked}
-          loading={updatingBookmark}
-          ariaLabel={computed(() => bookmarked.value ? 'Remove bookmark from this post' : 'Bookmark this post')}
-          onClick={toggleBookmark}
-        >
-          {computed(() => bookmarked.value ? 'Bookmarked' : 'Bookmark')}
-        </Button>
-        <Button variant="tertiary" size="small" loading={reposting} onClick={() => repost()}>
-          Repost
-        </Button>
-        <Button variant="tertiary" size="small" pressed={quoting} onClick={() => quoting.value = !quoting.value}>Quote</Button>
-        {onReply && <Button variant="tertiary" size="small" onClick={() => onReply(post)}>Reply</Button>}
-        {onTogglePinned && <Button variant="tertiary" size="small" loading={pinning} onClick={togglePinned}>{pinned ? 'Unpin' : 'Pin'}</Button>}
-        {canEdit && <Button variant="tertiary" size="small" onClick={() => editing.value = true}>Edit</Button>}
-        {isOwnPost && isEdited && <Button variant="tertiary" size="small" loading={historyLoading} onClick={loadHistory}>History</Button>}
-        {isOwnPost && <Button variant="tertiary" size="small" loading={deleting} onClick={deleteOwnPost}>Delete</Button>}
+        />
+        {DropdownMenu({
+          class: 'post-action-menu',
+          ariaLabel: 'Post actions',
+          placement: 'bottom-end',
+          trigger: ({ open, toggle }) => IconButton({
+            icon: MoreHorizontalIcon(),
+            ariaLabel: 'More post actions',
+            title: 'More post actions',
+            pressed: open,
+            onClick: toggle
+          }),
+          items: [
+            { id: 'repost', label: 'Repost', icon: '↻', onSelect: () => repost() },
+            { id: 'quote', label: 'Quote post', icon: '“', onSelect: () => quoting.value = !quoting.value },
+            { type: 'separator' },
+            { id: 'bookmark', label: computed(() => bookmarked.value ? 'Remove bookmark' : 'Bookmark'), icon: '🔖', onSelect: toggleBookmark }
+          ]
+        })}
+        {onReply && <IconButton icon={ChatIcon()} ariaLabel="Reply to this post" title="Reply" onClick={() => onReply(post)} />}
+        {onTogglePinned && <IconButton icon={MapPinIcon()} ariaLabel={pinned ? 'Unpin this post' : 'Pin this post'} title={pinned ? 'Unpin' : 'Pin'} loading={pinning} pressed={pinned} onClick={togglePinned} />}
+        {canEdit && <IconButton icon="✎" ariaLabel="Edit this post" title="Edit" onClick={() => editing.value = true} />}
+        {isOwnPost && isEdited && <IconButton icon={ClockIcon()} ariaLabel="View edit history" title="History" loading={historyLoading} onClick={loadHistory} />}
+        {isOwnPost && <IconButton icon="×" ariaLabel="Delete this post" title="Delete" loading={deleting} onClick={deleteOwnPost} />}
         {!isOwnPost && <ReportButton targetType="post" targetId={post.id} />}
         {canAppeal && <AppealButton targetType="post" targetId={post.id} />}
       </div>
