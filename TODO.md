@@ -1,7 +1,7 @@
 # Echo TODO
 
 Twitter-like app built with JavaScript, Vite, PostgreSQL, Node.js, Express, Socket.IO, `@mickyballadelli/prism`, and `@mickyballadelli/matrix`.
-learn and use components in Prism for all your UI
+Use `@mickyballadelli/matrix` and `@mickyballadelli/prism` fully for the frontend. Do not add another frontend framework. If a needed primitive is missing, add it to Prism first.
 ## Priority rules
 
 - **P0 — Must have:** App cannot work without it.
@@ -22,9 +22,18 @@ learn and use components in Prism for all your UI
 - [x] Add error logging with safe production output.
 - [x] Define API response shape and common error shape.
 - [x] Define IDs, timestamps, pagination, and validation rules in the server.
-- [x] Use `@mickyballadelli/prism` for the interface system.
-- [x] Use `@mickyballadelli/matrix` SPA framework.
+- [x] Use `@mickyballadelli/prism` as the only frontend UI and design system.
+- [x] Use `@mickyballadelli/matrix` as the only frontend runtime, renderer, state, and router.
 - [x] Use sequelize for the app's data/state model.
+
+### Frontend framework contract
+
+- [x] Use Matrix for all frontend JSX/rendering, reactive state, lifecycle, routing, async resources, and form bindings.
+- [x] Use Prism for all frontend UI components, controls, layouts, feedback, overlays, icons, and theme tokens.
+- [x] Keep Vite as the build tool only; do not add React, Vue, Svelte, or another frontend UI/state/router framework.
+- [ ] Add missing Prism primitives before replacing native controls that Prism does not cover.
+- [ ] Replace remaining native selects, textareas, and file inputs with Prism controls where available.
+- [ ] Add Prism multiline text area and file-upload controls, then migrate Echo forms to them.
 
 ### PostgreSQL data layer
 
@@ -300,18 +309,18 @@ learn and use components in Prism for all your UI
 
 ## Product decisions to make before P1 grows
 
-- [ ] Pick session model: secure cookie session or short-lived access token plus refresh token.
-- [ ] Pick backend database library or query builder.
-- [ ] Decide whether `@mickyballadelli/matrix` owns client state only or also domain types.
-- [ ] Decide whether `@mickyballadelli/prism` supplies the full design system or only visual primitives.
-- [ ] Decide public post length and media limits.
-- [ ] Decide feed ranking and pagination behavior.
-- [ ] Decide whether channels are public, private, or both.
-- [ ] Decide whether notes are private, shared, or convertible to posts.
-- [ ] Decide one-to-one and group chat limits.
-- [ ] Decide notification retention and delivery rules.
-- [ ] Decide moderation roles and content policy.
-- [ ] Decide upload storage provider and file scanning rules.
+- [x] Pick session model: secure HttpOnly cookie session, 30-day lifetime, and server-side revocation.
+- [x] Pick backend database library or query builder: Sequelize boundary with parameterized raw SQL for feature queries.
+- [x] Decide whether `@mickyballadelli/matrix` owns client state only or also domain types: Matrix owns the full frontend runtime and client state; Echo feature modules own domain behavior.
+- [x] Decide whether `@mickyballadelli/prism` supplies the full design system or only visual primitives: Prism supplies the full frontend design system; Echo owns product composition only.
+- [x] Decide public post length and media limits: 280-character short posts, 20,000-character long posts, and bounded image uploads.
+- [x] Decide feed ranking and pagination behavior: chronological cursor feeds, engagement-ranked popular posts, and scored channel discovery.
+- [x] Decide whether channels are public, private, or both: both, with invite/member access for private channels.
+- [x] Decide whether notes are private, shared, or convertible to posts: private by default, explicitly shared, and publishable when within short-post limits.
+- [x] Decide one-to-one and group chat limits: one-to-one direct chats and groups capped at 20 invited people plus owner.
+- [x] Decide notification retention and delivery rules: 90-day in-app/realtime retention with preference-aware email later.
+- [x] Decide moderation roles and content policy: user/moderator/admin roles, queued reports, audited staff actions, and appeals.
+- [x] Decide upload storage provider and file scanning rules: data-URL prototype now; private S3/R2-compatible storage and scanning in production.
 
 ## Definition of done for first release
 

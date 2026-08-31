@@ -4,11 +4,12 @@ Echo is a JavaScript social app. It will have posts, replies, likes, follows, ch
 
 ## Stack
 
-- Vite + Matrix frontend
+- Vite build + Matrix frontend runtime and renderer
 - Node.js + Express API
 - Socket.IO real-time layer
 - PostgreSQL data layer
-- `@mickyballadelli/prism` UI kit and `@mickyballadelli/matrix` reactive runtime
+- `@mickyballadelli/prism` is the only frontend UI/design system and `@mickyballadelli/matrix` is the only frontend runtime, renderer, state, and router
+- No React, Vue, Svelte, or other frontend UI/state/router framework
 - Server-local contracts for IDs, timestamps, pagination, and API responses
 
 ## Run it
@@ -67,6 +68,7 @@ Failure:
 ## Project map
 
 - `portal/` — Vite client
+- `portal/src/lib/vendor.js` — the single frontend import boundary for Matrix and Prism
 - `server/` — Express and Socket.IO server
 - `server/src/http/` — server-local API and validation contracts
 - `server/src/db/migrations/` — PostgreSQL schema migrations

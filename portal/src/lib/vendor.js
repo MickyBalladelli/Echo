@@ -1,11 +1,13 @@
-// Keep vendor-specific imports in one place while the product grows.
-export { computed, createRouter, html, mount, onMount, routerView, signal } from '@mickyballadelli/matrix'
+// Keep Matrix and Prism imports in one place. They are the only frontend runtime and UI system.
+export { computed, createRouter, html, mount, onMount, resource, routerView, signal } from '@mickyballadelli/matrix'
 export {
+  AutoComplete,
   Background,
   Badge,
   Button,
   Card,
   CheckBox,
+  DateTimePicker,
   EmptyState,
   Alert,
   Footer,
@@ -14,6 +16,7 @@ export {
   Label,
   Layout,
   Navigator,
+  Select,
   Separator,
   Stack,
   Tabs,
