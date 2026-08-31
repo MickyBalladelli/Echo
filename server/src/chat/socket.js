@@ -65,7 +65,7 @@ export function initializeChatSocket(socket) {
       return
     }
     try {
-      const message = await sendChannelChatMessage(userId, input.channelId, input.body)
+      const message = await sendChannelChatMessage(userId, input.channelId, input.body, input.attachments)
       acknowledge({ ok: true, message })
     } catch (error) {
       acknowledge({ ok: false, error: error.code || 'MESSAGE_SEND_FAILED', message: error.message })

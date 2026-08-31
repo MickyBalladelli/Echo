@@ -12,7 +12,10 @@ export function ChannelChatMessage({ message, currentUserId, compact = false, on
 
   async function copyMessage() {
     try {
-      await navigator.clipboard.writeText(message.body)
+      const copyText = [message.body, ...(message.attachments || []).map(attachment => attachment.name)]
+        .filter(Boolean)
+        .join('\n')
+      await navigator.clipboard.writeText(copyText)
       copied.value = true
       clearTimeout(copyTimer)
       copyTimer = setTimeout(() => copied.value = false, 1400)
@@ -24,6 +27,11 @@ export function ChannelChatMessage({ message, currentUserId, compact = false, on
   function toggleReaction(emoji) {
     selectedReaction.value = selectedReaction.value === emoji ? '' : emoji
     reactionPickerOpen.value = false
+  }
+
+  function openAttachment(event, attachment) {
+    event.preventDefault()
+    window.open(attachment.data, '_blank', 'noopener,noreferrer')
   }
 
   return (
@@ -45,7 +53,24 @@ export function ChannelChatMessage({ message, currentUserId, compact = false, on
             <time datetime={message.createdAt}>{formatClockTime(message.createdAt)}</time>
           </div>
         )}
-        <p>{message.body}</p>
+        {message.body && <p>{message.body}</p>}
+        {message.attachments?.length > 0 && (
+          <div class="channel-chat-message-attachments" aria-label="Message attachments">
+            {message.attachments.map(attachment => (
+              <a
+                key={`${attachment.name}-${attachment.size}`}
+                class="channel-chat-message-attachment"
+                href="#"
+                title={`Open ${attachment.name}`}
+                aria-label={`Open ${attachment.name}`}
+                onClick={event => openAttachment(event, attachment)}
+              >
+                <span class="channel-chat-attachment-icon" aria-hidden="true">📎︎</span>
+                <span>{attachment.name}</span>
+              </a>
+            ))}
+          </div>
+        )}
         {message.updatedAt !== message.createdAt && <small class="channel-chat-message-edited">(edited)</small>}
         {selectedReaction.value && (
           <div class="channel-chat-message-reactions">

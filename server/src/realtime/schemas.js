@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { channelChatAttachmentSchema } from '../channels/chat-schemas.js'
 
 const uuid = z.string().uuid()
 
@@ -14,7 +15,12 @@ export const chatMessageEventSchema = z.object({
 
 export const channelChatMessageEventSchema = z.object({
   channelId: uuid,
-  body: z.string().trim().min(1).max(4000)
+  body: z.string().trim().max(4000).default(''),
+  attachments: z.array(channelChatAttachmentSchema).max(3).default([])
+}).superRefine((value, context) => {
+  if (!value.body && !value.attachments.length) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ['body'], message: 'Message or attachment is required' })
+  }
 })
 
 export const typingEventSchema = z.object({

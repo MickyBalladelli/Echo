@@ -6,6 +6,11 @@ import { inspectContent } from '../moderation/signals.js'
 import { publishRealtimeEvent } from '../realtime/events.js'
 import { roomName } from '../realtime/rooms.js'
 
+const maxAttachmentBytes = 1024 * 1024
+const maxAttachmentCount = 3
+const maxAttachmentTotalBytes = 1024 * 1024
+const attachmentDataPattern = /^data:([^;,]+);base64,([A-Za-z0-9+/]*={0,2})$/
+
 async function requireMember(userId, channelId, transaction) {
   const rows = await sequelize.query(`
     SELECT channel.id, channel.slug, member.role
@@ -20,10 +25,15 @@ async function requireMember(userId, channelId, transaction) {
 }
 
 function mapMessage(row) {
+  const attachments = Array.isArray(row.attachments)
+    ? row.attachments
+    : typeof row.attachments === 'string' ? JSON.parse(row.attachments) : []
+
   return {
     id: row.id,
     channelId: row.channel_id,
     body: row.body,
+    attachments,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     deletedAt: row.deleted_at,
@@ -34,6 +44,36 @@ function mapMessage(row) {
       avatarUrl: row.avatar_url || null
     }
   }
+}
+
+function normalizeAttachments(attachments = []) {
+  if (!Array.isArray(attachments) || attachments.length > maxAttachmentCount) {
+    throw new HttpError(400, 'INVALID_ATTACHMENTS', 'Too many attachments')
+  }
+
+  let totalBytes = 0
+  return attachments.map(attachment => {
+    const match = attachmentDataPattern.exec(attachment.data)
+    if (!match) throw new HttpError(400, 'INVALID_ATTACHMENT', 'Attachment data is invalid')
+
+    const data = Buffer.from(match[2], 'base64')
+    const size = data.byteLength
+    if (size !== attachment.size || size > maxAttachmentBytes) {
+      throw new HttpError(400, 'INVALID_ATTACHMENT', 'Attachment size is invalid')
+    }
+
+    totalBytes += size
+    if (totalBytes > maxAttachmentTotalBytes) {
+      throw new HttpError(400, 'ATTACHMENTS_TOO_LARGE', 'Attachments are too large')
+    }
+
+    return {
+      name: attachment.name.replace(/[\\/]/g, '_'),
+      type: attachment.type,
+      size,
+      data: attachment.data
+    }
+  })
 }
 
 export async function listChannelChatMessages(userId, channelId, { cursor, limit }) {
@@ -69,16 +109,27 @@ export async function listChannelChatMessages(userId, channelId, { cursor, limit
   }
 }
 
-export async function sendChannelChatMessage(userId, channelId, body) {
+export async function sendChannelChatMessage(userId, channelId, body, attachments = []) {
+  const normalizedAttachments = normalizeAttachments(attachments)
+  if (!String(body || '').trim() && !normalizedAttachments.length) {
+    throw new HttpError(400, 'EMPTY_MESSAGE', 'Message or attachment is required')
+  }
+
   const message = await withTransaction(async transaction => {
     await requireMember(userId, channelId, transaction)
     const signal = await inspectContent({ userId, action: 'channel_message', body, transaction })
     const rows = await sequelize.query(`
-      INSERT INTO channel_chat_messages (channel_id, sender_id, body, moderation_status)
-      VALUES (:channelId, :userId, :body, :moderationStatus)
+      INSERT INTO channel_chat_messages (channel_id, sender_id, body, attachments, moderation_status)
+      VALUES (:channelId, :userId, :body, CAST(:attachments AS JSONB), :moderationStatus)
       RETURNING id
     `, {
-      replacements: { channelId, userId, body, moderationStatus: signal.flagged ? 'flagged' : 'active' },
+      replacements: {
+        channelId,
+        userId,
+        body: String(body || '').trim(),
+        attachments: JSON.stringify(normalizedAttachments),
+        moderationStatus: signal.flagged ? 'flagged' : 'active'
+      },
       type: QueryTypes.SELECT,
       transaction
     })

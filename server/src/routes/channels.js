@@ -90,7 +90,7 @@ channelsRouter.post('/:slug/chat', abuseRateLimit('message'), async (request, re
     const slug = parse(channelSlugSchema, request.params.slug, 'channel slug')
     const input = parse(channelChatMessageSchema, request.body, 'channel chat message')
     const channel = await getChannel(request.auth.userId, slug)
-    response.status(201).json(ok({ message: await sendChannelChatMessage(request.auth.userId, channel.id, input.body) }))
+    response.status(201).json(ok({ message: await sendChannelChatMessage(request.auth.userId, channel.id, input.body, input.attachments) }))
   } catch (error) {
     next(error)
   }
