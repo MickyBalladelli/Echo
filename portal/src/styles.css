@@ -2796,6 +2796,10 @@ img {
   padding-bottom: 3px;
 }
 
+.channel-chat-message-compact .channel-chat-message-avatar-spacer {
+  height: 0;
+}
+
 .channel-chat-message-avatar,
 .channel-chat-message-avatar-spacer {
   width: 56px;

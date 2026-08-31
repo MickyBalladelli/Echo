@@ -223,7 +223,7 @@ export function ChannelChat({ slug, channel, currentUserId }) {
     return <Card class="channel-chat-card">
       <KeyboardList label="Channel chat messages" className="channel-chat-list">
         {messages.value.length
-          ? <VirtualList items={messages} estimateSize={72} label="Channel chat history" renderItem={renderMessage} />
+          ? <VirtualList items={messages} estimateSize={72} threshold={100} label="Channel chat history" renderItem={renderMessage} />
           : <div class="channel-chat-empty"><EmptyState title="No messages yet" description="Start the conversation." /></div>}
       </KeyboardList>
       <form class="channel-chat-compose" onSubmit={send}>
