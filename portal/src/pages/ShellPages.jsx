@@ -4,6 +4,7 @@ import { ExploreContent } from '../components/ExploreContent.jsx'
 import { NotificationCenter } from '../components/NotificationCenter.jsx'
 import { NotificationPreferences } from '../components/NotificationPreferences.jsx'
 import { ChannelDirectory } from '../components/ChannelDirectory.jsx'
+import { ChannelCreateDialog } from '../components/ChannelCreateDialog.jsx'
 import { NotesWorkspace } from '../components/NotesWorkspace.jsx'
 import { ChatWorkspace } from '../components/ChatWorkspace.jsx'
 import { AdvancedSettings } from '../components/AdvancedSettings.jsx'
@@ -66,6 +67,7 @@ export function ChannelsPage({ router }) {
       eyebrow="COMMUNITIES / CHANNELS"
       title="Channels"
       description="Chat rooms for focused conversations."
+      headerActions={<ChannelCreateDialog router={router} />}
     >
       <ChannelDirectory router={router} />
     </PageFrame>

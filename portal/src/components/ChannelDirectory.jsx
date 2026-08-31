@@ -1,5 +1,5 @@
 import { computed, onMount, signal } from '../lib/vendor.js'
-import { Button, Card, CheckBox, EmptyState, FormField, Label, Select, TextField } from '../lib/vendor.js'
+import { Button, Card, EmptyState, Label } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 
 function channelInitial(channel) {
@@ -26,13 +26,6 @@ export function ChannelDirectory({ router }) {
   const state = signal('loading')
   const error = signal('')
   const loadingMore = signal(false)
-  const creating = signal(false)
-  const name = signal('')
-  const slug = signal('')
-  const description = signal('')
-  const imageUrl = signal('')
-  const rules = signal('')
-  const visibility = signal('public')
 
   async function load({ append = false } = {}) {
     if (append) loadingMore.value = true
@@ -49,31 +42,6 @@ export function ChannelDirectory({ router }) {
       state.value = 'error'
     } finally {
       loadingMore.value = false
-    }
-  }
-
-  async function create(event) {
-    event.preventDefault()
-    creating.value = true
-    error.value = ''
-    try {
-      const result = await apiRequest('/api/channels', {
-        method: 'POST',
-        body: JSON.stringify({
-          name: name.value,
-          ...(slug.value.trim() ? { slug: slug.value } : {}),
-          description: description.value,
-          imageUrl: imageUrl.value.trim() || null,
-          visibility: visibility.value,
-          rules: rules.value
-        })
-      })
-      window.dispatchEvent(new CustomEvent('echo:channels-changed'))
-      router.navigate(`/channels/${result.data.channel.slug}`)
-    } catch (requestError) {
-      error.value = requestError.message || 'Could not create channel'
-    } finally {
-      creating.value = false
     }
   }
 
@@ -134,45 +102,6 @@ export function ChannelDirectory({ router }) {
 
   return (
     <div class="channels-stack">
-      <section class="channel-management-section" aria-labelledby="create-channel-title">
-        <div class="channel-section-heading">
-          <Label size="small" tone="accent">MANAGE CHANNELS</Label>
-          <h2 id="create-channel-title">Create a channel</h2>
-          <p>Set up a space first. You can invite people later, or leave it public so anyone can join.</p>
-        </div>
-        <Card class="channel-create-card">
-          <form class="channel-form" onSubmit={create}>
-            <FormField id="channel-name" label="Name" required>
-              <TextField id="channel-name" value={name} minLength={2} maxLength={80} required />
-            </FormField>
-            <FormField id="channel-slug" label="Slug" hint="Optional. Lowercase words and hyphens.">
-              <TextField id="channel-slug" value={slug} maxLength={80} pattern="[a-z0-9]+(?:-[a-z0-9]+)*" />
-            </FormField>
-            <FormField id="channel-image" label="Image URL">
-              <TextField id="channel-image" value={imageUrl} type="url" maxLength={2000} placeholder="https://…" />
-            </FormField>
-            <FormField id="channel-description" label="Description">
-              <textarea id="channel-description" class="post-composer-input" use:bind={description} maxlength="280" rows="3" />
-            </FormField>
-            <FormField id="channel-rules" label="Rules" hint="One rule per line. Up to 2,000 characters.">
-              <textarea id="channel-rules" class="post-composer-input" use:bind={rules} maxlength="2000" rows="4" />
-            </FormField>
-            <FormField id="channel-visibility" label="Visibility" hint="Public channels are discoverable and need no invites.">
-              <Select
-                id="channel-visibility"
-                value={visibility}
-                ariaLabel="Channel visibility"
-                options={[
-                  { value: 'public', label: 'Public — anyone can join' },
-                  { value: 'private', label: 'Private — invite only' }
-                ]}
-              />
-            </FormField>
-            <Button type="submit" loading={creating}>Create channel</Button>
-          </form>
-          <div class="post-feed-error" role="alert">{error}</div>
-        </Card>
-      </section>
       {list}
       {pagination}
     </div>
