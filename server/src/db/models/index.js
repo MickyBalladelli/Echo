@@ -47,6 +47,19 @@ export const Profile = sequelize.define('Profile', {
   ...timestamps
 })
 
+export const UserBadge = sequelize.define('UserBadge', {
+  userId: { type: DataTypes.UUID, allowNull: false, primaryKey: true, field: 'user_id' },
+  badgeType: { type: DataTypes.STRING(16), allowNull: false, primaryKey: true, field: 'badge_type' },
+  grantedBy: { type: DataTypes.UUID, field: 'granted_by' },
+  revokedAt: { type: DataTypes.DATE, field: 'revoked_at' }
+}, {
+  tableName: 'user_badges',
+  timestamps: true,
+  createdAt: 'createdAt',
+  updatedAt: false,
+  underscored: true
+})
+
 export const Session = sequelize.define('Session', {
   id: { ...uuid, primaryKey: true },
   userId: { type: DataTypes.UUID, allowNull: false, field: 'user_id' },
@@ -286,6 +299,8 @@ export const ChatReadState = sequelize.define('ChatReadState', {
 
 User.hasOne(Profile, { as: 'profile', foreignKey: 'userId' })
 Profile.belongsTo(User, { as: 'user', foreignKey: 'userId' })
+User.hasMany(UserBadge, { as: 'badges', foreignKey: 'userId' })
+UserBadge.belongsTo(User, { as: 'user', foreignKey: 'userId' })
 User.hasMany(Session, { as: 'sessions', foreignKey: 'userId' })
 Session.belongsTo(User, { as: 'user', foreignKey: 'userId' })
 
@@ -360,6 +375,7 @@ ChatReadState.belongsTo(ChatMessage, { as: 'lastReadMessage', foreignKey: 'lastR
 export const models = Object.freeze({
   User,
   Profile,
+  UserBadge,
   Session,
   Channel,
   ChannelMember,

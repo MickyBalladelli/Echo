@@ -3,6 +3,7 @@ import { Button, Card, EmptyState, Label } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { FollowButton } from './FollowButton.jsx'
 import { ProfileRelationshipControls } from './ProfileRelationshipControls.jsx'
+import { UserBadges } from './UserBadges.jsx'
 import { PostCard } from './PostCard.jsx'
 import { UserList } from './UserList.jsx'
 
@@ -105,6 +106,7 @@ export function UserSocialContent({ username, router, currentUserId, showIdentit
             </div>
             <div class="profile-copy">
               <Label size="large">{user.value.profile.displayName}</Label>
+              <UserBadges badges={user.value.badges} />
               <span class="profile-handle">@{user.value.username}</span>
               <p>{user.value.profile.bio || 'No bio yet.'}</p>
               <span class="profile-joined">Joined {formatJoinDate(user.value.createdAt)}</span>

@@ -18,7 +18,8 @@ function publicUser(row) {
       profileVisibility: row.profile_visibility || 'public',
       showFollowers: row.show_followers !== false,
       showFollowing: row.show_following !== false
-    }
+    },
+    badges: row.badges || []
   }
 }
 
@@ -37,7 +38,12 @@ async function findUserByIdentifier(identifier, transaction) {
       p.banner_url,
       p.profile_visibility,
       p.show_followers,
-      p.show_following
+      p.show_following,
+      COALESCE((
+        SELECT jsonb_agg(badge.badge_type ORDER BY CASE badge.badge_type WHEN 'staff' THEN 0 ELSE 1 END)
+        FROM user_badges badge
+        WHERE badge.user_id = u.id AND badge.revoked_at IS NULL
+      ), '[]'::JSONB) AS badges
     FROM users u
     LEFT JOIN profiles p ON p.user_id = u.id
     WHERE (LOWER(u.username) = LOWER(:identifier) OR LOWER(u.email) = LOWER(:identifier))

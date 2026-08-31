@@ -927,6 +927,13 @@ textarea {
   min-width: 0;
 }
 
+.user-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+
 .post-author-link {
   color: inherit;
   text-decoration: none;

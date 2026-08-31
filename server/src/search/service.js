@@ -11,7 +11,8 @@ function mapUser(row) {
     profile: {
       displayName: row.display_name || row.username,
       bio: row.bio || '',
-      avatarUrl: row.avatar_url || null
+      avatarUrl: row.avatar_url || null,
+      badges: row.badges || []
     },
     mutualCount: Number(row.mutual_count || 0)
   }
@@ -49,6 +50,11 @@ async function searchUsers(viewerId, query, { cursor, limit }) {
   const replacements = { pattern: `%${query}%`, viewerId }
   const rows = await sequelize.query(`
     SELECT u.id, u.username, u.created_at, p.display_name, p.bio, p.avatar_url,
+      COALESCE((
+        SELECT jsonb_agg(badge.badge_type ORDER BY CASE badge.badge_type WHEN 'staff' THEN 0 ELSE 1 END)
+        FROM user_badges badge
+        WHERE badge.user_id = u.id AND badge.revoked_at IS NULL
+      ), '[]'::JSONB) AS badges,
       (
         SELECT COUNT(DISTINCT viewer_follow.following_id)::INTEGER
         FROM follows viewer_follow

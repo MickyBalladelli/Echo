@@ -1,6 +1,7 @@
 import { computed, signal } from '../lib/vendor.js'
 import { Button, Card, Label } from '../lib/vendor.js'
 import { ProfileEditor } from './ProfileEditor.jsx'
+import { UserBadges } from './UserBadges.jsx'
 
 function formatJoinDate(value) {
   const date = new Date(value)
@@ -35,6 +36,7 @@ export function ProfileCard({ user, onLogout, onUpdated }) {
       </div>
       <div class="profile-copy">
         <Label size="large">{profile.displayName || user.username}</Label>
+        <UserBadges badges={user.badges} />
         <span class="profile-handle">@{user.username}</span>
         <p>{profile.bio || 'No bio yet.'}</p>
         <span class="profile-joined">Joined {formatJoinDate(user.createdAt)}</span>

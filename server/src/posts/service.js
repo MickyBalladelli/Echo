@@ -70,6 +70,11 @@ const postSelect = (extraSelect = '') => `
     p.link_preview,
     u.username,
     pr.display_name,
+    COALESCE((
+      SELECT jsonb_agg(post_badge.badge_type ORDER BY CASE post_badge.badge_type WHEN 'staff' THEN 0 ELSE 1 END)
+      FROM user_badges post_badge
+      WHERE post_badge.user_id = p.author_id AND post_badge.revoked_at IS NULL
+    ), '[]'::JSONB) AS author_badges,
     pr.avatar_url,
     COUNT(DISTINCT pl.user_id)::INTEGER AS like_count,
     COUNT(DISTINCT reply.id)::INTEGER AS reply_count,
@@ -97,7 +102,12 @@ const postSelect = (extraSelect = '') => `
           'id', source.author_id,
           'username', source_user.username,
           'displayName', COALESCE(source_profile.display_name, source_user.username),
-          'avatarUrl', source_profile.avatar_url
+          'avatarUrl', source_profile.avatar_url,
+          'badges', COALESCE((
+            SELECT jsonb_agg(source_badge.badge_type ORDER BY CASE source_badge.badge_type WHEN 'staff' THEN 0 ELSE 1 END)
+            FROM user_badges source_badge
+            WHERE source_badge.user_id = source.author_id AND source_badge.revoked_at IS NULL
+          ), '[]'::JSONB)
         )
       )
       FROM posts source
@@ -126,7 +136,8 @@ function mapPost(row) {
       id: row.author_id,
       username: row.username,
       displayName: row.display_name || row.username,
-      avatarUrl: row.avatar_url || null
+      avatarUrl: row.avatar_url || null,
+      badges: row.author_badges || []
     },
     parentPostId: row.parent_post_id,
     repostOfPostId: row.repost_of_post_id,

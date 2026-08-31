@@ -3,6 +3,7 @@ import { Button, Card, EmptyState, FormField, Label, Tabs, TextField } from '../
 import { apiRequest } from '../lib/api.js'
 import { PostCard } from './PostCard.jsx'
 import { SuggestedUsers } from './SuggestedUsers.jsx'
+import { UserBadges } from './UserBadges.jsx'
 
 const searchTypes = Object.freeze([
   { id: 'users', label: 'People' },
@@ -158,6 +159,7 @@ export function ExploreContent({ router, currentUserId }) {
                 : <span class="social-user-avatar" aria-hidden="true">{userInitial(item)}</span>}
               <div>
                 <Label size="large">{item.profile.displayName}</Label>
+                <UserBadges badges={item.badges} />
                 <p class="search-result-handle">@{item.username}</p>
                 <p>{item.profile.bio || 'No bio yet.'}</p>
                 {item.mutualCount > 0 && <p class="search-result-mutual">{item.mutualCount} mutual follows</p>}

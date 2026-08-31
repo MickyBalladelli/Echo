@@ -18,7 +18,8 @@ function mapUser(row) {
       pinnedPostId: row.pinned_post_id || null,
       profileVisibility: row.profile_visibility || 'public',
       showFollowers: row.show_followers !== false,
-      showFollowing: row.show_following !== false
+      showFollowing: row.show_following !== false,
+      badges: row.badges || []
     },
     mutualCount: Number(row.mutual_count || 0),
     mutual: Boolean(row.mutual)
@@ -28,7 +29,12 @@ function mapUser(row) {
 async function findPublicUser(identifier, transaction) {
   const rows = await sequelize.query(`
     SELECT u.id, u.username, u.created_at, p.display_name, p.bio, p.avatar_url, p.banner_url,
-      p.pinned_post_id, p.profile_visibility, p.show_followers, p.show_following
+      p.pinned_post_id, p.profile_visibility, p.show_followers, p.show_following,
+      COALESCE((
+        SELECT jsonb_agg(badge.badge_type ORDER BY CASE badge.badge_type WHEN 'staff' THEN 0 ELSE 1 END)
+        FROM user_badges badge
+        WHERE badge.user_id = u.id AND badge.revoked_at IS NULL
+      ), '[]'::JSONB) AS badges
     FROM users u
     LEFT JOIN profiles p ON p.user_id = u.id
     WHERE ${identifier.id ? 'u.id = :id' : 'LOWER(u.username) = LOWER(:username)'}
@@ -93,7 +99,8 @@ export async function getPublicProfile(viewerId, username) {
       ...user,
       bio: isPrivate ? '' : user.bio,
       avatar_url: isBlocked ? null : user.avatar_url,
-      banner_url: isPrivate ? null : user.banner_url
+      banner_url: isPrivate ? null : user.banner_url,
+      badges: isBlocked ? [] : user.badges
     }),
     followerCount: isPrivate ? 0 : Number(counts.follower_count),
     followingCount: isPrivate ? 0 : Number(counts.following_count),

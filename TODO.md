@@ -214,7 +214,7 @@ learn and use components in Prism for all your UI
 
 - [x] Add avatar and banner uploads.
 - [x] Add profile privacy settings.
-- [ ] Add verified or staff badge model if needed.
+- [x] Add verified or staff badge model if needed.
 - [x] Add block, mute, and restrict users.
 - [x] Hide blocked-user content from feeds, search, channels, chat, and notifications.
 - [x] Add suggested users to follow.

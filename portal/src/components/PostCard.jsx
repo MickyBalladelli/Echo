@@ -1,6 +1,7 @@
 import { computed, signal } from '../lib/vendor.js'
 import { Badge, Button, Card, Label } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
+import { UserBadges } from './UserBadges.jsx'
 
 function formatPostTime(value) {
   const date = new Date(value)
@@ -269,6 +270,7 @@ export function PostCard({
           onClick={router.link(`/users/${post.author.username}`)}
         >
           <Label size="large">{post.author.displayName}</Label>
+          <UserBadges badges={post.author.badges} />
           <span>@{post.author.username}</span>
         </a>
         <div class="post-card-meta">
