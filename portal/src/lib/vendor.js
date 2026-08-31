@@ -26,6 +26,7 @@ export {
   Stack,
   Tabs,
   TextField,
+  Tooltip,
   TreeView,
   AlertIcon,
   ChatIcon,

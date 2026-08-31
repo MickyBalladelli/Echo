@@ -927,8 +927,17 @@ textarea {
   gap: 12px;
 }
 
-.channel-card-title-row p {
+.channel-card-description-tooltip {
+  display: block;
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.channel-card-description-tooltip p {
+  max-width: 100%;
   overflow: hidden;
   margin: 0;
   text-overflow: ellipsis;

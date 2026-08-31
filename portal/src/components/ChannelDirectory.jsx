@@ -1,5 +1,5 @@
 import { computed, onMount, signal } from '../lib/vendor.js'
-import { Card, EmptyState, Label } from '../lib/vendor.js'
+import { Card, EmptyState, Label, Tooltip } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { ChannelDiscoveryDialog } from './ChannelDiscoveryDialog.jsx'
 import { ChannelManagementDialog } from './ChannelManagementDialog.jsx'
@@ -65,7 +65,9 @@ export function ChannelDirectory({ router }) {
           <div class="channel-card-copy">
             <div class="channel-card-title-row">
               <a class="channel-card-title-link" href={`/channels/${channel.slug}`} onClick={router.link(`/channels/${channel.slug}`)}><Label size="large">{channel.name}</Label></a>
-              <p>{channel.description || 'No description yet.'}</p>
+              <Tooltip class="channel-card-description-tooltip" content={channel.description || 'No description yet.'} placement="top">
+                <p>{channel.description || 'No description yet.'}</p>
+              </Tooltip>
             </div>
             <div class="channel-card-description-row">
               <a class="channel-card-slug-link channel-slug" href={`/channels/${channel.slug}`} onClick={router.link(`/channels/${channel.slug}`)}>/{channel.slug}</a>
