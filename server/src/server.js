@@ -54,7 +54,7 @@ io.on('connection', async socket => {
   })
 })
 
-httpServer.listen(env.port, () => {
+httpServer.listen(env.port, '0.0.0.0', () => {
   logger.info({ port: env.port }, 'Echo API listening')
 })
 
