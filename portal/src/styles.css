@@ -931,12 +931,11 @@ textarea {
   display: block;
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .channel-card-description-tooltip p {
+  display: block;
+  width: 100%;
   max-width: 100%;
   overflow: hidden;
   margin: 0;
