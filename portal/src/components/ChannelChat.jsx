@@ -29,8 +29,26 @@ export function ChannelChat({ slug, channel, currentUserId }) {
   function scrollMessagesToBottom() {
     if (typeof requestAnimationFrame !== 'function') return
     requestAnimationFrame(() => {
-      const viewport = messageViewport()
-      if (viewport) viewport.scrollTop = viewport.scrollHeight
+      requestAnimationFrame(() => {
+        const viewport = messageViewport()
+        if (viewport) viewport.scrollTop = viewport.scrollHeight
+      })
+    })
+  }
+
+  function focusMessageInput() {
+    if (typeof requestAnimationFrame !== 'function') return
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.querySelector('.channel-chat-compose textarea')?.focus()
+      })
+    })
+  }
+
+  function sortMessages(items) {
+    return [...items].sort((left, right) => {
+      const timeDifference = new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
+      return timeDifference || left.id.localeCompare(right.id)
     })
   }
 
@@ -38,7 +56,7 @@ export function ChannelChat({ slug, channel, currentUserId }) {
     if (message.channelId !== readChannel().id || messages.value.some(item => item.id === message.id)) return
     const viewport = messageViewport()
     const shouldStickToBottom = !viewport || viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 120
-    messages.value = [...messages.value, message]
+    messages.value = sortMessages([...messages.value, message])
     if (shouldStickToBottom) scrollMessagesToBottom()
     if (message.sender.id !== currentUserId) markRead(message.id)
   }
@@ -126,7 +144,11 @@ export function ChannelChat({ slug, channel, currentUserId }) {
         ? result.data.filter(message => message?.id && message?.sender?.id)
         : []
       state.value = 'ready'
-      messages.value = nextMessages
+      const loadedIds = new Set(nextMessages.map(message => message.id))
+      messages.value = sortMessages([
+        ...nextMessages,
+        ...messages.value.filter(message => !loadedIds.has(message.id))
+      ])
       const latest = messages.value.at(-1)
       if (latest && latest.sender.id !== currentUserId) markRead(latest.id)
       scrollMessagesToBottom()
@@ -153,6 +175,7 @@ export function ChannelChat({ slug, channel, currentUserId }) {
         addMessage(response.message)
         body.value = ''
         attachments.value = []
+        scrollMessagesToBottom()
       } else if (response.error === 'SOCKET_DISCONNECTED') {
         try {
           const result = await apiRequest(`/api/channels/${encodeURIComponent(slug)}/chat`, {
@@ -161,6 +184,7 @@ export function ChannelChat({ slug, channel, currentUserId }) {
           addMessage(result.data.message)
           body.value = ''
           attachments.value = []
+          scrollMessagesToBottom()
         } catch (requestError) {
           error.value = requestError.message || 'Could not send channel message'
         }
@@ -168,6 +192,7 @@ export function ChannelChat({ slug, channel, currentUserId }) {
         error.value = response.message || 'Could not send channel message'
       }
       busy.value = false
+      focusMessageInput()
     })
   }
 
@@ -180,6 +205,7 @@ export function ChannelChat({ slug, channel, currentUserId }) {
     if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return
     event.preventDefault()
     event.currentTarget.form?.requestSubmit()
+    event.currentTarget.focus()
   }
 
   function renderMessage(message, index) {
