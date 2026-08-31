@@ -1,5 +1,6 @@
 import { createRouter, html, onMount, routerView } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
+import echoIconUrl from '../assets/icons/echo.png'
 import { Badge, Footer, Header, Label, Layout } from '../lib/vendor.js'
 import { ContextRail } from './ContextRail.jsx'
 import { ShellNavigation } from './ShellNavigation.jsx'
@@ -124,7 +125,7 @@ export function AppShell({
           class: 'echo-header',
           sticky: true,
           ariaLabel: 'Echo header',
-          children: html`<div class="echo-header-content"><Label size="large">Echo</Label><span>Small signals. Real people.</span></div>`,
+          children: html`<div class="echo-header-content"><img class="echo-header-icon" src="${echoIconUrl}" alt="" aria-hidden="true" /><div class="echo-header-copy"><Label size="large">ECHO</Label><span>Small signals. Real people.</span></div></div>`,
           trailing: Badge({ children: 'SIGNED IN', tone: 'success' })
         })}
         navigator={ShellNavigation({ router, user, unreadNotifications })}

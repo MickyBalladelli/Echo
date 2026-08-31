@@ -14,7 +14,7 @@ export function ContextRail({ user, apiStatus, socketStatus }) {
       <Card class="context-card">
         <Label size="small" tone="accent">YOUR SIGNAL</Label>
         <div class="context-user">
-          <UserAvatar user={user} size="medium" className="profile-avatar context-avatar" />
+          <UserAvatar user={user} size="medium" className="context-avatar" />
           <div>
             <strong>{user.profile?.displayName || user.username}</strong>
             <span>@{user.username}</span>

@@ -80,7 +80,7 @@ textarea {
 }
 
 .echo-layout .prism-layout-header .prism-header-bar {
-  padding-left: calc(232px + 1.2rem);
+  padding-left: 0;
 }
 
 .echo-layout .prism-layout-body {
@@ -127,8 +127,29 @@ textarea {
 
 .echo-header-content {
   display: flex;
-  align-items: baseline;
-  gap: 14px;
+  align-items: center;
+  gap: 10px;
+  margin-left: 20px;
+}
+
+.echo-header-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.echo-header-content .prism-label {
+  font-family: Montserrat, Avenir Next, Arial, sans-serif;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.echo-header-icon {
+  width: 30px;
+  height: 30px;
+  align-self: center;
+  object-fit: cover;
+  object-position: center;
 }
 
 .echo-header-content span {
@@ -1477,6 +1498,16 @@ textarea {
   font-size: 18px;
 }
 
+.prism-avatar.context-avatar {
+  background: var(--prism-color-accent);
+  color: var(--prism-color-text-inverse) !important;
+  font-weight: 800;
+}
+
+.context-user .prism-avatar.context-avatar > span {
+  color: var(--prism-color-text-inverse) !important;
+}
+
 .context-status-row {
   display: flex;
   align-items: center;
@@ -1897,7 +1928,7 @@ textarea {
   }
 
   .echo-layout .prism-layout-header .prism-header-bar {
-    padding-left: 1.2rem;
+    padding-left: 0;
   }
 
   .echo-layout .prism-layout-navigator {
