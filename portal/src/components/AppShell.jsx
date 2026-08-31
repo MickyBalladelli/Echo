@@ -1,7 +1,7 @@
 import { createRouter, html, onMount, routerView } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import echoIconUrl from '../assets/icons/echo.png'
-import { Badge, Footer, Header, Label, Layout } from '../lib/vendor.js'
+import { Badge, Header, Label, Layout } from '../lib/vendor.js'
 import { ContextRail } from './ContextRail.jsx'
 import { ShellNavigation } from './ShellNavigation.jsx'
 import { UserProfilePage } from '../pages/UserProfilePage.jsx'
@@ -129,10 +129,6 @@ export function AppShell({
           trailing: Badge({ children: 'SIGNED IN', tone: 'success' })
         })}
         navigator={ShellNavigation({ router, user, unreadNotifications })}
-        footer={Footer({
-          leading: 'Echo',
-          trailing: html`<span>Built for conversation</span>`
-        })}
       >
         <div class="app-content-grid">
           <main id="main-content" class="app-main" tabindex="-1">
