@@ -1,0 +1,8 @@
+node_modules
+portal/dist
+server/node_modules
+.git
+.env
+Trash
+backups
+*.log

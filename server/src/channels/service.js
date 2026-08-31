@@ -4,6 +4,7 @@ import { HttpError } from '../http/errors.js'
 import { encodeCursor } from '../http/pagination.js'
 import { notifyChannelInvite, notifyChannelJoin, notifyChannelPost } from '../notifications/service.js'
 import { getPostById, listPosts } from '../posts/service.js'
+import { cacheGet, cacheKey, cacheSet } from '../cache/memory.js'
 
 function mapChannel(row) {
   return {
@@ -92,6 +93,10 @@ async function getChannelRow(viewerId, slug, transaction, { requireMember = fals
 }
 
 export async function listChannels(viewerId, { cursor, limit }) {
+  const key = cacheKey('channels', { viewerId, cursor, limit })
+  const cached = cacheGet(key)
+  if (cached) return cached
+
   const where = [`c.deleted_at IS NULL`, `(
     c.visibility = 'public' OR viewer_membership.user_id IS NOT NULL OR EXISTS (
       SELECT 1 FROM channel_invites access_invite
@@ -125,10 +130,10 @@ export async function listChannels(viewerId, { cursor, limit }) {
   const hasMore = rows.length > limit
   const page = hasMore ? rows.slice(0, limit) : rows
   const last = page.at(-1)
-  return {
+  return cacheSet(key, {
     channels: page.map(mapChannel),
     nextCursor: hasMore && last ? encodeCursor({ createdAt: last.created_at, id: last.id, score: last.discovery_score }) : null
-  }
+  }, 15000)
 }
 
 export async function getChannel(viewerId, slug) {

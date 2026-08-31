@@ -250,23 +250,23 @@ learn and use components in Prism for all your UI
 
 ## P2 — Reliability, security, and operations
 
-- [ ] Add request validation at every write endpoint.
-- [ ] Add CSRF protection if cookie sessions are used.
-- [ ] Add secure CORS policy.
-- [ ] Add Helmet and secure HTTP headers.
-- [ ] Add Socket.IO event validation and per-event rate limits.
-- [ ] Add maximum payload sizes for HTTP and sockets.
-- [ ] Add database connection health check.
-- [ ] Add graceful shutdown for HTTP, Socket.IO, and PostgreSQL.
-- [ ] Add structured request and event logs.
-- [ ] Add error tracking integration point.
-- [ ] Add backup and restore procedure for PostgreSQL.
-- [ ] Add migration rollback guidance.
-- [ ] Add pagination limits and query timeouts.
-- [ ] Add cache strategy for hot feeds and channel lists.
-- [ ] Add job queue strategy for notifications and heavy work.
-- [ ] Add object storage strategy for uploads.
-- [ ] Add deployment configuration for frontend, backend, PostgreSQL, and Socket.IO.
+- [x] Add request validation at every write endpoint.
+- [x] Add CSRF protection if cookie sessions are used.
+- [x] Add secure CORS policy.
+- [x] Add Helmet and secure HTTP headers.
+- [x] Add Socket.IO event validation and per-event rate limits.
+- [x] Add maximum payload sizes for HTTP and sockets.
+- [x] Add database connection health check.
+- [x] Add graceful shutdown for HTTP, Socket.IO, and PostgreSQL.
+- [x] Add structured request and event logs.
+- [x] Add error tracking integration point.
+- [x] Add backup and restore procedure for PostgreSQL.
+- [x] Add migration rollback guidance.
+- [x] Add pagination limits and query timeouts.
+- [x] Add cache strategy for hot feeds and channel lists.
+- [x] Add job queue strategy for notifications and heavy work.
+- [x] Add object storage strategy for uploads.
+- [x] Add deployment configuration for frontend, backend, PostgreSQL, and Socket.IO.
 
 ## P2 — Performance and accessibility
 

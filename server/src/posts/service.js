@@ -4,6 +4,7 @@ import { HttpError } from '../http/errors.js'
 import { encodeCursor } from '../http/pagination.js'
 import { notifyChannelPost, notifyLike, notifyReply } from '../notifications/service.js'
 import { inspectContent } from '../moderation/signals.js'
+import { cacheGet, cacheKey, cacheSet } from '../cache/memory.js'
 
 export const MAX_REPLY_DEPTH = 3
 const MAX_THREAD_REPLIES = 500
@@ -379,13 +380,16 @@ export async function listPosts(viewerId, {
 }
 
 export async function listPopularPosts(viewerId, limit) {
-  return selectPosts({
+  const key = cacheKey('popular-posts', { viewerId, limit })
+  const cached = cacheGet(key)
+  if (cached) return cached
+  return cacheSet(key, await selectPosts({
     viewerId,
     where: `p.deleted_at IS NULL AND ${postVisibilityAccess('p')} AND ${channelAccess('p')}`,
     replacements: {},
     limit,
     orderBy: 'like_count DESC, reply_count DESC, p.created_at DESC, p.id DESC'
-  })
+  }), 5000)
 }
 
 async function listThreadReplies(viewerId, postId, transaction) {

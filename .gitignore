@@ -15,6 +15,7 @@ pnpm-debug.log*
 
 # Local database files
 *.sql.gz
+backups/
 
 # Recoverable local scratch files
 Trash/

@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-echo}
+      POSTGRES_USER: ${POSTGRES_USER:-echo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    volumes:
+      - echo-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  echo:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgres://${POSTGRES_USER:-echo}:${POSTGRES_PASSWORD:-change-me}@postgres:5432/${POSTGRES_DB:-echo}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:3000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DB_QUERY_TIMEOUT_MS: ${DB_QUERY_TIMEOUT_MS:-5000}
+      DB_CONNECTION_TIMEOUT_MS: ${DB_CONNECTION_TIMEOUT_MS:-5000}
+      MAX_JSON_BODY_BYTES: ${MAX_JSON_BODY_BYTES:-2097152}
+      MAX_SOCKET_BUFFER_BYTES: ${MAX_SOCKET_BUFFER_BYTES:-2097152}
+    command: sh -c "npm run db:migrate --workspace server && npm run start --workspace server"
+    ports:
+      - "${ECHO_PORT:-3000}:3000"
+
+volumes:
+  echo-postgres:

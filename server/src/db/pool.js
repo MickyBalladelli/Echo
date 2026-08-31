@@ -1,4 +1,5 @@
 import { Sequelize } from 'sequelize'
+import { QueryTypes } from 'sequelize'
 import { env } from '../config/env.js'
 import { logger } from '../config/logger.js'
 
@@ -8,6 +9,10 @@ export const sequelize = new Sequelize(env.databaseUrl, {
     ? (message, timing) => logger.debug({ message, timing }, 'Database query')
     : false,
   benchmark: true,
+  dialectOptions: {
+    statement_timeout: env.dbQueryTimeoutMs,
+    connectionTimeoutMillis: env.dbConnectionTimeoutMs
+  },
   pool: {
     max: 10,
     idle: 30000,
@@ -34,4 +39,9 @@ sequelize.afterDisconnect(_connection => {
 
 export function withTransaction(callback) {
   return sequelize.transaction(callback)
+}
+
+export async function checkDatabaseHealth() {
+  await sequelize.query('SELECT 1 AS healthy', { type: QueryTypes.SELECT })
+  return true
 }

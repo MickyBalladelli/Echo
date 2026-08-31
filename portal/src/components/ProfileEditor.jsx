@@ -1,7 +1,5 @@
 import { Button, CheckBox, FormField, TextField, signal } from '../lib/vendor.js'
-import { clientEnv } from '../config/env.js'
-
-const apiUrl = clientEnv.apiUrl.replace(/\/$/, '')
+import { apiRequest } from '../lib/api.js'
 
 function resizeImage(file, maxWidth, maxHeight) {
   return new Promise((resolve, reject) => {
@@ -59,10 +57,8 @@ export function ProfileEditor({ user, onSaved, onCancel }) {
     busy.value = true
 
     try {
-      const response = await fetch(`${apiUrl}/api/me/profile`, {
+      const result = await apiRequest('/api/me/profile', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           displayName: displayName.value,
           bio: bio.value,
@@ -73,16 +69,9 @@ export function ProfileEditor({ user, onSaved, onCancel }) {
           showFollowing: showFollowing.value
         })
       })
-      const result = await response.json()
-
-      if (!response.ok || !result.ok) {
-        error.value = result.error?.message || 'Could not save profile'
-        return
-      }
-
       onSaved(result.data.user)
-    } catch {
-      error.value = 'Server unavailable. Try again.'
+    } catch (saveError) {
+      error.value = saveError.message || 'Could not save profile'
     } finally {
       busy.value = false
     }

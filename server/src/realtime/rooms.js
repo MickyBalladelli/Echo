@@ -1,5 +1,8 @@
 import { QueryTypes } from 'sequelize'
 import { sequelize } from '../db/pool.js'
+import { logger } from '../config/logger.js'
+import { allowSocketEvent } from './rate-limit.js'
+import { parseSocketEvent, roomEventSchema } from './schemas.js'
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const roomKinds = new Set(['channel', 'post', 'conversation'])
@@ -135,9 +138,13 @@ export async function initializeSocketRooms(socket) {
   socket.data.automaticRooms = new Set(await joinMembershipRooms(socket, userId))
 
   socket.on('room:join', async (request = {}, acknowledge = () => {}) => {
-    const kind = String(request.kind || '')
-    const id = String(request.id || '')
-    if (!roomKinds.has(kind) || !uuidPattern.test(id)) {
+    const limit = allowSocketEvent(socket, 'room:join')
+    if (!limit.allowed) {
+      acknowledge({ ok: false, error: 'RATE_LIMITED', retryAfterSeconds: limit.retryAfterSeconds })
+      return
+    }
+    const input = parseSocketEvent(roomEventSchema, request)
+    if (!input || !roomKinds.has(input.kind) || !uuidPattern.test(input.id)) {
       acknowledge({ ok: false, error: 'INVALID_ROOM' })
       return
     }
@@ -146,13 +153,14 @@ export async function initializeSocketRooms(socket) {
       return
     }
     try {
-      if (!await canJoin(userId, kind, id)) {
+      if (!await canJoin(userId, input.kind, input.id)) {
         acknowledge({ ok: false, error: 'ROOM_ACCESS_DENIED' })
         return
       }
-      const room = roomName(kind, id)
+      const room = roomName(input.kind, input.id)
       await socket.join(room)
       socket.data.explicitRooms.add(room)
+      logger.info({ socketId: socket.id, userId, room }, 'Socket room joined')
       acknowledge({ ok: true, room })
     } catch {
       acknowledge({ ok: false, error: 'ROOM_JOIN_FAILED' })
@@ -160,15 +168,20 @@ export async function initializeSocketRooms(socket) {
   })
 
   socket.on('room:leave', async (request = {}, acknowledge = () => {}) => {
-    const kind = String(request.kind || '')
-    const id = String(request.id || '')
-    if (!roomKinds.has(kind) || !uuidPattern.test(id)) {
+    const limit = allowSocketEvent(socket, 'room:leave')
+    if (!limit.allowed) {
+      acknowledge({ ok: false, error: 'RATE_LIMITED', retryAfterSeconds: limit.retryAfterSeconds })
+      return
+    }
+    const input = parseSocketEvent(roomEventSchema, request)
+    if (!input || !roomKinds.has(input.kind) || !uuidPattern.test(input.id)) {
       acknowledge({ ok: false, error: 'INVALID_ROOM' })
       return
     }
-    const room = roomName(kind, id)
+    const room = roomName(input.kind, input.id)
     if (!socket.data.automaticRooms.has(room)) await socket.leave(room)
     socket.data.explicitRooms.delete(room)
+    logger.info({ socketId: socket.id, userId, room }, 'Socket room left')
     acknowledge({ ok: true, room })
   })
 

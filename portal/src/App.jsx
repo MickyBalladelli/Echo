@@ -2,6 +2,7 @@ import { io } from 'socket.io-client'
 import { clientEnv } from './config/env.js'
 import { AuthPanel } from './components/AuthPanel.jsx'
 import { AppShell } from './components/AppShell.jsx'
+import { apiRequest } from './lib/api.js'
 import { acceptRealtimeEvent, configureRealtimeSocket } from './lib/realtime.js'
 import {
   Background,
@@ -150,10 +151,7 @@ export function App() {
   })
 
   async function logout() {
-    await fetch(`${apiUrl}/api/auth/logout`, {
-      method: 'POST',
-      credentials: 'include'
-    })
+    await apiRequest('/api/auth/logout', { method: 'POST' })
     window.location.reload()
   }
 

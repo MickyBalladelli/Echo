@@ -1,5 +1,14 @@
 import { getConversation, markConversationRead, sendMessage } from './service.js'
 import { realtimeEnvelope } from '../realtime/events.js'
+import { logger } from '../config/logger.js'
+import { allowSocketEvent } from '../realtime/rate-limit.js'
+import {
+  chatMessageEventSchema,
+  parseSocketEvent,
+  presenceListEventSchema,
+  readEventSchema,
+  typingEventSchema
+} from '../realtime/schemas.js'
 
 const onlineUsers = new Map()
 
@@ -23,14 +32,19 @@ export function initializeChatSocket(socket) {
   )
 
   socket.on('chat:message:send', async (request = {}, acknowledge = () => {}) => {
-    const conversationId = String(request.conversationId || '')
-    const body = String(request.body || '').trim()
-    if (!body || body.length > 4000) {
+    const limit = allowSocketEvent(socket, 'chat:message:send')
+    const input = parseSocketEvent(chatMessageEventSchema, request)
+    if (!limit.allowed) {
+      acknowledge({ ok: false, error: 'RATE_LIMITED', retryAfterSeconds: limit.retryAfterSeconds })
+      return
+    }
+    if (!input) {
       acknowledge({ ok: false, error: 'INVALID_MESSAGE' })
       return
     }
     try {
-      const message = await sendMessage(userId, conversationId, body)
+      const message = await sendMessage(userId, input.conversationId, input.body)
+      logger.info({ socketId: socket.id, userId, conversationId: input.conversationId, messageId: message.id }, 'Socket message sent')
       acknowledge({ ok: true, message })
     } catch (error) {
       acknowledge({ ok: false, error: error.code || 'MESSAGE_SEND_FAILED', message: error.message })
@@ -38,13 +52,22 @@ export function initializeChatSocket(socket) {
   })
 
   socket.on('chat:typing', async (request = {}, acknowledge = () => {}) => {
-    const conversationId = String(request.conversationId || '')
+    const limit = allowSocketEvent(socket, 'chat:typing')
+    const input = parseSocketEvent(typingEventSchema, request)
+    if (!limit.allowed) {
+      acknowledge({ ok: false, error: 'RATE_LIMITED', retryAfterSeconds: limit.retryAfterSeconds })
+      return
+    }
+    if (!input) {
+      acknowledge({ ok: false, error: 'INVALID_TYPING' })
+      return
+    }
     try {
-      await getConversation(userId, conversationId)
-      socket.to(`conversation:${conversationId}`).emit('chat:typing', realtimeEnvelope(
+      await getConversation(userId, input.conversationId)
+      socket.to(`conversation:${input.conversationId}`).emit('chat:typing', realtimeEnvelope(
         'chat:typing',
-        { conversationId, userId, typing: Boolean(request.typing) },
-        `typing:${conversationId}:${userId}:${Boolean(request.typing)}:${Date.now()}`
+        { conversationId: input.conversationId, userId, typing: input.typing },
+        `typing:${input.conversationId}:${userId}:${input.typing}:${Date.now()}`
       ))
       acknowledge({ ok: true })
     } catch (error) {
@@ -53,8 +76,18 @@ export function initializeChatSocket(socket) {
   })
 
   socket.on('chat:read', async (request = {}, acknowledge = () => {}) => {
+    const limit = allowSocketEvent(socket, 'chat:read')
+    const input = parseSocketEvent(readEventSchema, request)
+    if (!limit.allowed) {
+      acknowledge({ ok: false, error: 'RATE_LIMITED', retryAfterSeconds: limit.retryAfterSeconds })
+      return
+    }
+    if (!input) {
+      acknowledge({ ok: false, error: 'INVALID_READ' })
+      return
+    }
     try {
-      const receipt = await markConversationRead(userId, String(request.conversationId || ''), String(request.messageId || ''))
+      const receipt = await markConversationRead(userId, input.conversationId, input.messageId)
       acknowledge({ ok: true, receipt })
     } catch (error) {
       acknowledge({ ok: false, error: error.code || 'READ_FAILED' })
@@ -62,8 +95,17 @@ export function initializeChatSocket(socket) {
   })
 
   socket.on('chat:presence:list', (request = {}, acknowledge = () => {}) => {
-    const userIds = Array.isArray(request.userIds) ? request.userIds.slice(0, 100) : []
-    acknowledge({ ok: true, onlineUserIds: userIds.filter(id => onlineUsers.has(id)) })
+    const limit = allowSocketEvent(socket, 'chat:presence:list')
+    const input = parseSocketEvent(presenceListEventSchema, request)
+    if (!limit.allowed) {
+      acknowledge({ ok: false, error: 'RATE_LIMITED', retryAfterSeconds: limit.retryAfterSeconds })
+      return
+    }
+    if (!input) {
+      acknowledge({ ok: false, error: 'INVALID_PRESENCE_REQUEST' })
+      return
+    }
+    acknowledge({ ok: true, onlineUserIds: input.userIds.filter(id => onlineUsers.has(id)) })
   })
 
   socket.on('disconnecting', () => {

@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url'
+import { randomUUID } from 'node:crypto'
 import cors from 'cors'
 import express from 'express'
 import helmet from 'helmet'
@@ -6,6 +7,7 @@ import pinoHttp from 'pino-http'
 import { env } from './config/env.js'
 import { logger } from './config/logger.js'
 import { requireAuth } from './auth/middleware.js'
+import { csrfProtection, ensureCsrfCookie } from './auth/csrf.js'
 import { errorHandler, notFoundHandler } from './http/errors.js'
 import { authRouter } from './routes/auth.js'
 import { healthRouter } from './routes/health.js'
@@ -24,11 +26,30 @@ export function createApp() {
   const portalDist = fileURLToPath(new URL('../../portal/dist/', import.meta.url))
 
   app.disable('x-powered-by')
-  app.use(helmet())
-  app.use(cors({ origin: env.clientOrigin, credentials: true }))
-  app.use(express.json({ limit: '2mb' }))
+  app.use(helmet({ hsts: env.nodeEnv === 'production' }))
+  app.use(pinoHttp({
+    logger,
+    genReqId: request => {
+      const requestId = String(request.headers['x-request-id'] || '')
+      return /^[a-zA-Z0-9._-]{1,64}$/.test(requestId) ? requestId : randomUUID()
+    },
+    customProps: request => ({ userId: request.auth?.userId || undefined }),
+    customSuccessMessage: (request, response) => `${request.method} ${request.originalUrl} ${response.statusCode}`
+  }))
+  app.use(cors({
+    origin: (origin, callback) => callback(null, !origin || env.clientOrigins.includes(origin)),
+    credentials: true,
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'X-CSRF-Token', 'X-Request-Id']
+  }))
+  app.use((request, response, next) => {
+    response.setHeader('X-Request-Id', request.id)
+    next()
+  })
+  app.use(ensureCsrfCookie)
+  app.use(csrfProtection)
+  app.use(express.json({ limit: env.maxJsonBodyBytes }))
   app.use(express.urlencoded({ extended: false, limit: '20kb' }))
-  app.use(pinoHttp({ logger }))
 
   app.get('/api', (request, response) => {
     response.json({

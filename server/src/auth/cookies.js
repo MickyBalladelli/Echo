@@ -19,12 +19,16 @@ function parseCookies(header = '') {
   }, {})
 }
 
+export function cookieFromRequest(request, name) {
+  return parseCookies(request.headers.cookie)[name] || null
+}
+
 export function sessionTokenFromHeaders(headers = {}) {
   return parseCookies(headers.cookie)[sessionCookieName] || null
 }
 
 export function sessionTokenFromRequest(request) {
-  return sessionTokenFromHeaders(request.headers)
+  return cookieFromRequest(request, sessionCookieName)
 }
 
 function serializeSessionCookie(value, maxAge) {
@@ -44,9 +48,9 @@ function serializeSessionCookie(value, maxAge) {
 }
 
 export function setSessionCookie(response, token, maxAgeSeconds) {
-  response.setHeader('Set-Cookie', serializeSessionCookie(token, maxAgeSeconds))
+  response.append('Set-Cookie', serializeSessionCookie(token, maxAgeSeconds))
 }
 
 export function clearSessionCookie(response) {
-  response.setHeader('Set-Cookie', serializeSessionCookie('', 0))
+  response.append('Set-Cookie', serializeSessionCookie('', 0))
 }

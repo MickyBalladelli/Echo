@@ -36,6 +36,8 @@ npm start
 
 The server serves `portal/dist` in production and keeps `/api` for API routes.
 
+For container deployment and operational procedures, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) and [docs/OPERATIONS.md](docs/OPERATIONS.md).
+
 Database commands run from the project root. `db:migrate` applies versioned SQL files from `server/src/db/migrations`. `db:seed` adds repeatable local users, posts, a channel, a chat, and a notification.
 
 ## API response shape

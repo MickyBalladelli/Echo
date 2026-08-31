@@ -7,6 +7,7 @@ import { requireAuth } from '../auth/middleware.js'
 import { loginSchema, registerSchema } from '../auth/schemas.js'
 import { loginUser, registerUser } from '../auth/service.js'
 import { revokeSession } from '../auth/sessions.js'
+import { ensureCsrfToken } from '../auth/csrf.js'
 
 export const authRouter = Router()
 const registrationLimit = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 })
@@ -18,6 +19,10 @@ function requestInfo(request) {
     ipAddress: request.ip
   }
 }
+
+authRouter.get('/csrf', (request, response) => {
+  response.json(ok({ csrfToken: ensureCsrfToken(request, response) }))
+})
 
 authRouter.post('/register', registrationLimit, async (request, response, next) => {
   try {
