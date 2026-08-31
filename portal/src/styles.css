@@ -171,14 +171,14 @@ textarea {
 }
 
 .echo-layout-channel {
-  --echo-header-height: 5rem;
+  --echo-header-height: 3.7rem;
 }
 
 .echo-layout-channel .prism-layout-header .prism-header-bar {
-  align-items: flex-start;
+  align-items: center;
   height: var(--echo-header-height);
   min-height: var(--echo-header-height);
-  padding: 4px 1.2rem 4px 0;
+  padding: 0 1.2rem 0 0;
 }
 
 .echo-header-brand {
@@ -189,6 +189,7 @@ textarea {
 }
 
 .echo-channel-header-content {
+  align-items: center;
   gap: clamp(18px, 3vw, 40px);
 }
 
@@ -259,7 +260,7 @@ textarea {
 
 .echo-channel-header-details h1 {
   max-width: min(760px, 100%);
-  font-size: clamp(28px, 3vw, 42px);
+  font-size: clamp(28px, 3vw, 40px);
   line-height: .9;
 }
 
@@ -2270,7 +2271,7 @@ textarea {
   }
 
   .echo-layout-channel {
-    --echo-header-height: 7rem;
+    --echo-header-height: 6.5rem;
   }
 
   .echo-channel-header-content {
