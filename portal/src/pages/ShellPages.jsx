@@ -16,7 +16,7 @@ export function ExplorePage({ router, currentUserId }) {
     <PageFrame
       eyebrow="DISCOVER / EXPLORE"
       title="Explore"
-      description="Find people, posts, and channels worth your attention."
+      description="Find people, topics, and public posts for your timeline."
     >
       <ExploreContent router={router} currentUserId={currentUserId} />
     </PageFrame>
@@ -65,7 +65,7 @@ export function ChannelsPage({ router }) {
     <PageFrame
       eyebrow="COMMUNITIES / CHANNELS"
       title="Channels"
-      description="Browse focused spaces and join the conversations that fit."
+      description="Chat rooms for focused conversations."
     >
       <ChannelDirectory router={router} />
     </PageFrame>

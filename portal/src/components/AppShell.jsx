@@ -31,7 +31,7 @@ export function AppShell({
   onUpdated
 }) {
   const router = createRouter([
-    { path: '/', title: 'Home', view: () => HomePage({ router, currentUserId: userState.value.id }) },
+    { path: '/', title: 'Timeline', view: () => HomePage({ router, currentUserId: userState.value.id }) },
     {
       path: '/following',
       title: 'Following',

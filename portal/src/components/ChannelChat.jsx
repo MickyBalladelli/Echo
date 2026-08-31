@@ -1,4 +1,4 @@
-import { computed, onMount, signal } from '../lib/vendor.js'
+import { computed, effect, onMount, signal } from '../lib/vendor.js'
 import { Button, Card, EmptyState, Label } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { emitRealtime, onRealtimeEvent } from '../lib/realtime.js'
@@ -10,6 +10,7 @@ function messageText(message) {
 }
 
 export function ChannelChat({ slug, channel, currentUserId }) {
+  const readChannel = () => channel?.value ?? channel
   const messages = signal([])
   const body = signal('')
   const state = signal('loading')
@@ -17,7 +18,7 @@ export function ChannelChat({ slug, channel, currentUserId }) {
   const error = signal('')
 
   function addMessage(message) {
-    if (message.channelId !== channel.id || messages.value.some(item => item.id === message.id)) return
+    if (message.channelId !== readChannel().id || messages.value.some(item => item.id === message.id)) return
     messages.value = [...messages.value, message]
     if (message.sender.id !== currentUserId) markRead(message.id)
   }
@@ -27,7 +28,7 @@ export function ChannelChat({ slug, channel, currentUserId }) {
   }
 
   async function load() {
-    if (!channel.membershipRole) {
+    if (!readChannel().membershipRole) {
       state.value = 'ready'
       return
     }
@@ -49,7 +50,7 @@ export function ChannelChat({ slug, channel, currentUserId }) {
     if (!cleanBody || busy.value) return
     busy.value = true
     error.value = ''
-    emitRealtime('channel:chat:message:send', { channelId: channel.id, body: cleanBody }, async response => {
+    emitRealtime('channel:chat:message:send', { channelId: readChannel().id, body: cleanBody }, async response => {
       if (response.ok) {
         addMessage(response.message)
         body.value = ''
@@ -71,11 +72,11 @@ export function ChannelChat({ slug, channel, currentUserId }) {
   }
 
   const content = computed(() => {
-    if (!channel.membershipRole) return <Card><EmptyState title="Join to chat" description="Channel chat is available to members." /></Card>
+    if (!readChannel().membershipRole) return <Card><EmptyState title="Join to chat" description="Channel chat is available to members." /></Card>
     if (state.value === 'loading') return <Card><div role="status">Loading channel chat…</div></Card>
     if (state.value === 'error') return <Card><EmptyState status="error" title="Chat unavailable" description={error.value} /></Card>
     return <Card class="channel-chat-card">
-      <Label size="small" tone="accent">LIVE CHANNEL CHAT</Label>
+      <Label size="small" tone="accent">CHANNEL CHAT</Label>
       <KeyboardList label="Channel chat messages" className="channel-chat-list">
         <VirtualList items={messages} estimateSize={72} label="Channel chat history" renderItem={messageText} />
       </KeyboardList>
@@ -88,8 +89,22 @@ export function ChannelChat({ slug, channel, currentUserId }) {
   })
 
   onMount(() => {
+    let wasMember = Boolean(readChannel().membershipRole)
+    const stopMembershipEffect = effect(() => {
+      const isMember = Boolean(readChannel().membershipRole)
+      if (isMember && !wasMember) {
+        state.value = 'loading'
+        error.value = ''
+        load()
+      }
+      wasMember = isMember
+    })
     load()
-    return onRealtimeEvent('channel:chat:message', addMessage)
+    const stopRealtime = onRealtimeEvent('channel:chat:message', addMessage)
+    return () => {
+      stopMembershipEffect()
+      stopRealtime()
+    }
   })
 
   return content

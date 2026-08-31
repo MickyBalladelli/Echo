@@ -177,14 +177,7 @@ export async function listTrendingTopics(viewerId, { limit = 10 } = {}) {
         OR NOT EXISTS (SELECT 1 FROM profiles protected_profile WHERE protected_profile.user_id = post.author_id AND protected_profile.profile_visibility = 'followers')
         OR EXISTS (SELECT 1 FROM follows protected_follow WHERE protected_follow.follower_id = :viewerId AND protected_follow.following_id = post.author_id)
       )
-      AND (
-        post.channel_id IS NULL
-        OR EXISTS (
-          SELECT 1 FROM channels trend_channel
-          LEFT JOIN channel_members trend_member ON trend_member.channel_id = trend_channel.id AND trend_member.user_id = :viewerId AND trend_member.left_at IS NULL
-          WHERE trend_channel.id = post.channel_id AND (trend_channel.visibility = 'public' OR trend_member.user_id IS NOT NULL)
-        )
-      )
+      AND post.channel_id IS NULL
       AND NOT EXISTS (SELECT 1 FROM user_mutes trend_mute WHERE trend_mute.user_id = :viewerId AND trend_mute.muted_user_id = post.author_id)
       AND NOT EXISTS (
         SELECT 1 FROM user_blocks blocked

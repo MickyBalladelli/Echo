@@ -178,7 +178,7 @@ export function ExploreContent({ router, currentUserId }) {
                 <p class="search-result-handle">/{item.slug}</p>
                 <p>{item.description || 'No description yet.'}</p>
               </div>
-              <span>{item.memberCount} members · {item.postCount} posts</span>
+              <span>{item.memberCount} members</span>
               <a class="back-link" href={`/channels/${item.slug}`} onClick={router.link(`/channels/${item.slug}`)}>View channel →</a>
             </Card>
           ))}

@@ -84,8 +84,8 @@ export function FeedPage({ router, currentUserId, feed = 'home' }) {
       return (
         <Card class="route-card feed-status-card">
           <EmptyState
-            title={feed === 'following' ? 'Nothing from your circle yet' : 'Your feed is quiet'}
-            description={feed === 'following' ? 'Follow people to see their posts here.' : 'Write the first signal and start the conversation.'}
+            title={feed === 'following' ? 'Nothing from your circle yet' : 'Your timeline is quiet'}
+            description={feed === 'following' ? 'Follow people to see their posts here.' : 'Follow people or explore topics to fill your timeline.'}
           />
         </Card>
       )
@@ -124,11 +124,11 @@ export function FeedPage({ router, currentUserId, feed = 'home' }) {
 
   return (
     <PageFrame
-      eyebrow={feed === 'following' ? 'HOME / FOLLOWING' : 'HOME / DISCOVERY'}
-      title={feed === 'following' ? 'Following' : 'Home'}
+      eyebrow={feed === 'following' ? 'TIMELINE / FOLLOWING' : 'TIMELINE / FOR YOU'}
+      title={feed === 'following' ? 'Following' : 'Timeline'}
       description={feed === 'following'
-        ? 'Posts from you and people you follow.'
-        : 'A mixed discovery feed of public posts.'}
+        ? 'A timeline of posts from you and people you follow.'
+        : 'A timeline of posts from people and topics you may care about. Channels are for chat.'}
     >
       <PostComposer onCreated={addPost} />
       {feedContent}

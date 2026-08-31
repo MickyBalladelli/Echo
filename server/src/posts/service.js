@@ -337,6 +337,10 @@ export async function listPosts(viewerId, {
     postVisibilityAccess('p'),
     channelAccess('p')
   ]
+
+  if (!channelId) {
+    where.push('p.channel_id IS NULL')
+  }
   const replacements = {}
 
   if (feed === 'following') {
@@ -410,7 +414,7 @@ export async function listPopularPosts(viewerId, limit) {
   if (cached) return cached
   return cacheSet(key, await selectPosts({
     viewerId,
-    where: `p.deleted_at IS NULL AND ${postVisibilityAccess('p')} AND ${channelAccess('p')}`,
+    where: `p.deleted_at IS NULL AND p.channel_id IS NULL AND ${postVisibilityAccess('p')}`,
     replacements: {},
     limit,
     orderBy: 'like_count DESC, reply_count DESC, p.created_at DESC, p.id DESC',

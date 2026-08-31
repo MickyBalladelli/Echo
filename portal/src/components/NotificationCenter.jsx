@@ -15,7 +15,7 @@ function notificationText(notification) {
     follow: `${actor}${more} followed you`,
     channel_invite: `${actor}${more} invited you to a channel`,
     channel_join: `${actor}${more} joined your channel`,
-    channel_post: `${actor}${more} posted in your channel`,
+    channel_post: `${actor}${more} created activity in your channel`,
     chat_message: `${actor}${more} sent you a message`
   }
   return messages[notification.type] || `${actor} sent a notification`

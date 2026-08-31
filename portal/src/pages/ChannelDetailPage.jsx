@@ -1,21 +1,15 @@
 import { computed, onMount, signal } from '../lib/vendor.js'
-import { Button, Card, CheckBox, EmptyState, FormField, Label, TextField } from '../lib/vendor.js'
+import { Button, Card, CheckBox, EmptyState, FormField, Label, Popup, TextField } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
-import { PostCard } from '../components/PostCard.jsx'
-import { PostComposer } from '../components/PostComposer.jsx'
-import { ChannelPostModeration } from '../components/ChannelPostModeration.jsx'
 import { PageFrame } from './PageFrame.jsx'
 import { joinRealtimeRoom } from '../lib/realtime.js'
 import { ReportButton } from '../components/ReportButton.jsx'
 import { LiveRegion } from '../components/LiveRegion.jsx'
-import { KeyboardList } from '../components/KeyboardList.jsx'
-import { VirtualList } from '../components/VirtualList.jsx'
 import { ChannelChat } from '../components/ChannelChat.jsx'
 
 export function ChannelDetailPage({ slug, router, currentUserId }) {
   const channel = signal(null)
   const members = signal([])
-  const posts = signal([])
   const state = signal('loading')
   const error = signal('')
   const busy = signal(false)
@@ -24,28 +18,25 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
   const description = signal('')
   const imageUrl = signal('')
   const rules = signal('')
-  const postApprovalRequired = signal(false)
   const privateChannel = signal(false)
   const announcement = signal('')
+  const detailsOpen = signal(false)
 
   async function load() {
     state.value = 'loading'
     error.value = ''
     try {
       const encodedSlug = encodeURIComponent(slug)
-      const [channelResult, membersResult, postsResult] = await Promise.all([
+      const [channelResult, membersResult] = await Promise.all([
         apiRequest(`/api/channels/${encodedSlug}`),
-        apiRequest(`/api/channels/${encodedSlug}/members`),
-        apiRequest(`/api/channels/${encodedSlug}/posts?limit=50`)
+        apiRequest(`/api/channels/${encodedSlug}/members`)
       ])
       channel.value = channelResult.data.channel
       members.value = membersResult.data
-      posts.value = postsResult.data
       name.value = channel.value.name
       description.value = channel.value.description
       imageUrl.value = channel.value.imageUrl || ''
       rules.value = channel.value.rules || ''
-      postApprovalRequired.value = channel.value.postApprovalRequired
       privateChannel.value = channel.value.visibility === 'private'
       state.value = 'ready'
     } catch (requestError) {
@@ -74,6 +65,7 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
         method: joining ? 'PUT' : 'DELETE'
       })
       if (result.data.channel) channel.value = result.data.channel
+      window.dispatchEvent(new CustomEvent('echo:channels-changed'))
       announcement.value = joining ? 'Joined channel' : 'Left channel'
     } catch (requestError) {
       channel.value = previous
@@ -113,8 +105,7 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
           description: description.value,
           imageUrl: imageUrl.value.trim() || null,
           visibility: privateChannel.value ? 'private' : 'public',
-          rules: rules.value,
-          postApprovalRequired: postApprovalRequired.value
+          rules: rules.value
         })
       })
       channel.value = result.data.channel
@@ -159,142 +150,142 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
     }
   }
 
-  function addPost(post) {
-    posts.value = [post, ...posts.value]
-    if (post.moderationStatus === 'approved') {
-      channel.value = { ...channel.value, postCount: channel.value.postCount + 1 }
-    }
-  }
+  const headerActions = computed(() => {
+    if (state.value !== 'ready' || !channel.value) return null
 
-  function removePost(postId) {
-    const removedPost = posts.value.find(post => post.id === postId) || channel.value.pinnedPost
-    posts.value = posts.value.filter(post => post.id !== postId)
-    if (removedPost?.moderationStatus === 'approved') {
-      channel.value = { ...channel.value, postCount: Math.max(0, channel.value.postCount - 1) }
-    }
-    if (channel.value.pinnedPost?.id === postId) {
-      channel.value = { ...channel.value, pinnedPostId: null, pinnedPost: null }
-    }
-  }
-
-  function updatePost(updatedPost) {
-    const previousPost = posts.value.find(post => post.id === updatedPost.id)
-    posts.value = posts.value.map(post => post.id === updatedPost.id ? { ...post, ...updatedPost } : post)
-    if (previousPost?.moderationStatus !== 'approved' && updatedPost.moderationStatus === 'approved') {
-      channel.value = { ...channel.value, postCount: channel.value.postCount + 1 }
-    } else if (previousPost?.moderationStatus === 'approved' && updatedPost.moderationStatus !== 'approved') {
-      channel.value = { ...channel.value, postCount: Math.max(0, channel.value.postCount - 1) }
-    }
-    if (channel.value.pinnedPost?.id === updatedPost.id) {
-      channel.value = {
-        ...channel.value,
-        pinnedPostId: updatedPost.moderationStatus === 'approved' ? updatedPost.id : null,
-        pinnedPost: updatedPost.moderationStatus === 'approved' ? updatedPost : null
-      }
-    }
-  }
-
-  function updatePinned(updatedChannel) {
-    channel.value = updatedChannel
-  }
+    return (
+      <div class="channel-header-actions">
+        {!channel.value.isOwner && (
+          <Button
+            loading={busy}
+            variant={channel.value.membershipRole ? 'secondary' : 'primary'}
+            ariaLabel={computed(() => channel.value.membershipRole ? 'Leave this channel' : 'Join this channel')}
+            onClick={toggleMembership}
+          >
+            {channel.value.membershipRole ? 'Leave' : channel.value.invited ? 'Accept invite' : 'Join channel'}
+          </Button>
+        )}
+        <Button variant="tertiary" onClick={() => detailsOpen.value = true}>
+          {channel.value.isOwner ? 'Manage channel' : 'Channel details'}
+        </Button>
+      </div>
+    )
+  })
 
   const content = computed(() => {
     if (state.value === 'loading') return <Card><div role="status">Loading channel…</div></Card>
     if (state.value === 'error') return <Card><EmptyState status="error" title="Channel unavailable" description={error.value} /></Card>
-    return (
-      <div class="channel-detail-stack">
-        <Card class="channel-hero-card">
-          {channel.value.imageUrl
-            ? <img class="channel-hero-image" src={channel.value.imageUrl} alt="" loading="lazy" decoding="async" />
-            : <span class="channel-hero-placeholder" aria-hidden="true">{channel.value.name.slice(0, 1).toUpperCase()}</span>}
-          <div>
-            <Label size="large">{channel.value.name}</Label>
+
+    const membersCard = (
+      <Card class="channel-members-card">
+        <div class="channel-section-heading">
+          <Label size="small" tone="accent">MEMBERS</Label>
+          <h3>{channel.value.isOwner ? 'Manage members' : 'People in this channel'}</h3>
+          <p>{channel.value.isOwner ? 'Change member roles here. Inviting people is optional for public channels.' : `${channel.value.memberCount} people are part of this channel.`}</p>
+        </div>
+        <div class="channel-member-list">
+          {members.value.map(member => (
+            <div key={member.id} class="channel-member-row">
+              <a href={`/users/${member.username}`} onClick={router.link(`/users/${member.username}`)}>{member.displayName} <span>@{member.username}</span></a>
+              <span>{member.role}</span>
+              {channel.value.isOwner && member.role !== 'owner' && (
+                <Button variant="tertiary" size="small" onClick={() => changeRole(member, member.role === 'moderator' ? 'member' : 'moderator')}>
+                  {member.role === 'moderator' ? 'Make member' : 'Make moderator'}
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+      </Card>
+    )
+
+    const channelDetails = (
+      <div class="channel-dialog-stack">
+        <Card class="channel-dialog-summary">
+          <div class="channel-section-heading">
+            <Label size="small" tone="accent">ABOUT THIS CHANNEL</Label>
             <p class="channel-slug">/{channel.value.slug} · {channel.value.visibility}</p>
             <p>{channel.value.description || 'No description yet.'}</p>
-            <span>{channel.value.memberCount} members · {channel.value.postCount} posts</span>
-            {channel.value.postApprovalRequired && <span class="channel-approval-note">New member posts need approval.</span>}
-          </div>
-          <div class="channel-hero-actions">
-            {!channel.value.isOwner && (
-              <Button
-                loading={busy}
-                variant={channel.value.membershipRole ? 'secondary' : 'primary'}
-                ariaLabel={computed(() => channel.value.membershipRole ? 'Leave this channel' : 'Join this channel')}
-                onClick={toggleMembership}
-              >
-                {channel.value.membershipRole ? 'Leave' : channel.value.invited ? 'Accept invite' : 'Join'}
-              </Button>
-            )}
-            {channel.value.membershipRole && <>
-              <Button variant="tertiary" size="small" loading={busy} onClick={() => updatePreferences({ muted: !channel.value.muted })}>
-                {channel.value.muted ? 'Unmute channel' : 'Mute channel'}
-              </Button>
-              <Button variant="tertiary" size="small" loading={busy} onClick={() => updatePreferences({ notificationsEnabled: !channel.value.notificationsEnabled })}>
-                {channel.value.notificationsEnabled ? 'Turn off alerts' : 'Turn on alerts'}
-              </Button>
-            </>}
-            {!channel.value.isOwner && <ReportButton targetType="channel" targetId={channel.value.id} label="Report channel" />}
+            <span>{channel.value.memberCount} members</span>
           </div>
         </Card>
         {channel.value.rules && <Card class="channel-rules-card"><Label size="small" tone="accent">CHANNEL RULES</Label><pre>{channel.value.rules}</pre></Card>}
-        <ChannelChat slug={slug} channel={channel.value} currentUserId={currentUserId} />
+        {!channel.value.isOwner && (
+          <Card class="channel-dialog-card">
+            <div class="channel-section-heading">
+              <Label size="small" tone="accent">YOUR ACCESS</Label>
+              <h3>{channel.value.membershipRole ? 'Your channel settings' : 'Join this channel'}</h3>
+              <p>{channel.value.membershipRole ? 'Control alerts or leave whenever you want.' : 'Join to chat and publish messages in this channel.'}</p>
+            </div>
+            {channel.value.membershipRole && (
+              <div class="channel-dialog-actions">
+                <Button variant="tertiary" size="small" loading={busy} onClick={() => updatePreferences({ muted: !channel.value.muted })}>
+                  {channel.value.muted ? 'Unmute channel' : 'Mute channel'}
+                </Button>
+                <Button variant="tertiary" size="small" loading={busy} onClick={() => updatePreferences({ notificationsEnabled: !channel.value.notificationsEnabled })}>
+                  {channel.value.notificationsEnabled ? 'Turn off alerts' : 'Turn on alerts'}
+                </Button>
+                <ReportButton targetType="channel" targetId={channel.value.id} label="Report channel" />
+              </div>
+            )}
+          </Card>
+        )}
         {channel.value.isOwner && (
-          <div class="channel-owner-grid">
-            <Card>
-              <Label size="small" tone="accent">OWNER CONTROLS</Label>
+          <>
+            <Card class="channel-dialog-card">
+              <div class="channel-section-heading">
+                <Label size="small" tone="accent">SETTINGS</Label>
+                <h3>Channel settings</h3>
+                <p>Change how this channel looks and works.</p>
+              </div>
               <form class="channel-form" onSubmit={saveChannel}>
                 <FormField id="edit-channel-name" label="Name"><TextField id="edit-channel-name" value={name} maxLength={80} required /></FormField>
                 <FormField id="edit-channel-image" label="Image URL"><TextField id="edit-channel-image" value={imageUrl} type="url" maxLength={2000} /></FormField>
                 <FormField id="edit-channel-description" label="Description"><textarea id="edit-channel-description" class="post-composer-input" use:bind={description} maxlength="280" rows="3" /></FormField>
                 <FormField id="edit-channel-rules" label="Rules" hint="One rule per line. Up to 2,000 characters."><textarea id="edit-channel-rules" class="post-composer-input" use:bind={rules} maxlength="2000" rows="6" /></FormField>
-                <CheckBox checked={privateChannel}>Private channel</CheckBox>
-                <CheckBox checked={postApprovalRequired}>Approve member posts before publishing</CheckBox>
-                <Button type="submit" loading={busy}>Save</Button>
+                <CheckBox checked={privateChannel}>Private channel (invite only)</CheckBox>
+                <Button type="submit" loading={busy}>Save settings</Button>
               </form>
             </Card>
-            <Card>
-              <Label size="small" tone="accent">INVITE</Label>
+            <Card class="channel-dialog-card">
+              <div class="channel-section-heading">
+                <Label size="small" tone="accent">OPTIONAL INVITES</Label>
+                <h3>Invite someone</h3>
+                <p>Useful for private channels. Public channels can grow without invitations.</p>
+              </div>
               <form class="channel-form" onSubmit={invite}>
                 <FormField id="invite-username" label="Username"><TextField id="invite-username" value={inviteUsername} required /></FormField>
                 <Button type="submit" loading={busy}>Send invite</Button>
               </form>
             </Card>
-          </div>
+          </>
         )}
-        <Card class="channel-members-card">
-          <Label size="small" tone="accent">MEMBERS</Label>
-          <div class="channel-member-list">
-            {members.value.map(member => (
-              <div key={member.id} class="channel-member-row">
-                <a href={`/users/${member.username}`} onClick={router.link(`/users/${member.username}`)}>{member.displayName} <span>@{member.username}</span></a>
-                <span>{member.role}</span>
-                {channel.value.isOwner && member.role !== 'owner' && (
-                  <Button variant="tertiary" size="small" onClick={() => changeRole(member, member.role === 'moderator' ? 'member' : 'moderator')}>
-                    {member.role === 'moderator' ? 'Make member' : 'Make moderator'}
-                  </Button>
-                )}
-              </div>
-            ))}
+        {membersCard}
+      </div>
+    )
+
+    return (
+      <div class="channel-detail-stack">
+        <a class="back-link" href="/channels" onClick={router.link('/channels')}>← All channels</a>
+        <section class="channel-message-section" aria-labelledby="channel-messages-title">
+          <div class="channel-section-heading">
+            <Label size="small" tone="accent">CHANNEL</Label>
+            <h2 id="channel-messages-title">Chat</h2>
+            <p>Live conversation with channel members.</p>
           </div>
-        </Card>
-        {channel.value.pinnedPost && <Card class="channel-pinned-post"><div class="post-replies-heading"><Label size="small" tone="accent">PINNED POST</Label></div><PostCard post={channel.value.pinnedPost} router={router} currentUserId={currentUserId} onDeleted={removePost} onUpdated={updatePost} /><ChannelPostModeration slug={slug} post={channel.value.pinnedPost} canPin={channel.value.canModerate} pinned onPinned={updatePinned} /></Card>}
-        {channel.value.membershipRole && <PostComposer channelId={channel.value.id} onCreated={addPost} />}
-        <div class="post-replies-heading"><Label size="small" tone="accent">CHANNEL FEED</Label></div>
-        {posts.value.length
-          ? <KeyboardList label="Channel post feed" className="post-feed-keyboard post-feed">
-            <VirtualList
-              items={posts}
-              estimateSize={420}
-              label="Channel post feed"
-              renderItem={post => (
-                <div class="channel-post-item">
-                  <PostCard post={post} router={router} currentUserId={currentUserId} onDeleted={removePost} onUpdated={updatePost} onReposted={addPost} />
-                  {channel.value.canModerate && <ChannelPostModeration slug={slug} post={post} canPin pinned={channel.value.pinnedPost?.id === post.id} onChanged={updatePost} onPinned={updatePinned} />}
-                </div>
-              )}
-            />
-          </KeyboardList>
-          : <Card><EmptyState title="No posts yet" description="Members can start this channel." /></Card>}
+          <ChannelChat slug={slug} channel={channel} currentUserId={currentUserId} />
+        </section>
+        <Popup
+          open={detailsOpen}
+          eyebrow={channel.value.isOwner ? 'CHANNEL MANAGEMENT' : 'CHANNEL DETAILS'}
+          title={channel.value.name}
+          ariaDescription={channel.value.isOwner ? 'Manage this channel, its members, and its settings.' : 'View channel details and manage your membership.'}
+          size="large"
+          class="channel-details-popup"
+          onClose={() => detailsOpen.value = false}
+        >
+          {channelDetails}
+        </Popup>
         <div class="post-feed-error" role="alert">{error}</div>
         <LiveRegion message={announcement} />
       </div>
@@ -314,8 +305,12 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
   })
 
   return (
-    <PageFrame eyebrow="COMMUNITIES / CHANNEL" title={slug} description="A focused space for shared conversation.">
-      <a class="back-link" href="/channels" onClick={router.link('/channels')}>← All channels</a>
+    <PageFrame
+      eyebrow="COMMUNITIES / CHANNEL"
+      title={computed(() => channel.value?.name || slug)}
+      description={computed(() => channel.value?.visibility === 'private' ? 'Private chat room · invite only.' : 'Public chat room · anyone can join.')}
+      headerActions={headerActions}
+    >
       {content}
     </PageFrame>
   )

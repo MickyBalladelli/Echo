@@ -8,7 +8,7 @@ const preferenceOptions = Object.freeze([
   { type: 'follow', label: 'New followers' },
   { type: 'channel_invite', label: 'Channel invites' },
   { type: 'channel_join', label: 'People joining your channels' },
-  { type: 'channel_post', label: 'Posts in your channels' },
+  { type: 'channel_post', label: 'Activity in your channels' },
   { type: 'chat_message', label: 'Chat messages' }
 ])
 
