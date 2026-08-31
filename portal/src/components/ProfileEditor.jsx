@@ -1,4 +1,4 @@
-import { Button, CheckBox, FormField, TextField, signal } from '../lib/vendor.js'
+import { Button, CheckBox, FormField, Select, TextField, signal } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 
 const maxImageBytes = 10 * 1024 * 1024
@@ -104,10 +104,15 @@ export function ProfileEditor({ user, onSaved, onCancel }) {
         </FormField>
       </div>
       <FormField id="profile-visibility" label="Profile privacy" hint="Followers-only profiles still show your name and handle.">
-        <select id="profile-visibility" use:bind={profileVisibility}>
-          <option value="public">Public profile</option>
-          <option value="followers">Followers only</option>
-        </select>
+      <Select
+        id="profile-visibility"
+        value={profileVisibility}
+        ariaLabel="Profile privacy"
+        options={[
+          { value: 'public', label: 'Public profile' },
+          { value: 'followers', label: 'Followers only' }
+        ]}
+      />
       </FormField>
       <div class="profile-privacy-options">
         <CheckBox checked={showFollowers}>Show followers list</CheckBox>

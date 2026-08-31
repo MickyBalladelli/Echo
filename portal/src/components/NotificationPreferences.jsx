@@ -1,5 +1,5 @@
 import { computed, onMount, signal } from '../lib/vendor.js'
-import { Button, Card, CheckBox, FormField, Label } from '../lib/vendor.js'
+import { Button, Card, CheckBox, FormField, Label, Select } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 
 const preferenceOptions = Object.freeze([
@@ -136,11 +136,16 @@ export function NotificationPreferences() {
           <p>Store email delivery preferences now. Echo does not send email yet.</p>
           <CheckBox checked={emailEnabled}>Allow email notifications</CheckBox>
           <FormField id="email-digest-frequency" label="Digest frequency">
-            <select id="email-digest-frequency" use:bind={digestFrequency}>
-              <option value="never">Never</option>
-              <option value="daily">Daily digest</option>
-              <option value="weekly">Weekly digest</option>
-            </select>
+            <Select
+              id="email-digest-frequency"
+              value={digestFrequency}
+              ariaLabel="Digest frequency"
+              options={[
+                { value: 'never', label: 'Never' },
+                { value: 'daily', label: 'Daily digest' },
+                { value: 'weekly', label: 'Weekly digest' }
+              ]}
+            />
           </FormField>
           <div class="notification-preference-actions">
             <Button loading={emailSaving} onClick={saveEmailPreferences}>Save email preference</Button>

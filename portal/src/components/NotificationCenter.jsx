@@ -4,6 +4,7 @@ import { apiRequest } from '../lib/api.js'
 import { LiveRegion } from './LiveRegion.jsx'
 import { formatRelativeTime } from '../lib/dates.js'
 import { KeyboardList } from './KeyboardList.jsx'
+import { UserAvatar } from './UserAvatar.jsx'
 
 function notificationText(notification) {
   const actor = notification.actor?.displayName || 'Someone'
@@ -18,10 +19,6 @@ function notificationText(notification) {
     chat_message: `${actor}${more} sent you a message`
   }
   return messages[notification.type] || `${actor} sent a notification`
-}
-
-function actorInitial(notification) {
-  return (notification.actor?.displayName || '?').slice(0, 1).toUpperCase()
 }
 
 export function NotificationCenter({ router, unreadCount, notificationVersion }) {
@@ -129,7 +126,7 @@ export function NotificationCenter({ router, unreadCount, notificationVersion })
             href={notification.href}
             onClick={event => openNotification(event, notification)}
           >
-            <span class="notification-avatar" aria-hidden="true">{actorInitial(notification)}</span>
+            <UserAvatar user={notification.actor} size="medium" className="notification-avatar" />
             <span class="notification-copy">
               <strong>{notificationText(notification)}</strong>
               <time datetime={notification.createdAt}>{formatRelativeTime(notification.createdAt)}</time>

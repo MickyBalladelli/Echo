@@ -3,10 +3,10 @@ import { Button, Card, Label } from '../lib/vendor.js'
 import { ProfileEditor } from './ProfileEditor.jsx'
 import { UserBadges } from './UserBadges.jsx'
 import { formatMonthYear } from '../lib/dates.js'
+import { UserAvatar } from './UserAvatar.jsx'
 
 export function ProfileCard({ user, onLogout, onUpdated }) {
   const profile = user.profile || {}
-  const initials = (profile.displayName || user.username).slice(0, 1).toUpperCase()
   const editing = signal(false)
 
   const profileContent = computed(() => editing.value
@@ -21,9 +21,7 @@ export function ProfileCard({ user, onLogout, onUpdated }) {
     : <>
       <div class="profile-card-media">
         {profile.bannerUrl && <img class="profile-banner" src={profile.bannerUrl} alt="" loading="lazy" decoding="async" />}
-        {profile.avatarUrl
-          ? <img class="profile-avatar" src={profile.avatarUrl} alt="" loading="lazy" decoding="async" />
-          : <div class="profile-avatar" aria-hidden="true">{initials}</div>}
+        <UserAvatar user={user} size="large" className="profile-avatar" />
       </div>
       <div class="profile-copy">
         <Label size="large">{profile.displayName || user.username}</Label>

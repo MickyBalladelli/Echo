@@ -1,9 +1,6 @@
 import { Card, EmptyState, Label } from '../lib/vendor.js'
 import { KeyboardList } from './KeyboardList.jsx'
-
-function initial(user) {
-  return (user.profile.displayName || user.username).slice(0, 1).toUpperCase()
-}
+import { UserAvatar } from './UserAvatar.jsx'
 
 export function UserList({ title, users, router }) {
   return (
@@ -20,9 +17,7 @@ export function UserList({ title, users, router }) {
               href={`/users/${user.username}`}
               onClick={router.link(`/users/${user.username}`)}
             >
-              {user.profile.avatarUrl
-                ? <img class="social-user-avatar" src={user.profile.avatarUrl} alt="" loading="lazy" decoding="async" />
-                : <span class="social-user-avatar" aria-hidden="true">{initial(user)}</span>}
+              <UserAvatar user={user} size="small" className="social-user-avatar" />
               <span>
                 <strong>{user.profile.displayName}</strong>
                 <small>@{user.username}</small>

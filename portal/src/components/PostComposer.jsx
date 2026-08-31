@@ -1,5 +1,5 @@
 import { computed, onMount, signal } from '../lib/vendor.js'
-import { Button, Card, Label } from '../lib/vendor.js'
+import { Button, Card, CheckBox, DateTimePicker, FormField, Label, Select, TextField } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { clearOfflineDraft, readOfflineDraft, writeOfflineDraft } from '../lib/offline-drafts.js'
 
@@ -332,55 +332,59 @@ export function PostComposer({ onCreated, channelId = null }) {
             {mentionLoading.value
               ? <span role="status">Finding people…</span>
               : mentionSuggestions.value.map(user => (
-                <button key={user.id} type="button" role="option" onClick={() => insertMention(user)}>
+                <Button key={user.id} type="button" variant="tertiary" size="small" onClick={() => insertMention(user)}>
                   <strong>{user.profile.displayName}</strong> <span>@{user.username}</span>
-                </button>
+                </Button>
               ))}
           </div>
         )}
         <div class="post-composer-options">
-          <label>
-            Format
-            <select use:bind={postFormat} aria-label="Post format">
-              <option value="short">Short post</option>
-              <option value="long">Long-form post</option>
-            </select>
-          </label>
-          <label>
-            Visibility
-            <select use:bind={visibility} aria-label="Post visibility">
-              <option value="public">Public</option>
-              <option value="followers">Followers</option>
-              <option value="private">Only me</option>
-            </select>
-          </label>
+          <FormField id="post-format" label="Format" class="post-option-field">
+            <Select
+              id="post-format"
+              value={postFormat}
+              ariaLabel="Post format"
+              options={[
+                { value: 'short', label: 'Short post' },
+                { value: 'long', label: 'Long-form post' }
+              ]}
+            />
+          </FormField>
+          <FormField id="post-visibility" label="Visibility" class="post-option-field">
+            <Select
+              id="post-visibility"
+              value={visibility}
+              ariaLabel="Post visibility"
+              options={[
+                { value: 'public', label: 'Public' },
+                { value: 'followers', label: 'Followers' },
+                { value: 'private', label: 'Only me' }
+              ]}
+            />
+          </FormField>
           <label class="post-image-picker">
             Add image
             <input type="file" accept="image/png,image/jpeg,image/webp" onChange={selectImage} />
           </label>
-          <label class="post-warning-toggle">
-            Content warning
-            <input type="text" use:bind={contentWarning} maxlength="120" placeholder="Optional" aria-label="Content warning" />
-          </label>
-          <label class="post-warning-toggle">
-            Schedule
-            <input type="datetime-local" use:bind={scheduledAt} aria-label="Schedule post" />
-          </label>
-          {!channelId && <label class="post-poll-toggle">
-            <input type="checkbox" checked={pollEnabled} onChange={event => pollEnabled.value = event.target.checked} />
-            Add poll
-          </label>}
+          <FormField id="post-content-warning" label="Content warning" class="post-option-field">
+            <TextField id="post-content-warning" value={contentWarning} maxLength={120} placeholder="Optional" ariaLabel="Content warning" />
+          </FormField>
+          <FormField id="post-schedule" label="Schedule" class="post-option-field">
+            <DateTimePicker id="post-schedule" value={scheduledAt} ariaLabel="Schedule post" />
+          </FormField>
+          {!channelId && <CheckBox checked={pollEnabled} class="post-poll-toggle">Add poll</CheckBox>}
         </div>
         {pollEnabled.value && <div class="post-poll-composer">
-          <input type="text" use:bind={pollQuestion} maxlength="240" placeholder="Poll question" aria-label="Poll question" />
+          <FormField id="poll-question" label="Poll question">
+            <TextField id="poll-question" value={pollQuestion} maxLength={240} placeholder="Ask a question" ariaLabel="Poll question" />
+          </FormField>
           {pollOptions.value.map((option, index) => (
-            <input
+            <TextField
               key={index}
-              type="text"
               value={option}
-              maxlength="120"
+              maxLength={120}
               placeholder={`Option ${index + 1}`}
-              aria-label={`Poll option ${index + 1}`}
+              ariaLabel={`Poll option ${index + 1}`}
               onInput={event => pollOptions.value = pollOptions.value.map((item, itemIndex) => itemIndex === index ? event.target.value : item)}
             />
           ))}
@@ -392,7 +396,7 @@ export function PostComposer({ onCreated, channelId = null }) {
             <img src={imageUrl} alt={imageAltText.value || 'Selected image preview'} decoding="async" />
             <div>
               <span>{imageName}</span>
-              <input type="text" use:bind={imageAltText} maxlength="120" placeholder="Describe the image" aria-label="Image description" />
+              <TextField value={imageAltText} maxLength={120} placeholder="Describe the image" ariaLabel="Image description" />
               <Button type="button" variant="tertiary" size="small" onClick={() => { imageUrl.value = ''; imageName.value = '' }}>Remove image</Button>
             </div>
           </div>

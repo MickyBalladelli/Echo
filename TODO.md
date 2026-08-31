@@ -24,6 +24,7 @@ Use `@mickyballadelli/matrix` and `@mickyballadelli/prism` fully for the fronten
 - [x] Define IDs, timestamps, pagination, and validation rules in the server.
 - [x] Use `@mickyballadelli/prism` as the only frontend UI and design system.
 - [x] Use `@mickyballadelli/matrix` as the only frontend runtime, renderer, state, and router.
+- [x] Apply `@mickyballadelli/prism/theme` at the portal root, including the selected Prism theme model.
 - [x] Use sequelize for the app's data/state model.
 
 ### Frontend framework contract
@@ -31,9 +32,8 @@ Use `@mickyballadelli/matrix` and `@mickyballadelli/prism` fully for the fronten
 - [x] Use Matrix for all frontend JSX/rendering, reactive state, lifecycle, routing, async resources, and form bindings.
 - [x] Use Prism for all frontend UI components, controls, layouts, feedback, overlays, icons, and theme tokens.
 - [x] Keep Vite as the build tool only; do not add React, Vue, Svelte, or another frontend UI/state/router framework.
-- [ ] Add missing Prism primitives before replacing native controls that Prism does not cover.
-- [ ] Replace remaining native selects, textareas, and file inputs with Prism controls where available.
-- [ ] Add Prism multiline text area and file-upload controls, then migrate Echo forms to them.
+- [ ] Add missing Prism primitives listed in [MISSING.md](MISSING.md): `TextArea`, `FileField`/`ImagePicker`, and `Media`.
+- [x] Replace native selects and available inputs with Prism controls; keep only unavailable native textareas and file inputs.
 
 ### PostgreSQL data layer
 

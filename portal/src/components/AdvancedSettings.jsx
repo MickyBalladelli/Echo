@@ -1,5 +1,5 @@
 import { computed, onMount, signal } from '../lib/vendor.js'
-import { Button, Card, FormField, Label, TextField } from '../lib/vendor.js'
+import { Button, Card, FormField, Label, Select, TextField } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { setAppLocale } from '../lib/i18n.js'
 
@@ -236,10 +236,19 @@ export function AdvancedSettings({ user, onDeleted }) {
         <Label size="small" tone="accent">LANGUAGE</Label>
         <form class="advanced-inline-form" onSubmit={event => run(() => saveLocale(event))}>
           <FormField id="account-locale" label="Language">
-            <select id="account-locale" use:bind={locale}>
-              <option value="en">English</option><option value="fr">Français</option><option value="de">Deutsch</option>
-              <option value="es">Español</option><option value="it">Italiano</option><option value="ja">日本語</option>
-            </select>
+            <Select
+              id="account-locale"
+              value={locale}
+              ariaLabel="Language"
+              options={[
+                { value: 'en', label: 'English' },
+                { value: 'fr', label: 'Français' },
+                { value: 'de', label: 'Deutsch' },
+                { value: 'es', label: 'Español' },
+                { value: 'it', label: 'Italiano' },
+                { value: 'ja', label: '日本語' }
+              ]}
+            />
           </FormField>
           <Button type="submit" loading={busy}>Save language</Button>
         </form>

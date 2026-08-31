@@ -1,5 +1,6 @@
 import { computed } from '../lib/vendor.js'
 import { Badge, Card, Label, Separator } from '../lib/vendor.js'
+import { UserAvatar } from './UserAvatar.jsx'
 
 export function ContextRail({ user, apiStatus, socketStatus }) {
   const socketTone = computed(() => socketStatus.value === 'connected'
@@ -13,9 +14,7 @@ export function ContextRail({ user, apiStatus, socketStatus }) {
       <Card class="context-card">
         <Label size="small" tone="accent">YOUR SIGNAL</Label>
         <div class="context-user">
-          <div class="profile-avatar context-avatar" aria-hidden="true">
-            {(user.profile?.displayName || user.username).slice(0, 1).toUpperCase()}
-          </div>
+          <UserAvatar user={user} size="medium" className="profile-avatar context-avatar" />
           <div>
             <strong>{user.profile?.displayName || user.username}</strong>
             <span>@{user.username}</span>

@@ -4,6 +4,7 @@ import { apiRequest } from '../lib/api.js'
 import { PostCard } from './PostCard.jsx'
 import { SuggestedUsers } from './SuggestedUsers.jsx'
 import { UserBadges } from './UserBadges.jsx'
+import { UserAvatar } from './UserAvatar.jsx'
 import { KeyboardList } from './KeyboardList.jsx'
 import { VirtualList } from './VirtualList.jsx'
 
@@ -13,10 +14,6 @@ const searchTypes = Object.freeze([
   { id: 'channels', label: 'Channels' },
   { id: 'hashtags', label: 'Hashtags' }
 ])
-
-function userInitial(user) {
-  return (user.profile.displayName || user.username).slice(0, 1).toUpperCase()
-}
 
 export function ExploreContent({ router, currentUserId }) {
   const recentPosts = signal([])
@@ -163,9 +160,7 @@ export function ExploreContent({ router, currentUserId }) {
         {results.value.map(item => searchType.value === 'users'
           ? (
             <Card key={item.id} class="search-result-card">
-              {item.profile.avatarUrl
-                ? <img class="social-user-avatar" src={item.profile.avatarUrl} alt="" loading="lazy" decoding="async" />
-                : <span class="social-user-avatar" aria-hidden="true">{userInitial(item)}</span>}
+              <UserAvatar user={item} size="small" className="social-user-avatar" />
               <div>
                 <Label size="large">{item.profile.displayName}</Label>
                 <UserBadges badges={item.badges} />

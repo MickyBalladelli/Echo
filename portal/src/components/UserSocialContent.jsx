@@ -10,15 +10,10 @@ import { ReportButton } from './ReportButton.jsx'
 import { formatMonthYear } from '../lib/dates.js'
 import { KeyboardList } from './KeyboardList.jsx'
 import { VirtualList } from './VirtualList.jsx'
-
-function initial(user) {
-  return (user.profile.displayName || user.username).slice(0, 1).toUpperCase()
-}
+import { UserAvatar } from './UserAvatar.jsx'
 
 function profileAvatar(user) {
-  return user.profile.avatarUrl
-    ? <img class="profile-avatar" src={user.profile.avatarUrl} alt="" loading="lazy" decoding="async" />
-    : <div class="profile-avatar" aria-hidden="true">{initial(user)}</div>
+  return <UserAvatar user={user} size="large" className="profile-avatar" />
 }
 
 export function UserSocialContent({ username, router, currentUserId, showIdentity = true }) {

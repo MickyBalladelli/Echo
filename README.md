@@ -1,6 +1,6 @@
 # Echo
 
-Echo is a JavaScript social app. It will have posts, replies, likes, follows, channels, notes, notifications, and real-time chat.
+Echo is a JavaScript social app with posts, replies, likes, follows, channels, notes, notifications, and real-time chat.
 
 ## Stack
 
@@ -74,4 +74,5 @@ Failure:
 - `server/src/db/migrations/` — PostgreSQL schema migrations
 - `server/src/db/models/` — Sequelize models and associations
 - `TODO.md` — prioritized product build list
+- `MISSING.md` — Prism components Echo needs before the remaining native controls and media can migrate
 # Echo

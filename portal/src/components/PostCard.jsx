@@ -1,5 +1,5 @@
 import { computed, signal } from '../lib/vendor.js'
-import { Badge, Button, Card, Label } from '../lib/vendor.js'
+import { Badge, Button, Card, FormField, Label, Select, TextField } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { UserBadges } from './UserBadges.jsx'
 import { ReportButton } from './ReportButton.jsx'
@@ -7,10 +7,7 @@ import { AppealButton } from './AppealButton.jsx'
 import { LiveRegion } from './LiveRegion.jsx'
 import { formatDateTime, formatRelativeTime } from '../lib/dates.js'
 import { Poll } from './Poll.jsx'
-
-function authorInitial(post) {
-  return (post.author.displayName || post.author.username).slice(0, 1).toUpperCase()
-}
+import { UserAvatar } from './UserAvatar.jsx'
 
 function renderBody(value, router) {
   return value.split(/(#[a-z0-9_]+|@[a-z0-9_]+)/gi).map((part, index) => {
@@ -267,11 +264,7 @@ export function PostCard({
     <div class="post-card-keyboard-item" role="group" tabIndex={0} data-keyboard-item="true" aria-label={`Post by ${post.author.displayName}`}>
       <Card class="post-card">
       <div class="post-card-header">
-        <div class="post-author-avatar" aria-hidden="true">
-          {post.author.avatarUrl
-            ? <img src={post.author.avatarUrl} alt="" loading="lazy" decoding="async" />
-            : authorInitial(post)}
-        </div>
+        <UserAvatar user={post.author} size="medium" className="post-author-avatar" />
         <a
           class="post-author-copy post-author-link"
           href={`/users/${post.author.username}`}
@@ -300,12 +293,27 @@ export function PostCard({
           <form class="post-edit-form" onSubmit={saveEdit}>
             <textarea class="post-composer-input" use:bind={body} maxlength="280" rows="4" aria-label="Edit post text" />
             <div class="post-edit-options">
-              <select use:bind={visibility} aria-label="Post visibility">
-                <option value="public">Public</option>
-                <option value="followers">Followers</option>
-                <option value="private">Only me</option>
-              </select>
-              <input use:bind={contentWarning} maxlength="120" placeholder="Content warning (optional)" aria-label="Content warning" />
+              <FormField id={`post-edit-visibility-${post.id}`} label="Visibility">
+                <Select
+                  id={`post-edit-visibility-${post.id}`}
+                  value={visibility}
+                  ariaLabel="Post visibility"
+                  options={[
+                    { value: 'public', label: 'Public' },
+                    { value: 'followers', label: 'Followers' },
+                    { value: 'private', label: 'Only me' }
+                  ]}
+                />
+              </FormField>
+              <FormField id={`post-edit-warning-${post.id}`} label="Content warning">
+                <TextField
+                  id={`post-edit-warning-${post.id}`}
+                  value={contentWarning}
+                  maxLength={120}
+                  placeholder="Optional"
+                  ariaLabel="Content warning"
+                />
+              </FormField>
             </div>
             <div class="post-card-footer">
               <Button type="submit">Save edit</Button>

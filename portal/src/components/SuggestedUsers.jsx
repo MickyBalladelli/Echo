@@ -2,11 +2,10 @@ import { onMount, signal } from '../lib/vendor.js'
 import { Card, Label } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { FollowButton } from './FollowButton.jsx'
+import { UserAvatar } from './UserAvatar.jsx'
 
 function avatar(user) {
-  return user.profile.avatarUrl
-    ? <img class="social-user-avatar" src={user.profile.avatarUrl} alt="" loading="lazy" decoding="async" />
-    : <span class="social-user-avatar" aria-hidden="true">{(user.profile.displayName || user.username).slice(0, 1).toUpperCase()}</span>
+  return <UserAvatar user={user} size="small" className="social-user-avatar" />
 }
 
 export function SuggestedUsers({ router }) {

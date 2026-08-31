@@ -26,4 +26,4 @@ These choices lock the boundaries for P1 work. They match the current server and
 
 ## Revisit triggers
 
-Revisit these decisions when a second client needs shared domain types, feed volume requires a distributed ranking/cache system, email delivery becomes a launch requirement, production media storage is enabled, or Prism/Matrix need a new primitive. Current Prism gaps for Echo are a multiline text area and a file-upload control.
+Revisit these decisions when a second client needs shared domain types, feed volume requires a distributed ranking/cache system, email delivery becomes a launch requirement, production media storage is enabled, or Prism/Matrix need a new primitive. Current Prism gaps are tracked in [MISSING.md](../MISSING.md).
