@@ -2,6 +2,7 @@ import { ProfileCard } from '../components/ProfileCard.jsx'
 import { UserSocialContent } from '../components/UserSocialContent.jsx'
 import { ExploreContent } from '../components/ExploreContent.jsx'
 import { NotificationCenter } from '../components/NotificationCenter.jsx'
+import { NotificationPreferences } from '../components/NotificationPreferences.jsx'
 import { ChannelDirectory } from '../components/ChannelDirectory.jsx'
 import { NotesWorkspace } from '../components/NotesWorkspace.jsx'
 import { ChatWorkspace } from '../components/ChatWorkspace.jsx'
@@ -29,6 +30,18 @@ export function NotificationsPage({ router, unreadCount, notificationVersion }) 
       description="Replies, likes, follows, and channel activity will land here."
     >
       <NotificationCenter router={router} unreadCount={unreadCount} notificationVersion={notificationVersion} />
+    </PageFrame>
+  )
+}
+
+export function PreferencesPage() {
+  return (
+    <PageFrame
+      eyebrow="YOU / PREFERENCES"
+      title="Preferences"
+      description="Choose which signals reach your inbox, browser, and future email digest."
+    >
+      <NotificationPreferences />
     </PageFrame>
   )
 }

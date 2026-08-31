@@ -10,7 +10,8 @@ const navItems = Object.freeze([
   { path: '/notes', label: 'Notes', mark: '▤' },
   { path: '/channels', label: 'Channels', mark: '◈' },
   { path: '/chat', label: 'Chat', mark: '◌' },
-  { path: '/profile', label: 'Profile', mark: '◎' }
+  { path: '/profile', label: 'Profile', mark: '◎' },
+  { path: '/preferences', label: 'Preferences', mark: '⚙' }
 ])
 
 function NavigationLink({ item, router, unreadNotifications }) {

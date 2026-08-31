@@ -2,10 +2,12 @@ import { Router } from 'express'
 import { ok, cursorMeta } from '../http/api.js'
 import { decodeCursor } from '../http/pagination.js'
 import { idSchema, paginationSchema, parse } from '../http/validation.js'
+import { notificationGroupKeySchema } from '../notifications/schemas.js'
 import {
   getUnreadCount,
   listNotifications,
   markAllNotificationsRead,
+  markNotificationGroupRead,
   markNotificationRead
 } from '../notifications/service.js'
 
@@ -35,6 +37,15 @@ notificationsRouter.get('/unread-count', async (request, response, next) => {
 notificationsRouter.put('/read-all', async (request, response, next) => {
   try {
     response.json(ok(await markAllNotificationsRead(request.auth.userId)))
+  } catch (error) {
+    next(error)
+  }
+})
+
+notificationsRouter.put('/groups/:groupKey/read', async (request, response, next) => {
+  try {
+    const groupKey = parse(notificationGroupKeySchema, request.params.groupKey, 'notification group key')
+    response.json(ok({ notification: await markNotificationGroupRead(request.auth.userId, groupKey) }))
   } catch (error) {
     next(error)
   }

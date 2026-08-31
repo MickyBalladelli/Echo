@@ -14,6 +14,20 @@ export const notificationTypes = Object.freeze({
   chatMessage: 'chat_message'
 })
 
+export const notificationPreferenceTypes = Object.freeze(Object.values(notificationTypes))
+export const NOTIFICATION_RETENTION_DAYS = 90
+
+function notificationGroupKey({ type, recipientId, postId, channelId, conversationId }) {
+  if (postId && type === notificationTypes.like) return `post:${postId}:likes`
+  if (postId && type === notificationTypes.reply) return `post:${postId}:replies`
+  if (channelId && type === notificationTypes.channelPost) return `channel:${channelId}:posts`
+  if (channelId && type === notificationTypes.channelInvite) return `channel:${channelId}:invites`
+  if (channelId && type === notificationTypes.channelJoin) return `channel:${channelId}:joins`
+  if (conversationId && type === notificationTypes.chatMessage) return `conversation:${conversationId}:messages`
+  if (type === notificationTypes.follow) return `user:${recipientId}:follows`
+  return `${type}:${postId || channelId || conversationId || recipientId}`
+}
+
 function notificationHref(row) {
   if (row.post_id) return `/posts/${row.post_id}`
   if (row.type === notificationTypes.follow && row.actor_username) return `/users/${row.actor_username}`
@@ -23,6 +37,7 @@ function notificationHref(row) {
 }
 
 function mapNotification(row) {
+  const groupedRead = row.group_read === undefined ? Boolean(row.read_at) : Boolean(row.group_read)
   return {
     id: row.id,
     type: row.type,
@@ -30,8 +45,10 @@ function mapNotification(row) {
     channelId: row.channel_id || null,
     conversationId: row.conversation_id || null,
     payload: row.payload || {},
-    readAt: row.read_at || null,
+    readAt: groupedRead ? row.read_at || null : null,
     createdAt: row.created_at,
+    groupKey: row.notification_group_key || row.group_key || row.id,
+    groupCount: Number(row.group_count || 1),
     href: notificationHref(row),
     actor: row.actor_id
       ? {
@@ -44,11 +61,23 @@ function mapNotification(row) {
   }
 }
 
+async function purgeExpiredNotifications(recipientId, transaction) {
+  await sequelize.query(`
+    DELETE FROM notifications
+    WHERE recipient_id = :recipientId AND expires_at <= CURRENT_TIMESTAMP
+  `, {
+    replacements: { recipientId },
+    ...(transaction ? { transaction } : {})
+  })
+}
+
 export async function getUnreadCount(recipientId, transaction) {
+  await purgeExpiredNotifications(recipientId, transaction)
   const rows = await sequelize.query(`
     SELECT COUNT(*)::INTEGER AS count
     FROM notifications
     WHERE recipient_id = :recipientId AND read_at IS NULL
+      AND expires_at > CURRENT_TIMESTAMP
       AND (actor_id IS NULL OR NOT EXISTS (
         SELECT 1 FROM user_blocks hidden_block
         WHERE (hidden_block.blocker_id = :recipientId AND hidden_block.blocked_id = notifications.actor_id)
@@ -66,6 +95,80 @@ export async function getUnreadCount(recipientId, transaction) {
   return Number(rows[0]?.count || 0)
 }
 
+export async function getNotificationPreferences(userId, transaction) {
+  const rows = await sequelize.query(`
+    SELECT notification_type, enabled
+    FROM user_notification_preferences
+    WHERE user_id = :userId
+  `, {
+    replacements: { userId },
+    type: QueryTypes.SELECT,
+    ...(transaction ? { transaction } : {})
+  })
+  const values = new Map(rows.map(row => [row.notification_type, Boolean(row.enabled)]))
+  return notificationPreferenceTypes.map(type => ({
+    type,
+    enabled: values.get(type) !== false
+  }))
+}
+
+export async function updateNotificationPreferences(userId, preferences) {
+  return sequelize.transaction(async transaction => {
+    for (const preference of preferences) {
+      await sequelize.query(`
+        INSERT INTO user_notification_preferences (user_id, notification_type, enabled)
+        VALUES (:userId, :notificationType, :enabled)
+        ON CONFLICT (user_id, notification_type) DO UPDATE SET
+          enabled = EXCLUDED.enabled,
+          updated_at = CURRENT_TIMESTAMP
+      `, {
+        replacements: {
+          userId,
+          notificationType: preference.type,
+          enabled: preference.enabled
+        },
+        transaction
+      })
+    }
+    return getNotificationPreferences(userId, transaction)
+  })
+}
+
+export async function getEmailNotificationPreferences(userId, transaction) {
+  const rows = await sequelize.query(`
+    SELECT enabled, digest_frequency
+    FROM user_email_preferences
+    WHERE user_id = :userId
+    LIMIT 1
+  `, {
+    replacements: { userId },
+    type: QueryTypes.SELECT,
+    ...(transaction ? { transaction } : {})
+  })
+  return rows[0]
+    ? { enabled: Boolean(rows[0].enabled), digestFrequency: rows[0].digest_frequency }
+    : { enabled: false, digestFrequency: 'never' }
+}
+
+export async function updateEmailNotificationPreferences(userId, input) {
+  const rows = await sequelize.query(`
+    INSERT INTO user_email_preferences (user_id, enabled, digest_frequency)
+    VALUES (:userId, :enabled, :digestFrequency)
+    ON CONFLICT (user_id) DO UPDATE SET
+      enabled = EXCLUDED.enabled,
+      digest_frequency = EXCLUDED.digest_frequency,
+      updated_at = CURRENT_TIMESTAMP
+    RETURNING enabled, digest_frequency
+  `, {
+    replacements: { userId, ...input },
+    type: QueryTypes.SELECT
+  })
+  return {
+    enabled: Boolean(rows[0].enabled),
+    digestFrequency: rows[0].digest_frequency
+  }
+}
+
 export async function createNotification({
   recipientId,
   actorId = null,
@@ -74,9 +177,22 @@ export async function createNotification({
   channelId = null,
   conversationId = null,
   payload = {},
-  dedupeKey
+  dedupeKey,
+  groupKey = null
 }, transaction) {
   if (actorId && recipientId === actorId) return null
+
+  const preferenceRows = await sequelize.query(`
+    SELECT enabled
+    FROM user_notification_preferences
+    WHERE user_id = :recipientId AND notification_type = :notificationType
+    LIMIT 1
+  `, {
+    replacements: { recipientId, notificationType: type },
+    type: QueryTypes.SELECT,
+    ...(transaction ? { transaction } : {})
+  })
+  if (preferenceRows[0] && !preferenceRows[0].enabled) return null
 
   if (actorId) {
     const hidden = await sequelize.query(`
@@ -98,14 +214,14 @@ export async function createNotification({
 
   const rows = await sequelize.query(`
     INSERT INTO notifications (
-      recipient_id, actor_id, type, post_id, channel_id, conversation_id, payload, dedupe_key
+      recipient_id, actor_id, type, post_id, channel_id, conversation_id, payload, dedupe_key, group_key
     )
     VALUES (
       :recipientId, :actorId, :type, :postId, :channelId, :conversationId,
-      CAST(:payload AS JSONB), :dedupeKey
+      CAST(:payload AS JSONB), :dedupeKey, :groupKey
     )
     ON CONFLICT (recipient_id, type, dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING
-    RETURNING id
+    RETURNING id, type, post_id, channel_id
   `, {
     replacements: {
       recipientId,
@@ -115,7 +231,8 @@ export async function createNotification({
       channelId,
       conversationId,
       payload: JSON.stringify(payload),
-      dedupeKey
+      dedupeKey,
+      groupKey: groupKey || notificationGroupKey({ type, recipientId, postId, channelId, conversationId })
     },
     type: QueryTypes.SELECT,
     ...(transaction ? { transaction } : {})
@@ -124,7 +241,13 @@ export async function createNotification({
   if (!notification) return null
 
   const publish = () => getUnreadCount(recipientId)
-    .then(unreadCount => emitNotification(recipientId, { id: notification.id, unreadCount }))
+    .then(unreadCount => emitNotification(recipientId, {
+      id: notification.id,
+      type: notification.type,
+      postId: notification.post_id || null,
+      channelId: notification.channel_id || null,
+      unreadCount
+    }))
     .catch(() => {})
 
   if (transaction) transaction.afterCommit(publish)
@@ -210,6 +333,7 @@ export function notifyChatMessage({ recipientId, actorId, conversationId, messag
 }
 
 export async function listNotifications(recipientId, { cursor, limit }) {
+  await purgeExpiredNotifications(recipientId)
   const where = ['n.recipient_id = :recipientId']
   const replacements = { recipientId }
   if (cursor) {
@@ -219,23 +343,38 @@ export async function listNotifications(recipientId, { cursor, limit }) {
   }
 
   const rows = await sequelize.query(`
-    SELECT n.*, actor.username AS actor_username, profile.display_name AS actor_display_name,
-      profile.avatar_url AS actor_avatar_url, channel.slug AS channel_slug
-    FROM notifications n
-    LEFT JOIN users actor ON actor.id = n.actor_id
-    LEFT JOIN profiles profile ON profile.user_id = actor.id
-    LEFT JOIN channels channel ON channel.id = n.channel_id AND channel.deleted_at IS NULL
-    WHERE ${where.join(' AND ')}
-      AND (n.actor_id IS NULL OR NOT EXISTS (
-        SELECT 1 FROM user_blocks hidden_block
-        WHERE (hidden_block.blocker_id = :recipientId AND hidden_block.blocked_id = n.actor_id)
-           OR (hidden_block.blocker_id = n.actor_id AND hidden_block.blocked_id = :recipientId)
-      ))
-      AND (n.actor_id IS NULL OR NOT EXISTS (
-        SELECT 1 FROM user_mutes hidden_mute
-        WHERE hidden_mute.user_id = :recipientId AND hidden_mute.muted_user_id = n.actor_id
-      ))
-    ORDER BY n.created_at DESC, n.id DESC
+    WITH visible_notifications AS (
+      SELECT n.*, actor.username AS actor_username, profile.display_name AS actor_display_name,
+        profile.avatar_url AS actor_avatar_url, channel.slug AS channel_slug,
+        COALESCE(n.group_key, n.id::TEXT) AS notification_group_key,
+        COUNT(*) OVER (
+          PARTITION BY COALESCE(n.group_key, n.id::TEXT)
+        )::INTEGER AS group_count,
+        BOOL_AND(n.read_at IS NOT NULL) OVER (
+          PARTITION BY COALESCE(n.group_key, n.id::TEXT)
+        ) AS group_read
+      FROM notifications n
+      LEFT JOIN users actor ON actor.id = n.actor_id
+      LEFT JOIN profiles profile ON profile.user_id = actor.id
+      LEFT JOIN channels channel ON channel.id = n.channel_id AND channel.deleted_at IS NULL
+      WHERE ${where.join(' AND ')}
+        AND n.expires_at > CURRENT_TIMESTAMP
+        AND (n.actor_id IS NULL OR NOT EXISTS (
+          SELECT 1 FROM user_blocks hidden_block
+          WHERE (hidden_block.blocker_id = :recipientId AND hidden_block.blocked_id = n.actor_id)
+             OR (hidden_block.blocker_id = n.actor_id AND hidden_block.blocked_id = :recipientId)
+        ))
+        AND (n.actor_id IS NULL OR NOT EXISTS (
+          SELECT 1 FROM user_mutes hidden_mute
+          WHERE hidden_mute.user_id = :recipientId AND hidden_mute.muted_user_id = n.actor_id
+        ))
+    ), latest_notifications AS (
+      SELECT DISTINCT ON (notification_group_key) *
+      FROM visible_notifications
+      ORDER BY notification_group_key, created_at DESC, id DESC
+    )
+    SELECT * FROM latest_notifications
+    ORDER BY created_at DESC, id DESC
     LIMIT :limit
   `, {
     replacements: { ...replacements, limit: limit + 1 },
@@ -255,6 +394,7 @@ export async function markNotificationRead(recipientId, notificationId) {
     UPDATE notifications
     SET read_at = COALESCE(read_at, CURRENT_TIMESTAMP)
     WHERE id = :notificationId AND recipient_id = :recipientId
+      AND expires_at > CURRENT_TIMESTAMP
     RETURNING id, read_at
   `, {
     replacements: { recipientId, notificationId },
@@ -264,10 +404,29 @@ export async function markNotificationRead(recipientId, notificationId) {
   return { id: rows[0].id, readAt: rows[0].read_at }
 }
 
+export async function markNotificationGroupRead(recipientId, groupKey) {
+  const rows = await sequelize.query(`
+    UPDATE notifications
+    SET read_at = CURRENT_TIMESTAMP
+    WHERE recipient_id = :recipientId
+      AND COALESCE(group_key, id::TEXT) = :groupKey
+      AND read_at IS NULL
+      AND expires_at > CURRENT_TIMESTAMP
+    RETURNING id
+  `, {
+    replacements: { recipientId, groupKey },
+    type: QueryTypes.SELECT
+  })
+  if (!rows.length) throw new HttpError(404, 'NOTIFICATION_NOT_FOUND', 'Notification not found')
+  return { groupKey, updatedCount: rows.length }
+}
+
 export async function markAllNotificationsRead(recipientId) {
+  await purgeExpiredNotifications(recipientId)
   const rows = await sequelize.query(`
     UPDATE notifications SET read_at = CURRENT_TIMESTAMP
     WHERE recipient_id = :recipientId AND read_at IS NULL
+      AND expires_at > CURRENT_TIMESTAMP
     RETURNING id
   `, {
     replacements: { recipientId },

@@ -190,6 +190,36 @@ textarea {
   background: #8fa5ff;
 }
 
+.notification-preferences {
+  display: grid;
+  gap: 14px;
+}
+
+.notification-preferences-card {
+  display: grid;
+  gap: 14px;
+}
+
+.notification-preferences-card p {
+  margin: 0;
+  color: #b9c1ca;
+}
+
+.notification-preference-list {
+  display: grid;
+  gap: 10px;
+}
+
+.notification-preference-actions,
+.browser-permission-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  color: #8ed0b7;
+  font-size: 13px;
+}
+
 .shell-nav-link:hover {
   border-color: #39414b;
   background: rgba(47, 56, 66, 0.65);

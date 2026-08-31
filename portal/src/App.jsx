@@ -18,6 +18,15 @@ import {
 
 const apiUrl = clientEnv.apiUrl.replace(/\/$/, '')
 
+function showBrowserNotification() {
+  if (typeof window === 'undefined' || !('Notification' in window) || window.Notification.permission !== 'granted') return
+  try {
+    new window.Notification('Echo', { body: 'You have a new notification' })
+  } catch {
+    // Browser notifications can fail when the page is not focused or permission changed.
+  }
+}
+
 export function App() {
   const status = signal('checking')
   const authStatus = signal('checking')
@@ -90,6 +99,7 @@ export function App() {
         if (!acceptRealtimeEvent(envelope)) return
         unreadNotifications.value = envelope.data.unreadCount
         notificationVersion.value += 1
+        showBrowserNotification()
       })
     }
 

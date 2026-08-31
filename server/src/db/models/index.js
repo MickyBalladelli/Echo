@@ -233,6 +233,8 @@ export const Notification = sequelize.define('Notification', {
   conversationId: { type: DataTypes.UUID, field: 'conversation_id' },
   payload: { type: DataTypes.JSONB, allowNull: false, defaultValue: {} },
   dedupeKey: { type: DataTypes.STRING(255), field: 'dedupe_key' },
+  groupKey: { type: DataTypes.STRING(255), field: 'group_key' },
+  expiresAt: { type: DataTypes.DATE, allowNull: false, field: 'expires_at' },
   readAt: { type: DataTypes.DATE, field: 'read_at' }
 }, {
   tableName: 'notifications',
@@ -240,6 +242,24 @@ export const Notification = sequelize.define('Notification', {
   createdAt: 'createdAt',
   updatedAt: false,
   underscored: true
+})
+
+export const UserNotificationPreference = sequelize.define('UserNotificationPreference', {
+  userId: { type: DataTypes.UUID, allowNull: false, primaryKey: true, field: 'user_id' },
+  notificationType: { type: DataTypes.STRING(32), allowNull: false, primaryKey: true, field: 'notification_type' },
+  enabled: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true }
+}, {
+  tableName: 'user_notification_preferences',
+  ...timestamps
+})
+
+export const UserEmailPreference = sequelize.define('UserEmailPreference', {
+  userId: { type: DataTypes.UUID, allowNull: false, primaryKey: true, field: 'user_id' },
+  enabled: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+  digestFrequency: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'never', field: 'digest_frequency' }
+}, {
+  tableName: 'user_email_preferences',
+  ...timestamps
 })
 
 export const Note = sequelize.define('Note', {
@@ -362,6 +382,10 @@ Notification.belongsTo(Post, { as: 'post', foreignKey: 'postId' })
 Notification.belongsTo(Channel, { as: 'channel', foreignKey: 'channelId' })
 Notification.belongsTo(ChatConversation, { as: 'conversation', foreignKey: 'conversationId' })
 User.hasMany(Notification, { as: 'notifications', foreignKey: 'recipientId' })
+User.hasMany(UserNotificationPreference, { as: 'notificationPreferences', foreignKey: 'userId' })
+UserNotificationPreference.belongsTo(User, { as: 'user', foreignKey: 'userId' })
+User.hasOne(UserEmailPreference, { as: 'emailPreference', foreignKey: 'userId' })
+UserEmailPreference.belongsTo(User, { as: 'user', foreignKey: 'userId' })
 
 User.hasMany(Note, { as: 'notes', foreignKey: 'userId' })
 Note.belongsTo(User, { as: 'user', foreignKey: 'userId' })
@@ -394,6 +418,8 @@ export const models = Object.freeze({
   PostLike,
   Follow,
   Notification,
+  UserNotificationPreference,
+  UserEmailPreference,
   Note,
   ChatConversation,
   ChatMember,

@@ -14,14 +14,15 @@ function formatTime(value) {
 
 function notificationText(notification) {
   const actor = notification.actor?.displayName || 'Someone'
+  const more = notification.groupCount > 1 ? ` and ${notification.groupCount - 1} more` : ''
   const messages = {
-    reply: `${actor} replied to your post`,
-    like: `${actor} liked your post`,
-    follow: `${actor} followed you`,
-    channel_invite: `${actor} invited you to a channel`,
-    channel_join: `${actor} joined your channel`,
-    channel_post: `${actor} posted in your channel`,
-    chat_message: `${actor} sent you a message`
+    reply: `${actor}${more} replied to your post`,
+    like: `${actor}${more} liked your post`,
+    follow: `${actor}${more} followed you`,
+    channel_invite: `${actor}${more} invited you to a channel`,
+    channel_join: `${actor}${more} joined your channel`,
+    channel_post: `${actor}${more} posted in your channel`,
+    chat_message: `${actor}${more} sent you a message`
   }
   return messages[notification.type] || `${actor} sent a notification`
 }
@@ -62,13 +63,13 @@ export function NotificationCenter({ router, unreadCount, notificationVersion })
     event.preventDefault()
     if (!notification.readAt) {
       try {
-        const result = await apiRequest(`/api/notifications/${encodeURIComponent(notification.id)}/read`, {
+        const result = await apiRequest(`/api/notifications/groups/${encodeURIComponent(notification.groupKey)}/read`, {
           method: 'PUT'
         })
         notifications.value = notifications.value.map(item => item.id === notification.id
-          ? { ...item, readAt: result.data.notification.readAt }
+          ? { ...item, readAt: new Date().toISOString() }
           : item)
-        unreadCount.value = Math.max(0, unreadCount.value - 1)
+        unreadCount.value = Math.max(0, unreadCount.value - (result.data.notification.updatedCount || 1))
       } catch (requestError) {
         error.value = requestError.message || 'Could not mark notification read'
       }

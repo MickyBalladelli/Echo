@@ -231,11 +231,11 @@ learn and use components in Prism for all your UI
 
 ### Notifications and preferences
 
-- [ ] Add notification preferences by event type.
-- [ ] Add email notification preference model without sending email yet.
-- [ ] Add browser notification permission flow.
-- [ ] Add notification grouping.
-- [ ] Add notification retention policy.
+- [x] Add notification preferences by event type.
+- [x] Add email notification preference model without sending email yet.
+- [x] Add browser notification permission flow.
+- [x] Add notification grouping.
+- [x] Add notification retention policy.
 
 ### Moderation and safety
 

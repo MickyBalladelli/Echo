@@ -11,6 +11,13 @@ import { draftQuerySchema, draftSchema, pinnedPostSchema, postFeedSchema } from 
 import { deletePostDraft, getPostDraft, savePostDraft } from '../posts/drafts.js'
 import { listBookmarkedPosts } from '../posts/service.js'
 import { setPinnedPost } from '../users/service.js'
+import { emailPreferencesSchema, notificationPreferencesSchema } from '../notifications/schemas.js'
+import {
+  getEmailNotificationPreferences,
+  getNotificationPreferences,
+  updateEmailNotificationPreferences,
+  updateNotificationPreferences
+} from '../notifications/service.js'
 
 export const meRouter = Router()
 
@@ -23,6 +30,36 @@ meRouter.patch('/profile', async (request, response, next) => {
       throw new HttpError(401, 'AUTH_REQUIRED', 'Authentication required')
     }
     response.json(ok({ user: session.user }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+meRouter.get('/notification-preferences', async (request, response, next) => {
+  try {
+    const [preferences, email] = await Promise.all([
+      getNotificationPreferences(request.auth.userId),
+      getEmailNotificationPreferences(request.auth.userId)
+    ])
+    response.json(ok({ preferences, email }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+meRouter.put('/notification-preferences', async (request, response, next) => {
+  try {
+    const input = parse(notificationPreferencesSchema, request.body, 'notification preferences request')
+    response.json(ok({ preferences: await updateNotificationPreferences(request.auth.userId, input.preferences) }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+meRouter.put('/email-preferences', async (request, response, next) => {
+  try {
+    const input = parse(emailPreferencesSchema, request.body, 'email preferences request')
+    response.json(ok({ email: await updateEmailNotificationPreferences(request.auth.userId, input) }))
   } catch (error) {
     next(error)
   }

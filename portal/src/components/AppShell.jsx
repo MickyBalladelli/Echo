@@ -15,6 +15,7 @@ import {
   NotificationsPage,
   NotesPage,
   PostDetailPage,
+  PreferencesPage,
   ProfilePage
 } from '../pages/ShellPages.jsx'
 
@@ -76,6 +77,7 @@ export function AppShell({
       title: 'Profile',
       view: () => ProfilePage({ userState, onLogout, onUpdated, router })
     },
+    { path: '/preferences', title: 'Preferences', view: () => PreferencesPage() },
     {
       path: '/users/:username',
       title: 'Profile',
