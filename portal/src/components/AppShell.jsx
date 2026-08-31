@@ -153,7 +153,7 @@ export function AppShell({
             />
             <div class="echo-channel-identity">
               <h1><a class="echo-channel-title-link" href={`/channels/${channel.slug}`} onClick={router.link(`/channels/${channel.slug}`)}>{channel.name}</a></h1>
-              <a class="echo-channel-slug-link" href={`/channels/${channel.slug}`} onClick={router.link(`/channels/${channel.slug}`)}>/{channel.slug}</a>
+              <a class="echo-channel-slug-link" href={`/channels/${channel.slug}`} onClick={router.link(`/channels/${channel.slug}`)}>{channel.slug}</a>
             </div>
             <p class="echo-channel-visibility">{channel.visibility === 'private' ? 'Private chat room · invite only.' : 'Public chat room · anyone can join.'}</p>
           </div>

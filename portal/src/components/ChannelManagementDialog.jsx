@@ -127,7 +127,7 @@ export function ChannelManagementDialog({ channel: initialChannel, onUpdated }) 
             <FormField id={`manage-channel-name-${initialChannel.id}`} label="Name">
               <TextField id={`manage-channel-name-${initialChannel.id}`} value={name} maxLength={80} required />
             </FormField>
-            <FormField id={`manage-channel-slug-${initialChannel.id}`} label="Endpoint" hint="The URL ending. Lowercase words and hyphens.">
+            <FormField id={`manage-channel-slug-${initialChannel.id}`} label="Channel URL" hint="Lowercase words and hyphens.">
               <div class="channel-endpoint-field">
                 <span aria-hidden="true">/</span>
                 <TextField id={`manage-channel-slug-${initialChannel.id}`} value={slug} maxLength={80} pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required />
