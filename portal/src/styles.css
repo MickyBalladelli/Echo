@@ -3053,10 +3053,34 @@ img {
   margin-top: 9px;
 }
 
+.channel-chat-message-attachment-group {
+  display: inline-flex;
+  min-width: 0;
+}
+
 .channel-chat-message-attachment {
   max-width: min(320px, 100%);
   padding: 7px 10px;
   text-decoration: none;
+}
+
+.channel-chat-message-attachment-download {
+  align-self: stretch;
+  padding: 0 8px;
+  border: 1px solid #3b3c45;
+  border-radius: 7px;
+  background: #2a2b30;
+  color: #9daeff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.channel-chat-message-attachment-download:hover,
+.channel-chat-message-attachment-download:focus-visible {
+  border-color: #6f8fff;
+  background: #303443;
+  color: #fff;
 }
 
 .channel-chat-message-attachment:hover,

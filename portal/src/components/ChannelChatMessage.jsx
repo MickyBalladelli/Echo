@@ -29,9 +29,28 @@ export function ChannelChatMessage({ message, currentUserId, compact = false, on
     reactionPickerOpen.value = false
   }
 
+  function attachmentBlob(attachment) {
+    const encoded = attachment.data.split(',')[1] || ''
+    const binary = atob(encoded)
+    const bytes = Uint8Array.from(binary, character => character.charCodeAt(0))
+    return new Blob([bytes], { type: attachment.type || 'application/octet-stream' })
+  }
+
   function openAttachment(event, attachment) {
     event.preventDefault()
-    window.open(attachment.data, '_blank', 'noopener,noreferrer')
+    const url = URL.createObjectURL(attachmentBlob(attachment))
+    window.open(url, '_blank', 'noopener,noreferrer')
+    window.setTimeout(() => URL.revokeObjectURL(url), 60000)
+  }
+
+  function downloadAttachment(event, attachment) {
+    event.preventDefault()
+    const url = URL.createObjectURL(attachmentBlob(attachment))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = attachment.name
+    link.click()
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
   }
 
   return (
@@ -57,17 +76,27 @@ export function ChannelChatMessage({ message, currentUserId, compact = false, on
         {message.attachments?.length > 0 && (
           <div class="channel-chat-message-attachments" aria-label="Message attachments">
             {message.attachments.map(attachment => (
-              <a
-                key={`${attachment.name}-${attachment.size}`}
-                class="channel-chat-message-attachment"
-                href="#"
-                title={`Open ${attachment.name}`}
-                aria-label={`Open ${attachment.name}`}
-                onClick={event => openAttachment(event, attachment)}
-              >
-                <span class="channel-chat-attachment-icon" aria-hidden="true">📎︎</span>
-                <span>{attachment.name}</span>
-              </a>
+              <div class="channel-chat-message-attachment-group" key={`${attachment.name}-${attachment.size}`}>
+                <a
+                  class="channel-chat-message-attachment"
+                  href="#"
+                  title={`Open ${attachment.name}`}
+                  aria-label={`Open ${attachment.name}`}
+                  onClick={event => openAttachment(event, attachment)}
+                >
+                  <span class="channel-chat-attachment-icon" aria-hidden="true">📎︎</span>
+                  <span>{attachment.name}</span>
+                </a>
+                <button
+                  type="button"
+                  class="channel-chat-message-attachment-download"
+                  title={`Download ${attachment.name}`}
+                  aria-label={`Download ${attachment.name}`}
+                  onClick={event => downloadAttachment(event, attachment)}
+                >
+                  Download
+                </button>
+              </div>
             ))}
           </div>
         )}
