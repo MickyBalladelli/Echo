@@ -133,6 +133,8 @@ export function ShellNavigation({ router, user, unreadNotifications }) {
     ariaLabel: 'Echo primary navigation',
     title: 'Echo',
     description: `@${user.username}`,
+    sticky: true,
+    stickyTop: '4.45rem',
     class: 'shell-navigator',
     children: TreeView({
       id: 'echo-navigation-tree',

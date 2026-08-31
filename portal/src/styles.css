@@ -55,30 +55,61 @@ textarea {
   min-height: 100vh;
 }
 
-.echo-layout {
+.echo-root .echo-background {
+  overflow: visible;
+}
+
+.echo-root .echo-layout {
+  display: block;
   min-height: 100vh;
   background: color-mix(in srgb, var(--prism-color-page) 68%, transparent);
 }
 
 .echo-layout .prism-layout-header {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 40;
   border-bottom: 1px solid color-mix(in srgb, var(--prism-color-border-strong) 34%, transparent);
+}
+
+.echo-layout .prism-layout-header .prism-header {
+  position: static !important;
 }
 
 .echo-layout .prism-layout-body {
   display: grid;
   grid-template-columns: 232px minmax(0, 1fr);
-  min-height: calc(100vh - 76px);
+  min-height: calc(100vh - 4.45rem);
 }
 
 .echo-layout .prism-layout-navigator {
+  display: block;
+  position: sticky;
+  top: 4.45rem;
+  align-self: start;
+  height: calc(100vh - 4.45rem);
+  max-height: calc(100vh - 4.45rem);
+  overflow-y: auto;
+  z-index: 30;
   border-right: 1px solid color-mix(in srgb, var(--prism-color-border-strong) 30%, transparent);
+  background: color-mix(in srgb, var(--prism-color-page) 94%, transparent);
+}
+
+.echo-layout .prism-layout-navigator .prism-navigator-sticky {
+  position: static !important;
+  max-height: none;
+  overflow: visible;
 }
 
 .echo-layout .prism-layout-content {
   min-width: 0;
+  min-height: auto;
+  overflow: visible;
 }
 
 .echo-layout .prism-layout-footer {
+  display: block;
   border-top: 1px solid color-mix(in srgb, var(--prism-color-border-strong) 30%, transparent);
 }
 
@@ -1805,16 +1836,21 @@ textarea {
 }
 
 @media (max-width: 900px) {
-  .echo-layout .prism-layout-body {
-    grid-template-columns: 1fr;
-  }
-
   .echo-layout .prism-layout-navigator {
+    position: static;
+    height: auto;
+    max-height: none;
+    overflow: visible;
     border-right: 0;
     border-bottom: 1px solid color-mix(in srgb, var(--prism-color-border-strong) 30%, transparent);
   }
 
+  .echo-layout .prism-layout-body {
+    grid-template-columns: 1fr;
+  }
+
   .shell-navigator {
+    min-height: auto;
     padding: 14px 18px;
   }
 

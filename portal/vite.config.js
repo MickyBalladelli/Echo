@@ -11,7 +11,8 @@ export default defineConfig(({ mode }) => {
       jsxImportSource: '@mickyballadelli/matrix'
     },
     server: {
-      port: 5000,
+      host: '127.0.0.1',
+      port: 5173,
       strictPort: true,
       proxy: {
         '/api': {

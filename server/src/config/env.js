@@ -5,7 +5,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   DATABASE_URL: z.string().min(1),
-  CLIENT_ORIGIN: z.string().url().default('http://localhost:5000'),
+  CLIENT_ORIGIN: z.string().url().default('http://localhost:5173'),
   CLIENT_ORIGINS: z.string().optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   DB_QUERY_TIMEOUT_MS: z.coerce.number().int().min(100).max(30000).default(5000),

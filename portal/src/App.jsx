@@ -158,7 +158,7 @@ export function App() {
 
   return (
     <div class="echo-root prism-theme-model-nocturne" use:style={prismTheme}>
-      <Background palette="midnight" animation={reducedMotion ? undefined : 'halo'} intensity={0.65} grain={0.018} minHeight="100vh">
+      <Background class="echo-background" palette="midnight" animation={reducedMotion ? undefined : 'halo'} intensity={0.65} grain={0.018} minHeight="100vh">
         {authView}
       </Background>
     </div>

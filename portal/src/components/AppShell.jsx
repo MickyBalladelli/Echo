@@ -122,7 +122,7 @@ export function AppShell({
         class="echo-layout"
         header={Header({
           class: 'echo-header',
-          sticky: false,
+          sticky: true,
           ariaLabel: 'Echo header',
           children: html`<div class="echo-header-content"><Label size="large">Echo</Label><span>Small signals. Real people.</span></div>`,
           trailing: Badge({ children: 'SIGNED IN', tone: 'success' })
