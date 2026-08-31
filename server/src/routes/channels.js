@@ -3,6 +3,9 @@ import { postBodySchema } from '../posts/schemas.js'
 import { createPost } from '../posts/service.js'
 import {
   channelInviteSchema,
+  channelModerationSchema,
+  channelPinnedPostSchema,
+  channelPreferencesSchema,
   channelRoleSchema,
   channelSlugSchema,
   createChannelSchema,
@@ -17,7 +20,10 @@ import {
   listChannelMembers,
   listChannelPosts,
   listChannels,
+  moderateChannelPost,
+  setPinnedPost,
   updateChannel,
+  updateChannelPreferences,
   updateMemberRole
 } from '../channels/service.js'
 import { ok, cursorMeta } from '../http/api.js'
@@ -74,6 +80,17 @@ channelsRouter.post('/:slug/posts', async (request, response, next) => {
   }
 })
 
+channelsRouter.patch('/:slug/posts/:postId/moderation', async (request, response, next) => {
+  try {
+    const slug = parse(channelSlugSchema, request.params.slug, 'channel slug')
+    const postId = parse(idSchema, request.params.postId, 'channel post id')
+    const input = parse(channelModerationSchema, request.body, 'channel moderation request')
+    response.json(ok({ post: await moderateChannelPost(request.auth.userId, slug, postId, input.status) }))
+  } catch (error) {
+    next(error)
+  }
+})
+
 channelsRouter.get('/:slug/members', async (request, response, next) => {
   try {
     const slug = parse(channelSlugSchema, request.params.slug, 'channel slug')
@@ -103,6 +120,16 @@ channelsRouter.put('/:slug/membership', async (request, response, next) => {
   }
 })
 
+channelsRouter.put('/:slug/preferences', async (request, response, next) => {
+  try {
+    const slug = parse(channelSlugSchema, request.params.slug, 'channel slug')
+    const input = parse(channelPreferencesSchema, request.body, 'channel preferences request')
+    response.json(ok({ channel: await updateChannelPreferences(request.auth.userId, slug, input) }))
+  } catch (error) {
+    next(error)
+  }
+})
+
 channelsRouter.delete('/:slug/membership', async (request, response, next) => {
   try {
     const slug = parse(channelSlugSchema, request.params.slug, 'channel slug')
@@ -127,6 +154,16 @@ channelsRouter.patch('/:slug', async (request, response, next) => {
     const slug = parse(channelSlugSchema, request.params.slug, 'channel slug')
     const input = parse(updateChannelSchema, request.body, 'channel update request')
     response.json(ok({ channel: await updateChannel(request.auth.userId, slug, input) }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+channelsRouter.patch('/:slug/pinned-post', async (request, response, next) => {
+  try {
+    const slug = parse(channelSlugSchema, request.params.slug, 'channel slug')
+    const input = parse(channelPinnedPostSchema, request.body, 'channel pinned post request')
+    response.json(ok({ channel: await setPinnedPost(request.auth.userId, slug, input.postId) }))
   } catch (error) {
     next(error)
   }

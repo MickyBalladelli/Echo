@@ -2,8 +2,10 @@ import { HttpError } from './errors.js'
 
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
-export function encodeCursor({ createdAt, id }) {
-  return Buffer.from(JSON.stringify({ createdAt: new Date(createdAt).toISOString(), id })).toString('base64url')
+export function encodeCursor({ createdAt, id, score }) {
+  const cursor = { createdAt: new Date(createdAt).toISOString(), id }
+  if (score !== undefined) cursor.score = Number(score)
+  return Buffer.from(JSON.stringify(cursor)).toString('base64url')
 }
 
 export function decodeCursor(value) {
@@ -20,7 +22,10 @@ export function decodeCursor(value) {
       throw new Error('Invalid cursor date')
     }
 
-    return { createdAt: date.toISOString(), id: decoded.id }
+    const score = decoded.score === undefined ? null : Number(decoded.score)
+    if (score !== null && !Number.isFinite(score)) throw new Error('Invalid cursor score')
+
+    return { createdAt: date.toISOString(), id: decoded.id, score }
   } catch {
     throw new HttpError(400, 'INVALID_CURSOR', 'Invalid pagination cursor')
   }

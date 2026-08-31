@@ -3,6 +3,7 @@ import { Button, Card, CheckBox, EmptyState, FormField, Label, TextField } from 
 import { apiRequest } from '../lib/api.js'
 import { PostCard } from '../components/PostCard.jsx'
 import { PostComposer } from '../components/PostComposer.jsx'
+import { ChannelPostModeration } from '../components/ChannelPostModeration.jsx'
 import { PageFrame } from './PageFrame.jsx'
 import { joinRealtimeRoom } from '../lib/realtime.js'
 
@@ -17,6 +18,8 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
   const name = signal('')
   const description = signal('')
   const imageUrl = signal('')
+  const rules = signal('')
+  const postApprovalRequired = signal(false)
   const privateChannel = signal(false)
 
   async function load() {
@@ -35,6 +38,8 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
       name.value = channel.value.name
       description.value = channel.value.description
       imageUrl.value = channel.value.imageUrl || ''
+      rules.value = channel.value.rules || ''
+      postApprovalRequired.value = channel.value.postApprovalRequired
       privateChannel.value = channel.value.visibility === 'private'
       state.value = 'ready'
     } catch (requestError) {
@@ -86,12 +91,33 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
           name: name.value,
           description: description.value,
           imageUrl: imageUrl.value.trim() || null,
-          visibility: privateChannel.value ? 'private' : 'public'
+          visibility: privateChannel.value ? 'private' : 'public',
+          rules: rules.value,
+          postApprovalRequired: postApprovalRequired.value
         })
       })
       channel.value = result.data.channel
     } catch (requestError) {
       error.value = requestError.message || 'Could not save channel'
+    } finally {
+      busy.value = false
+    }
+  }
+
+  async function updatePreferences(changes) {
+    busy.value = true
+    error.value = ''
+    try {
+      const result = await apiRequest(`/api/channels/${encodeURIComponent(slug)}/preferences`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          muted: changes.muted ?? channel.value.muted,
+          notificationsEnabled: changes.notificationsEnabled ?? channel.value.notificationsEnabled
+        })
+      })
+      channel.value = result.data.channel
+    } catch (requestError) {
+      error.value = requestError.message || 'Could not update channel preferences'
     } finally {
       busy.value = false
     }
@@ -114,15 +140,41 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
 
   function addPost(post) {
     posts.value = [post, ...posts.value]
-    channel.value = { ...channel.value, postCount: channel.value.postCount + 1 }
+    if (post.moderationStatus === 'approved') {
+      channel.value = { ...channel.value, postCount: channel.value.postCount + 1 }
+    }
   }
 
   function removePost(postId) {
+    const removedPost = posts.value.find(post => post.id === postId) || channel.value.pinnedPost
     posts.value = posts.value.filter(post => post.id !== postId)
+    if (removedPost?.moderationStatus === 'approved') {
+      channel.value = { ...channel.value, postCount: Math.max(0, channel.value.postCount - 1) }
+    }
+    if (channel.value.pinnedPost?.id === postId) {
+      channel.value = { ...channel.value, pinnedPostId: null, pinnedPost: null }
+    }
   }
 
   function updatePost(updatedPost) {
+    const previousPost = posts.value.find(post => post.id === updatedPost.id)
     posts.value = posts.value.map(post => post.id === updatedPost.id ? { ...post, ...updatedPost } : post)
+    if (previousPost?.moderationStatus !== 'approved' && updatedPost.moderationStatus === 'approved') {
+      channel.value = { ...channel.value, postCount: channel.value.postCount + 1 }
+    } else if (previousPost?.moderationStatus === 'approved' && updatedPost.moderationStatus !== 'approved') {
+      channel.value = { ...channel.value, postCount: Math.max(0, channel.value.postCount - 1) }
+    }
+    if (channel.value.pinnedPost?.id === updatedPost.id) {
+      channel.value = {
+        ...channel.value,
+        pinnedPostId: updatedPost.moderationStatus === 'approved' ? updatedPost.id : null,
+        pinnedPost: updatedPost.moderationStatus === 'approved' ? updatedPost : null
+      }
+    }
+  }
+
+  function updatePinned(updatedChannel) {
+    channel.value = updatedChannel
   }
 
   const content = computed(() => {
@@ -139,13 +191,25 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
             <p class="channel-slug">/{channel.value.slug} · {channel.value.visibility}</p>
             <p>{channel.value.description || 'No description yet.'}</p>
             <span>{channel.value.memberCount} members · {channel.value.postCount} posts</span>
+            {channel.value.postApprovalRequired && <span class="channel-approval-note">New member posts need approval.</span>}
           </div>
-          {!channel.value.isOwner && (
-            <Button loading={busy} variant={channel.value.membershipRole ? 'secondary' : 'primary'} onClick={toggleMembership}>
-              {channel.value.membershipRole ? 'Leave' : channel.value.invited ? 'Accept invite' : 'Join'}
-            </Button>
-          )}
+          <div class="channel-hero-actions">
+            {!channel.value.isOwner && (
+              <Button loading={busy} variant={channel.value.membershipRole ? 'secondary' : 'primary'} onClick={toggleMembership}>
+                {channel.value.membershipRole ? 'Leave' : channel.value.invited ? 'Accept invite' : 'Join'}
+              </Button>
+            )}
+            {channel.value.membershipRole && <>
+              <Button variant="tertiary" size="small" loading={busy} onClick={() => updatePreferences({ muted: !channel.value.muted })}>
+                {channel.value.muted ? 'Unmute channel' : 'Mute channel'}
+              </Button>
+              <Button variant="tertiary" size="small" loading={busy} onClick={() => updatePreferences({ notificationsEnabled: !channel.value.notificationsEnabled })}>
+                {channel.value.notificationsEnabled ? 'Turn off alerts' : 'Turn on alerts'}
+              </Button>
+            </>}
+          </div>
         </Card>
+        {channel.value.rules && <Card class="channel-rules-card"><Label size="small" tone="accent">CHANNEL RULES</Label><pre>{channel.value.rules}</pre></Card>}
         {channel.value.isOwner && (
           <div class="channel-owner-grid">
             <Card>
@@ -154,7 +218,9 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
                 <FormField id="edit-channel-name" label="Name"><TextField id="edit-channel-name" value={name} maxLength={80} required /></FormField>
                 <FormField id="edit-channel-image" label="Image URL"><TextField id="edit-channel-image" value={imageUrl} type="url" maxLength={2000} /></FormField>
                 <FormField id="edit-channel-description" label="Description"><textarea id="edit-channel-description" class="post-composer-input" use:bind={description} maxlength="280" rows="3" /></FormField>
+                <FormField id="edit-channel-rules" label="Rules" hint="One rule per line. Up to 2,000 characters."><textarea id="edit-channel-rules" class="post-composer-input" use:bind={rules} maxlength="2000" rows="6" /></FormField>
                 <CheckBox checked={privateChannel}>Private channel</CheckBox>
+                <CheckBox checked={postApprovalRequired}>Approve member posts before publishing</CheckBox>
                 <Button type="submit" loading={busy}>Save</Button>
               </form>
             </Card>
@@ -183,10 +249,11 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
             ))}
           </div>
         </Card>
+        {channel.value.pinnedPost && <Card class="channel-pinned-post"><div class="post-replies-heading"><Label size="small" tone="accent">PINNED POST</Label></div><PostCard post={channel.value.pinnedPost} router={router} currentUserId={currentUserId} onDeleted={removePost} onUpdated={updatePost} /><ChannelPostModeration slug={slug} post={channel.value.pinnedPost} canPin={channel.value.canModerate} pinned onPinned={updatePinned} /></Card>}
         {channel.value.membershipRole && <PostComposer channelId={channel.value.id} onCreated={addPost} />}
         <div class="post-replies-heading"><Label size="small" tone="accent">CHANNEL FEED</Label></div>
         {posts.value.length
-          ? <div class="post-feed">{posts.value.map(post => <PostCard key={post.id} post={post} router={router} currentUserId={currentUserId} onDeleted={removePost} onUpdated={updatePost} onReposted={addPost} />)}</div>
+          ? <div class="post-feed">{posts.value.map(post => <div class="channel-post-item" key={post.id}><PostCard post={post} router={router} currentUserId={currentUserId} onDeleted={removePost} onUpdated={updatePost} onReposted={addPost} />{channel.value.canModerate && <ChannelPostModeration slug={slug} post={post} canPin pinned={channel.value.pinnedPost?.id === post.id} onChanged={updatePost} onPinned={updatePinned} />}</div>)}</div>
           : <Card><EmptyState title="No posts yet" description="Members can start this channel." /></Card>}
         <div class="post-feed-error" role="alert">{error}</div>
       </div>

@@ -277,6 +277,8 @@ export function PostCard({
           <time datetime={post.createdAt} title={new Date(post.createdAt).toLocaleString()}>{formatPostTime(post.createdAt)}</time>
           {isEdited && <span title="This post has been edited">edited</span>}
           {post.visibility !== 'public' && <Badge tone="accent">{post.visibility}</Badge>}
+          {post.moderationStatus === 'pending' && <Badge tone="accent">Pending approval</Badge>}
+          {post.moderationStatus === 'rejected' && <Badge tone="error">Rejected</Badge>}
           {post.following && <Badge tone="success">Following</Badge>}
         </div>
       </div>

@@ -17,6 +17,8 @@ export function ChannelDirectory({ router }) {
   const slug = signal('')
   const description = signal('')
   const imageUrl = signal('')
+  const rules = signal('')
+  const postApprovalRequired = signal(false)
   const privateChannel = signal(false)
 
   async function load({ append = false } = {}) {
@@ -49,7 +51,9 @@ export function ChannelDirectory({ router }) {
           ...(slug.value.trim() ? { slug: slug.value } : {}),
           description: description.value,
           imageUrl: imageUrl.value.trim() || null,
-          visibility: privateChannel.value ? 'private' : 'public'
+          visibility: privateChannel.value ? 'private' : 'public',
+          rules: rules.value,
+          postApprovalRequired: postApprovalRequired.value
         })
       })
       router.navigate(`/channels/${result.data.channel.slug}`)
@@ -107,7 +111,11 @@ export function ChannelDirectory({ router }) {
           <FormField id="channel-description" label="Description">
             <textarea id="channel-description" class="post-composer-input" use:bind={description} maxlength="280" rows="3" />
           </FormField>
+          <FormField id="channel-rules" label="Rules" hint="One rule per line. Up to 2,000 characters.">
+            <textarea id="channel-rules" class="post-composer-input" use:bind={rules} maxlength="2000" rows="4" />
+          </FormField>
           <CheckBox checked={privateChannel}>Private channel</CheckBox>
+          <CheckBox checked={postApprovalRequired}>Approve member posts before publishing</CheckBox>
           <Button type="submit" loading={creating}>Create channel</Button>
         </form>
         <div class="post-feed-error" role="alert">{error}</div>

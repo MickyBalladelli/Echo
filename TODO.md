@@ -222,12 +222,12 @@ learn and use components in Prism for all your UI
 
 ### Channels depth
 
-- [ ] Add channel moderators.
-- [ ] Add channel rules and pinned posts.
-- [ ] Add channel post approval or moderation mode.
-- [ ] Add channel mute and notification preferences.
-- [ ] Add channel member roles.
-- [ ] Add channel discovery ranking.
+- [x] Add channel moderators.
+- [x] Add channel rules and pinned posts.
+- [x] Add channel post approval or moderation mode.
+- [x] Add channel mute and notification preferences.
+- [x] Add channel member roles.
+- [x] Add channel discovery ranking.
 
 ### Notifications and preferences
 

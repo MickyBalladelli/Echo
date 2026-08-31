@@ -2,7 +2,7 @@ import { QueryTypes } from 'sequelize'
 import { sequelize, withTransaction } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
 import { encodeCursor } from '../http/pagination.js'
-import { notifyLike, notifyReply } from '../notifications/service.js'
+import { notifyChannelPost, notifyLike, notifyReply } from '../notifications/service.js'
 
 export const MAX_REPLY_DEPTH = 3
 const MAX_THREAD_REPLIES = 500
@@ -51,6 +51,18 @@ const postVisibilityAccess = alias => `(
         AND private_follow.following_id = ${alias}.author_id
     )
   )
+  AND (
+    ${alias}.channel_id IS NULL
+    OR ${alias}.channel_moderation_status = 'approved'
+    OR ${alias}.author_id = :viewerId
+    OR EXISTS (
+      SELECT 1 FROM channel_members moderation_member
+      WHERE moderation_member.channel_id = ${alias}.channel_id
+        AND moderation_member.user_id = :viewerId
+        AND moderation_member.left_at IS NULL
+        AND moderation_member.role IN ('owner', 'moderator')
+    )
+  )
 )`
 
 const postSelect = (extraSelect = '') => `
@@ -68,6 +80,7 @@ const postSelect = (extraSelect = '') => `
     p.image_alt_text,
     p.content_warning,
     p.link_preview,
+    p.channel_moderation_status,
     u.username,
     pr.display_name,
     COALESCE((
@@ -145,6 +158,7 @@ function mapPost(row) {
     visibility: row.visibility,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    moderationStatus: row.channel_moderation_status || 'approved',
     imageUrl: row.image_url || null,
     imageAltText: row.image_alt_text || null,
     contentWarning: row.content_warning || null,
@@ -215,6 +229,30 @@ function linkPreviewForBody(body = '') {
     }
   } catch {
     return null
+  }
+}
+
+async function notifyChannelMembers(channelId, authorId, postId, transaction) {
+  const recipients = await sequelize.query(`
+    SELECT member.user_id
+    FROM channel_members member
+    WHERE member.channel_id = :channelId
+      AND member.user_id <> :authorId
+      AND member.left_at IS NULL
+      AND member.notifications_enabled = TRUE
+      AND (member.muted_until IS NULL OR member.muted_until < CURRENT_TIMESTAMP)
+  `, {
+    replacements: { channelId, authorId },
+    type: QueryTypes.SELECT,
+    transaction
+  })
+  for (const recipient of recipients) {
+    await notifyChannelPost({
+      recipientId: recipient.user_id,
+      actorId: authorId,
+      channelId,
+      postId
+    }, transaction)
   }
 }
 
@@ -407,9 +445,11 @@ export async function getPostById(viewerId, postId, transaction) {
 
 export async function createPost(authorId, input) {
   const postId = await withTransaction(async transaction => {
+    let channelModerationStatus = 'approved'
     if (input.channelId) {
       const channel = await sequelize.query(
-        `SELECT c.id, member.user_id AS member_id
+        `SELECT c.id, member.user_id AS member_id, member.role AS member_role,
+          c.post_approval_required
          FROM channels c
          LEFT JOIN channel_members member ON member.channel_id = c.id
            AND member.user_id = :authorId AND member.left_at IS NULL
@@ -422,6 +462,9 @@ export async function createPost(authorId, input) {
       )
       if (!channel[0]) throw new HttpError(400, 'CHANNEL_NOT_FOUND', 'Channel not found')
       if (!channel[0].member_id) throw new HttpError(403, 'CHANNEL_MEMBERSHIP_REQUIRED', 'Join channel before posting')
+      if (channel[0].post_approval_required && !['owner', 'moderator'].includes(channel[0].member_role)) {
+        channelModerationStatus = 'pending'
+      }
     }
 
     if (input.repostOfPostId) {
@@ -453,7 +496,8 @@ export async function createPost(authorId, input) {
         image_url,
         image_alt_text,
         content_warning,
-        link_preview
+        link_preview,
+        channel_moderation_status
       )
       VALUES (
         :authorId,
@@ -464,7 +508,8 @@ export async function createPost(authorId, input) {
         :imageUrl,
         :imageAltText,
         :contentWarning,
-        CAST(:linkPreview AS JSONB)
+        CAST(:linkPreview AS JSONB),
+        :channelModerationStatus
       )
       RETURNING id
     `, {
@@ -477,13 +522,22 @@ export async function createPost(authorId, input) {
         imageUrl: input.imageUrl || null,
         imageAltText: input.imageAltText || null,
         contentWarning: input.contentWarning || null,
-        linkPreview: JSON.stringify(linkPreviewForBody(input.body))
+        linkPreview: JSON.stringify(linkPreviewForBody(input.body)),
+        channelModerationStatus
       },
       type: QueryTypes.SELECT,
       transaction
     })
 
     await syncPostHashtags(rows[0].id, input.body, transaction)
+    if (input.channelId && channelModerationStatus === 'approved') {
+      await sequelize.query(`
+        UPDATE channels
+        SET discovery_score = discovery_score + 2, updated_at = CURRENT_TIMESTAMP
+        WHERE id = :channelId
+      `, { replacements: { channelId: input.channelId }, transaction })
+      await notifyChannelMembers(input.channelId, authorId, rows[0].id, transaction)
+    }
 
     return rows[0].id
   })
@@ -553,12 +607,40 @@ export async function createReply(authorId, parentPostId, input) {
       throw new HttpError(400, 'REPLY_DEPTH_LIMIT', `Replies can be nested only ${MAX_REPLY_DEPTH} levels deep`)
     }
 
+    let channelModerationStatus = 'approved'
+    if (parent.channel_id) {
+      const channelState = await sequelize.query(`
+        SELECT channel.post_approval_required, member.role
+        FROM channels channel
+        JOIN channel_members member ON member.channel_id = channel.id
+          AND member.user_id = :authorId AND member.left_at IS NULL
+        WHERE channel.id = :channelId AND channel.deleted_at IS NULL
+        LIMIT 1
+      `, {
+        replacements: { authorId, channelId: parent.channel_id },
+        type: QueryTypes.SELECT,
+        transaction
+      })
+      if (!channelState[0]) throw new HttpError(403, 'CHANNEL_MEMBERSHIP_REQUIRED', 'Join channel before replying')
+      if (channelState[0].post_approval_required && !['owner', 'moderator'].includes(channelState[0].role)) {
+        channelModerationStatus = 'pending'
+      }
+    }
+
     const replyRows = await sequelize.query(`
-      INSERT INTO posts (author_id, parent_post_id, channel_id, body, visibility)
-      VALUES (:authorId, :parentPostId, :channelId, :body, 'public')
+      INSERT INTO posts (
+        author_id, parent_post_id, channel_id, body, visibility, channel_moderation_status
+      )
+      VALUES (:authorId, :parentPostId, :channelId, :body, 'public', :channelModerationStatus)
       RETURNING id
     `, {
-      replacements: { authorId, parentPostId, channelId: parent.channel_id || null, body: input.body },
+      replacements: {
+        authorId,
+        parentPostId,
+        channelId: parent.channel_id || null,
+        body: input.body,
+        channelModerationStatus
+      },
       type: QueryTypes.SELECT,
       transaction
     })
@@ -566,12 +648,22 @@ export async function createReply(authorId, parentPostId, input) {
 
     await syncPostHashtags(replyId, input.body, transaction)
 
-    await notifyReply({
-      recipientId: parent.author_id,
-      actorId: authorId,
-      postId: parentPostId,
-      replyId
-    }, transaction)
+    if (channelModerationStatus === 'approved') {
+      await notifyReply({
+        recipientId: parent.author_id,
+        actorId: authorId,
+        postId: parentPostId,
+        replyId
+      }, transaction)
+      if (parent.channel_id) {
+        await sequelize.query(`
+          UPDATE channels
+          SET discovery_score = discovery_score + 2, updated_at = CURRENT_TIMESTAMP
+          WHERE id = :channelId
+        `, { replacements: { channelId: parent.channel_id }, transaction })
+        await notifyChannelMembers(parent.channel_id, authorId, replyId, transaction)
+      }
+    }
 
     return { replyId, depth: parentDepth + 1 }
   })
@@ -596,7 +688,7 @@ export async function deletePost(authorId, postId) {
     SET deleted_at = CURRENT_TIMESTAMP,
         updated_at = CURRENT_TIMESTAMP
     WHERE id = :postId AND author_id = :authorId AND deleted_at IS NULL
-    RETURNING id
+    RETURNING id, channel_id, channel_moderation_status
   `, {
     replacements: { authorId, postId },
     type: QueryTypes.SELECT
@@ -604,6 +696,15 @@ export async function deletePost(authorId, postId) {
 
   if (!rows[0]) {
     throw new HttpError(404, 'POST_NOT_FOUND', 'Post not found')
+  }
+
+  if (rows[0].channel_id && rows[0].channel_moderation_status === 'approved') {
+    await sequelize.query(`
+      UPDATE channels
+      SET discovery_score = GREATEST(0, discovery_score - 2), updated_at = CURRENT_TIMESTAMP,
+          pinned_post_id = CASE WHEN pinned_post_id = :postId THEN NULL ELSE pinned_post_id END
+      WHERE id = :channelId
+    `, { replacements: { channelId: rows[0].channel_id, postId }, type: QueryTypes.UPDATE })
   }
 
   return { id: rows[0].id }

@@ -10,6 +10,7 @@ export const notificationTypes = Object.freeze({
   follow: 'follow',
   channelInvite: 'channel_invite',
   channelJoin: 'channel_join',
+  channelPost: 'channel_post',
   chatMessage: 'chat_message'
 })
 
@@ -182,6 +183,18 @@ export function notifyChannelJoin({ recipientId, actorId, channelId }, transacti
     channelId,
     payload: { channelId },
     dedupeKey: `channel:${channelId}:actor:${actorId}`
+  }, transaction)
+}
+
+export function notifyChannelPost({ recipientId, actorId, channelId, postId }, transaction) {
+  return createNotification({
+    recipientId,
+    actorId,
+    type: notificationTypes.channelPost,
+    postId,
+    channelId,
+    payload: { postId, channelId },
+    dedupeKey: `post:${postId}`
   }, transaction)
 }
 

@@ -83,6 +83,10 @@ export const Channel = sequelize.define('Channel', {
   description: { type: DataTypes.STRING(280), allowNull: false, defaultValue: '' },
   imageUrl: { type: DataTypes.TEXT, field: 'image_url' },
   visibility: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'public' },
+  rules: { type: DataTypes.STRING(2000), allowNull: false, defaultValue: '' },
+  pinnedPostId: { type: DataTypes.UUID, field: 'pinned_post_id' },
+  postApprovalRequired: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false, field: 'post_approval_required' },
+  discoveryScore: { type: DataTypes.DECIMAL(12, 2), allowNull: false, defaultValue: 0, field: 'discovery_score' },
   deletedAt: { type: DataTypes.DATE, field: 'deleted_at' }
 }, {
   tableName: 'channels',
@@ -94,7 +98,9 @@ export const ChannelMember = sequelize.define('ChannelMember', {
   userId: { type: DataTypes.UUID, allowNull: false, primaryKey: true, field: 'user_id' },
   role: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'member' },
   joinedAt: { type: DataTypes.DATE, allowNull: false, field: 'joined_at' },
-  leftAt: { type: DataTypes.DATE, field: 'left_at' }
+  leftAt: { type: DataTypes.DATE, field: 'left_at' },
+  mutedUntil: { type: DataTypes.DATE, field: 'muted_until' },
+  notificationsEnabled: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true, field: 'notifications_enabled' }
 }, {
   tableName: 'channel_members',
   timestamps: false
@@ -125,6 +131,9 @@ export const Post = sequelize.define('Post', {
   imageAltText: { type: DataTypes.STRING(120), field: 'image_alt_text' },
   contentWarning: { type: DataTypes.STRING(120), field: 'content_warning' },
   linkPreview: { type: DataTypes.JSONB, field: 'link_preview' },
+  channelModerationStatus: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'approved', field: 'channel_moderation_status' },
+  channelModeratedBy: { type: DataTypes.UUID, field: 'channel_moderated_by' },
+  channelModeratedAt: { type: DataTypes.DATE, field: 'channel_moderated_at' },
   deletedAt: { type: DataTypes.DATE, field: 'deleted_at' }
 }, {
   tableName: 'posts',
@@ -306,6 +315,7 @@ Session.belongsTo(User, { as: 'user', foreignKey: 'userId' })
 
 User.hasMany(Channel, { as: 'ownedChannels', foreignKey: 'ownerId' })
 Channel.belongsTo(User, { as: 'owner', foreignKey: 'ownerId' })
+Channel.belongsTo(Post, { as: 'pinnedPost', foreignKey: 'pinnedPostId' })
 Channel.hasMany(ChannelMember, { as: 'members', foreignKey: 'channelId' })
 ChannelMember.belongsTo(Channel, { as: 'channel', foreignKey: 'channelId' })
 User.hasMany(ChannelMember, { as: 'channelMemberships', foreignKey: 'userId' })

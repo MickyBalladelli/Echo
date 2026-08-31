@@ -634,6 +634,49 @@ textarea {
   border-radius: 18px;
 }
 
+.channel-hero-actions {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+.channel-approval-note {
+  color: #efb365;
+  font-size: 13px;
+}
+
+.channel-rules-card,
+.channel-pinned-post {
+  display: grid;
+  gap: 12px;
+}
+
+.channel-rules-card pre {
+  margin: 0;
+  color: #d9dfe5;
+  font: inherit;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.channel-post-item {
+  display: grid;
+  gap: 6px;
+}
+
+.channel-post-moderation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding-inline: 8px;
+}
+
+.channel-post-moderation-error {
+  color: #ef9999;
+  font-size: 12px;
+}
+
 .channel-owner-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1576,6 +1619,10 @@ textarea {
   .channel-owner-grid,
   .channel-hero-card {
     grid-template-columns: 1fr;
+  }
+
+  .channel-hero-actions {
+    justify-items: start;
   }
 
   .notes-workspace {
