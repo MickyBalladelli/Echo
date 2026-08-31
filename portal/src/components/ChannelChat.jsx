@@ -1,5 +1,5 @@
 import { computed, effect, onMount, signal } from '../lib/vendor.js'
-import { Button, Card, EmptyState, Label } from '../lib/vendor.js'
+import { Button, Card, EmptyState } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { emitRealtime, onRealtimeEvent } from '../lib/realtime.js'
 import { ChannelChatMessage } from './ChannelChatMessage.jsx'
@@ -103,20 +103,14 @@ export function ChannelChat({ slug, channel, currentUserId }) {
     if (state.value === 'loading') return <Card><div role="status">Loading channel chat…</div></Card>
     if (state.value === 'error') return <Card><EmptyState status="error" title="Chat unavailable" description={error.value} /></Card>
     return <Card class="channel-chat-card">
-      <div class="channel-chat-header">
-        <div>
-          <Label size="small" tone="accent">CHANNEL CHAT</Label>
-          <strong>{readChannel().memberCount} members</strong>
-        </div>
-        <span>Live conversation</span>
-      </div>
       <KeyboardList label="Channel chat messages" className="channel-chat-list">
         {messages.value.length
           ? <VirtualList items={messages} estimateSize={72} label="Channel chat history" renderItem={renderMessage} />
           : <div class="channel-chat-empty"><EmptyState title="No messages yet" description="Start the conversation." /></div>}
       </KeyboardList>
       <form class="channel-chat-compose" onSubmit={send}>
-        <textarea use:bind={body} maxlength="4000" rows="2" placeholder="Talk with channel members" aria-label="Channel chat message" />
+        <button class="channel-chat-attach" type="button" aria-label="Add an attachment">+</button>
+        <textarea use:bind={body} maxlength="4000" rows="1" placeholder={`Message #${readChannel().slug}`} aria-label="Channel chat message" />
         <Button type="submit" loading={busy}>Send message</Button>
       </form>
       <div class="post-feed-error" role="alert">{error}</div>

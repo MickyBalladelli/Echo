@@ -5,6 +5,8 @@ import { UserAvatar } from './UserAvatar.jsx'
 
 export function ChannelChatMessage({ message, currentUserId, compact = false, onReply }) {
   const copied = signal(false)
+  const reactionPickerOpen = signal(false)
+  const selectedReaction = signal('')
   const own = message.sender.id === currentUserId
   let copyTimer
 
@@ -19,6 +21,11 @@ export function ChannelChatMessage({ message, currentUserId, compact = false, on
     }
   }
 
+  function toggleReaction(emoji) {
+    selectedReaction.value = selectedReaction.value === emoji ? '' : emoji
+    reactionPickerOpen.value = false
+  }
+
   return (
     <div
       class={`channel-chat-message-row ${compact ? 'channel-chat-message-compact' : ''} ${own ? 'channel-chat-message-own' : ''}`}
@@ -29,18 +36,47 @@ export function ChannelChatMessage({ message, currentUserId, compact = false, on
     >
       {compact
         ? <span class="channel-chat-message-avatar-spacer" aria-hidden="true" />
-        : <UserAvatar user={message.sender} size="medium" className="channel-chat-message-avatar" />}
+        : <UserAvatar user={message.sender} size="large" className="channel-chat-message-avatar" />}
       <div class="channel-chat-message-body">
         {!compact && (
           <div class="channel-chat-message-meta">
             <strong>{message.sender.displayName}</strong>
-            <span>@{message.sender.username}</span>
+            <span class="channel-chat-message-badge" aria-hidden="true">🎈</span>
             <time datetime={message.createdAt}>{formatClockTime(message.createdAt)}</time>
           </div>
         )}
         <p>{message.body}</p>
         {message.updatedAt !== message.createdAt && <small class="channel-chat-message-edited">(edited)</small>}
+        {selectedReaction.value && (
+          <div class="channel-chat-message-reactions">
+            <button
+              class="channel-chat-reaction"
+              type="button"
+              aria-label={`Remove ${selectedReaction.value} reaction`}
+              onClick={() => toggleReaction(selectedReaction.value)}
+            >
+              <span aria-hidden="true">{selectedReaction.value}</span>
+              <b>1</b>
+            </button>
+          </div>
+        )}
         <div class="channel-chat-message-actions">
+          {reactionPickerOpen.value && (
+            <div class="channel-chat-reaction-picker" role="group" aria-label="Choose a reaction">
+              {['🔥', '🙂', '❤️', '👏'].map(emoji => (
+                <button
+                  key={emoji}
+                  class="channel-chat-reaction-option"
+                  type="button"
+                  aria-label={`React with ${emoji}`}
+                  onClick={() => toggleReaction(emoji)}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          )}
+          <Button variant="tertiary" size="small" onClick={() => reactionPickerOpen.value = !reactionPickerOpen.value}>React</Button>
           <Button variant="tertiary" size="small" onClick={() => onReply?.(message)}>Reply</Button>
           <Button variant="tertiary" size="small" onClick={copyMessage}>Copy</Button>
           {copied.value && <span class="channel-chat-message-copied" role="status">Copied</span>}
