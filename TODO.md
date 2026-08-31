@@ -25,6 +25,7 @@ Use `@mickyballadelli/matrix` and `@mickyballadelli/prism` fully for the fronten
 - [x] Use `@mickyballadelli/prism` as the only frontend UI and design system.
 - [x] Use `@mickyballadelli/matrix` as the only frontend runtime, renderer, state, and router.
 - [x] Apply `@mickyballadelli/prism/theme` at the portal root, including the selected Prism theme model.
+- [x] Align portal colors with Prism theme tokens and make Nocturne primary text white.
 - [x] Use sequelize for the app's data/state model.
 
 ### Frontend framework contract
