@@ -1386,6 +1386,16 @@ textarea {
   margin-left: 0;
 }
 
+.post-action-with-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.post-action-count {
+  font-variant-numeric: tabular-nums;
+}
+
 .post-card-footer .prism-button-icon-only {
   min-width: 36px;
   min-height: 36px;

@@ -344,15 +344,20 @@ export function PostCard({
           title={`Replies (${post.replyCount})`}
           onClick={() => router.navigate(`/posts/${post.id}`)}
         />
-        <IconButton
-          class={computed(() => liked.value ? 'post-like-button post-like-button-active' : 'post-like-button')}
-          icon={computed(() => liked.value ? '♥' : '♡')}
-          pressed={liked}
-          ariaLabel={computed(() => `${liked.value ? 'Unlike' : 'Like'} this post. ${likeLabel.value}`)}
-          title={computed(() => `${liked.value ? 'Unlike' : 'Like'} post (${likeCount.value})`)}
-          loading={updatingLike}
-          onClick={toggleLike}
-        />
+        <span class="post-action-with-count">
+          <IconButton
+            class={computed(() => liked.value ? 'post-like-button post-like-button-active' : 'post-like-button')}
+            icon={computed(() => liked.value ? '♥' : '♡')}
+            pressed={liked}
+            ariaLabel={computed(() => `${liked.value ? 'Unlike' : 'Like'} this post. ${likeLabel.value}`)}
+            title={computed(() => `${liked.value ? 'Unlike' : 'Like'} post (${likeCount.value})`)}
+            loading={updatingLike}
+            onClick={toggleLike}
+          />
+          <Badge class="post-action-count" size="small" pulseOnChange ariaLabel={computed(() => `${likeCount.value} likes`)}>
+            {likeCount}
+          </Badge>
+        </span>
         {DropdownMenu({
           class: 'post-action-menu',
           ariaLabel: 'Post actions',
