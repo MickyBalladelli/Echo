@@ -2,7 +2,7 @@ import { computed, onMount, signal } from '../lib/vendor.js'
 import { Button, Card, EmptyState, Label } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { PostCard } from '../components/PostCard.jsx'
-import { PostComposer } from '../components/PostComposer.jsx'
+import { PostComposerDialog } from '../components/PostComposerDialog.jsx'
 import { ReplyComposer } from '../components/ReplyComposer.jsx'
 import { PageFrame } from './PageFrame.jsx'
 import { joinRealtimeRoom } from '../lib/realtime.js'
@@ -129,8 +129,8 @@ export function FeedPage({ router, currentUserId, feed = 'home' }) {
       description={feed === 'following'
         ? 'A timeline of posts from you and people you follow.'
         : 'A timeline of posts from people and topics you may care about. Channels are for chat.'}
+      headerActions={<PostComposerDialog onCreated={addPost} />}
     >
-      <PostComposer onCreated={addPost} />
       {feedContent}
     </PageFrame>
   )

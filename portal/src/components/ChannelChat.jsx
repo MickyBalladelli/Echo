@@ -2,12 +2,9 @@ import { computed, effect, onMount, signal } from '../lib/vendor.js'
 import { Button, Card, EmptyState, Label } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { emitRealtime, onRealtimeEvent } from '../lib/realtime.js'
+import { ChannelChatMessage } from './ChannelChatMessage.jsx'
 import { KeyboardList } from './KeyboardList.jsx'
 import { VirtualList } from './VirtualList.jsx'
-
-function messageText(message) {
-  return <div class="channel-chat-message"><strong>{message.sender.displayName}</strong><span>{message.body}</span><time datetime={message.createdAt}>{new Date(message.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</time></div>
-}
 
 export function ChannelChat({ slug, channel, currentUserId }) {
   const readChannel = () => channel?.value ?? channel
@@ -17,9 +14,25 @@ export function ChannelChat({ slug, channel, currentUserId }) {
   const busy = signal(false)
   const error = signal('')
 
+  function messageViewport() {
+    if (typeof document === 'undefined') return null
+    return document.querySelector('.channel-chat-list .virtual-list')
+  }
+
+  function scrollMessagesToBottom() {
+    if (typeof requestAnimationFrame !== 'function') return
+    requestAnimationFrame(() => {
+      const viewport = messageViewport()
+      if (viewport) viewport.scrollTop = viewport.scrollHeight
+    })
+  }
+
   function addMessage(message) {
     if (message.channelId !== readChannel().id || messages.value.some(item => item.id === message.id)) return
+    const viewport = messageViewport()
+    const shouldStickToBottom = !viewport || viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 120
     messages.value = [...messages.value, message]
+    if (shouldStickToBottom) scrollMessagesToBottom()
     if (message.sender.id !== currentUserId) markRead(message.id)
   }
 
@@ -38,6 +51,7 @@ export function ChannelChat({ slug, channel, currentUserId }) {
       const latest = messages.value.at(-1)
       if (latest && latest.sender.id !== currentUserId) markRead(latest.id)
       state.value = 'ready'
+      scrollMessagesToBottom()
     } catch (requestError) {
       error.value = requestError.message || 'Could not load channel chat'
       state.value = 'error'
@@ -71,18 +85,39 @@ export function ChannelChat({ slug, channel, currentUserId }) {
     })
   }
 
+  function replyTo(message) {
+    const prefix = `@${message.sender.username} `
+    body.value = body.value.trim() ? `${prefix}${body.value}` : prefix
+  }
+
+  function renderMessage(message, index) {
+    const previous = messages.value[index - 1]
+    const compact = Boolean(previous && previous.sender.id === message.sender.id &&
+      new Date(message.createdAt).getTime() - new Date(previous.createdAt).getTime() < 5 * 60 * 1000)
+
+    return <ChannelChatMessage message={message} currentUserId={currentUserId} compact={compact} onReply={replyTo} />
+  }
+
   const content = computed(() => {
     if (!readChannel().membershipRole) return <Card><EmptyState title="Join to chat" description="Channel chat is available to members." /></Card>
     if (state.value === 'loading') return <Card><div role="status">Loading channel chat…</div></Card>
     if (state.value === 'error') return <Card><EmptyState status="error" title="Chat unavailable" description={error.value} /></Card>
     return <Card class="channel-chat-card">
-      <Label size="small" tone="accent">CHANNEL CHAT</Label>
+      <div class="channel-chat-header">
+        <div>
+          <Label size="small" tone="accent">CHANNEL CHAT</Label>
+          <strong>{readChannel().memberCount} members</strong>
+        </div>
+        <span>Live conversation</span>
+      </div>
       <KeyboardList label="Channel chat messages" className="channel-chat-list">
-        <VirtualList items={messages} estimateSize={72} label="Channel chat history" renderItem={messageText} />
+        {messages.value.length
+          ? <VirtualList items={messages} estimateSize={72} label="Channel chat history" renderItem={renderMessage} />
+          : <div class="channel-chat-empty"><EmptyState title="No messages yet" description="Start the conversation." /></div>}
       </KeyboardList>
       <form class="channel-chat-compose" onSubmit={send}>
         <textarea use:bind={body} maxlength="4000" rows="2" placeholder="Talk with channel members" aria-label="Channel chat message" />
-        <Button type="submit" loading={busy}>Send</Button>
+        <Button type="submit" loading={busy}>Send message</Button>
       </form>
       <div class="post-feed-error" role="alert">{error}</div>
     </Card>

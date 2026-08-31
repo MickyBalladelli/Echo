@@ -215,7 +215,7 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
             <div class="channel-section-heading">
               <Label size="small" tone="accent">YOUR ACCESS</Label>
               <h3>{channel.value.membershipRole ? 'Your channel settings' : 'Join this channel'}</h3>
-              <p>{channel.value.membershipRole ? 'Control alerts or leave whenever you want.' : 'Join to chat and publish messages in this channel.'}</p>
+              <p>{channel.value.membershipRole ? 'Control alerts or leave whenever you want.' : 'Join to chat and send messages in this channel.'}</p>
             </div>
             {channel.value.membershipRole && (
               <div class="channel-dialog-actions">
