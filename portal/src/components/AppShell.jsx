@@ -1,7 +1,7 @@
-import { createRouter, html, onMount, routerView } from '../lib/vendor.js'
+import { computed, createRouter, onMount, routerView, signal } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import echoIconUrl from '../assets/icons/echo.png'
-import { Badge, Header, Label, Layout } from '../lib/vendor.js'
+import { ArrowLeftIcon, Badge, Header, IconButton, Label, Layout } from '../lib/vendor.js'
 import { ContextRail } from './ContextRail.jsx'
 import { ShellNavigation } from './ShellNavigation.jsx'
 import { UserProfilePage } from '../pages/UserProfilePage.jsx'
@@ -31,6 +31,7 @@ export function AppShell({
   onLogout,
   onUpdated
 }) {
+  const channelHeader = signal(null)
   const router = createRouter([
     { path: '/', title: 'Timeline', view: () => HomePage({ router, currentUserId: userState.value.id }) },
     {
@@ -67,7 +68,15 @@ export function AppShell({
     {
       path: '/channels/:slug',
       title: 'Channel',
-      view: ({ slug }) => ChannelDetailPage({ slug, router, currentUserId: userState.value.id })
+      view: ({ slug }) => {
+        channelHeader.value = null
+        return ChannelDetailPage({
+          slug,
+          router,
+          currentUserId: userState.value.id,
+          onHeaderChange: value => channelHeader.value = value
+        })
+      }
     },
     { path: '/chat', title: 'Chat', view: () => ChatPage({ router, currentUserId: userState.value.id }) },
     {
@@ -112,6 +121,46 @@ export function AppShell({
     }
   })
   const activeView = routerView(router, () => NotFoundPage({ router }))
+  const layoutClass = computed(() => router.path.value.startsWith('/channels/') ? 'echo-layout echo-layout-channel' : 'echo-layout')
+  const globalHeader = computed(() => {
+    const channel = channelHeader.value
+    if (!channel || !router.path.value.startsWith('/channels/')) {
+      return (
+        <div class="echo-header-content">
+          <div class="echo-header-brand">
+            <img class="echo-header-icon" src={echoIconUrl} alt="" aria-hidden="true" />
+            <div class="echo-header-copy"><Label size="large">ECHO</Label><span>Small signals. Real people.</span></div>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div class="echo-header-content echo-channel-header-content">
+        <div class="echo-header-brand">
+          <img class="echo-header-icon" src={echoIconUrl} alt="" aria-hidden="true" />
+          <div class="echo-header-copy"><Label size="large">ECHO</Label><span>Small signals. Real people.</span></div>
+        </div>
+        <div class="echo-channel-header-details">
+          <div class="echo-channel-primary">
+            <IconButton
+              class="echo-channel-back-button"
+              icon={ArrowLeftIcon()}
+              size="small"
+              ariaLabel="All channels"
+              title="All channels"
+              onClick={router.link('/channels')}
+            />
+            <div class="echo-channel-identity">
+              <h1><a class="echo-channel-title-link" href={`/channels/${channel.slug}`} onClick={router.link(`/channels/${channel.slug}`)}>{channel.name}</a></h1>
+              <a class="echo-channel-slug-link" href={`/channels/${channel.slug}`} onClick={router.link(`/channels/${channel.slug}`)}>/{channel.slug}</a>
+            </div>
+            <p class="echo-channel-visibility">{channel.visibility === 'private' ? 'Private chat room · invite only.' : 'Public chat room · anyone can join.'}</p>
+          </div>
+        </div>
+      </div>
+    )
+  })
   const user = userState.value
 
   onMount(() => router.start())
@@ -120,12 +169,12 @@ export function AppShell({
     <div class="echo-shell">
       <a class="skip-link" href="#main-content">Skip to content</a>
       <Layout
-        class="echo-layout"
+        class={layoutClass}
         header={Header({
           class: 'echo-header',
           sticky: true,
           ariaLabel: 'Echo header',
-          children: html`<div class="echo-header-content"><img class="echo-header-icon" src="${echoIconUrl}" alt="" aria-hidden="true" /><div class="echo-header-copy"><Label size="large">ECHO</Label><span>Small signals. Real people.</span></div></div>`,
+          children: globalHeader,
           trailing: Badge({ children: 'SIGNED IN', tone: 'success' })
         })}
         navigator={ShellNavigation({ router, user, unreadNotifications })}

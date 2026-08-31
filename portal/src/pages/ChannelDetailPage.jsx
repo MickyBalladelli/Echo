@@ -7,7 +7,7 @@ import { ReportButton } from '../components/ReportButton.jsx'
 import { LiveRegion } from '../components/LiveRegion.jsx'
 import { ChannelChat } from '../components/ChannelChat.jsx'
 
-export function ChannelDetailPage({ slug, router, currentUserId }) {
+export function ChannelDetailPage({ slug, router, currentUserId, onHeaderChange = () => {} }) {
   const channel = signal(null)
   const members = signal([])
   const state = signal('loading')
@@ -39,6 +39,10 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
       rules.value = channel.value.rules || ''
       privateChannel.value = channel.value.visibility === 'private'
       state.value = 'ready'
+      onHeaderChange({
+        name: channel.value.name,
+        visibility: channel.value.visibility
+      })
     } catch (requestError) {
       error.value = requestError.message || 'Could not load channel'
       state.value = 'error'
@@ -109,6 +113,10 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
         })
       })
       channel.value = result.data.channel
+      onHeaderChange({
+        name: channel.value.name,
+        visibility: channel.value.visibility
+      })
     } catch (requestError) {
       error.value = requestError.message || 'Could not save channel'
     } finally {
@@ -266,13 +274,7 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
 
     return (
       <div class="channel-detail-stack">
-        <a class="back-link" href="/channels" onClick={router.link('/channels')}>← All channels</a>
-        <section class="channel-message-section" aria-labelledby="channel-messages-title">
-          <div class="channel-section-heading">
-            <Label size="small" tone="accent">CHANNEL</Label>
-            <h2 id="channel-messages-title">Chat</h2>
-            <p>Live conversation with channel members.</p>
-          </div>
+        <section class="channel-message-section" aria-label="Channel messages">
           <ChannelChat slug={slug} channel={channel} currentUserId={currentUserId} />
         </section>
         <Popup
@@ -310,6 +312,7 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
       title={computed(() => channel.value?.name || slug)}
       description={computed(() => channel.value?.visibility === 'private' ? 'Private chat room · invite only.' : 'Public chat room · anyone can join.')}
       headerActions={headerActions}
+      hideHeader
     >
       {content}
     </PageFrame>

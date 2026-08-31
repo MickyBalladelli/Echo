@@ -29,6 +29,7 @@ export {
   Tooltip,
   TreeView,
   AlertIcon,
+  ArrowLeftIcon,
   ChatIcon,
   ClockIcon,
   MapPinIcon,

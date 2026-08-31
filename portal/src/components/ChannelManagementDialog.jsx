@@ -11,6 +11,7 @@ export function ChannelManagementDialog({ channel: initialChannel, onUpdated }) 
   const members = signal([])
   const inviteUsername = signal('')
   const name = signal(initialChannel.name)
+  const slug = signal(initialChannel.slug)
   const description = signal(initialChannel.description || '')
   const imageUrl = signal(initialChannel.imageUrl || '')
   const rules = signal(initialChannel.rules || '')
@@ -19,6 +20,7 @@ export function ChannelManagementDialog({ channel: initialChannel, onUpdated }) 
   function syncFields(nextChannel) {
     channel.value = nextChannel
     name.value = nextChannel.name
+    slug.value = nextChannel.slug
     description.value = nextChannel.description || ''
     imageUrl.value = nextChannel.imageUrl || ''
     rules.value = nextChannel.rules || ''
@@ -30,7 +32,7 @@ export function ChannelManagementDialog({ channel: initialChannel, onUpdated }) 
     state.value = 'loading'
     error.value = ''
     try {
-      const encodedSlug = encodeURIComponent(initialChannel.slug)
+      const encodedSlug = encodeURIComponent(slug.value)
       const [channelResult, membersResult] = await Promise.all([
         apiRequest(`/api/channels/${encodedSlug}`),
         apiRequest(`/api/channels/${encodedSlug}/members`)
@@ -54,10 +56,12 @@ export function ChannelManagementDialog({ channel: initialChannel, onUpdated }) 
     busy.value = true
     error.value = ''
     try {
-      const result = await apiRequest(`/api/channels/${encodeURIComponent(initialChannel.slug)}`, {
+      const currentSlug = slug.value
+      const result = await apiRequest(`/api/channels/${encodeURIComponent(currentSlug)}`, {
         method: 'PATCH',
         body: JSON.stringify({
           name: name.value,
+          slug: slug.value,
           description: description.value,
           imageUrl: imageUrl.value.trim() || null,
           visibility: privateChannel.value ? 'private' : 'public',
@@ -79,7 +83,7 @@ export function ChannelManagementDialog({ channel: initialChannel, onUpdated }) 
     busy.value = true
     error.value = ''
     try {
-      await apiRequest(`/api/channels/${encodeURIComponent(initialChannel.slug)}/invites`, {
+      await apiRequest(`/api/channels/${encodeURIComponent(slug.value)}/invites`, {
         method: 'POST',
         body: JSON.stringify({ username: inviteUsername.value })
       })
@@ -95,7 +99,7 @@ export function ChannelManagementDialog({ channel: initialChannel, onUpdated }) 
     busy.value = true
     error.value = ''
     try {
-      await apiRequest(`/api/channels/${encodeURIComponent(initialChannel.slug)}/members/${encodeURIComponent(member.id)}/role`, {
+      await apiRequest(`/api/channels/${encodeURIComponent(slug.value)}/members/${encodeURIComponent(member.id)}/role`, {
         method: 'PUT',
         body: JSON.stringify({ role })
       })
@@ -122,6 +126,12 @@ export function ChannelManagementDialog({ channel: initialChannel, onUpdated }) 
           <form class="channel-form" onSubmit={saveChannel}>
             <FormField id={`manage-channel-name-${initialChannel.id}`} label="Name">
               <TextField id={`manage-channel-name-${initialChannel.id}`} value={name} maxLength={80} required />
+            </FormField>
+            <FormField id={`manage-channel-slug-${initialChannel.id}`} label="Endpoint" hint="The URL ending. Lowercase words and hyphens.">
+              <div class="channel-endpoint-field">
+                <span aria-hidden="true">/</span>
+                <TextField id={`manage-channel-slug-${initialChannel.id}`} value={slug} maxLength={80} pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required />
+              </div>
             </FormField>
             <FormField id={`manage-channel-image-${initialChannel.id}`} label="Image URL">
               <TextField id={`manage-channel-image-${initialChannel.id}`} value={imageUrl} type="url" maxLength={2000} />
