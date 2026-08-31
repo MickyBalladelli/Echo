@@ -97,6 +97,7 @@ async function searchChannels(viewerId, query, { cursor, limit }) {
       )
     LEFT JOIN channel_members members ON members.channel_id = c.id AND members.left_at IS NULL
     LEFT JOIN posts ON posts.channel_id = c.id AND posts.deleted_at IS NULL
+      AND posts.moderation_status IN ('active', 'flagged', 'appeal_accepted')
       AND NOT EXISTS (
         SELECT 1 FROM user_blocks blocked_post_author
         WHERE (blocked_post_author.blocker_id = :viewerId AND blocked_post_author.blocked_id = posts.author_id)
@@ -123,6 +124,7 @@ async function searchHashtags(viewerId, query, { cursor, limit }) {
     FROM hashtags h
     LEFT JOIN post_hashtags ph ON ph.hashtag_id = h.id
     LEFT JOIN posts tagged_post ON tagged_post.id = ph.post_id AND tagged_post.deleted_at IS NULL
+      AND tagged_post.moderation_status IN ('active', 'flagged', 'appeal_accepted')
     WHERE h.tag ILIKE :pattern
       AND NOT EXISTS (
         SELECT 1 FROM user_blocks blocked_tag_author

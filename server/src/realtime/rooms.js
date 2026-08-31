@@ -47,6 +47,15 @@ async function canJoinPost(userId, postId) {
         WHERE (blocked.blocker_id = :userId AND blocked.blocked_id = post.author_id)
            OR (blocked.blocker_id = post.author_id AND blocked.blocked_id = :userId)
       )
+      AND (
+        post.moderation_status IN ('active', 'flagged', 'appeal_accepted')
+        OR post.author_id = :userId
+        OR EXISTS (
+          SELECT 1 FROM users moderation_user
+          WHERE moderation_user.id = :userId
+            AND moderation_user.global_role IN ('moderator', 'admin')
+        )
+      )
       AND NOT EXISTS (
         SELECT 1 FROM user_mutes muted
         WHERE muted.user_id = :userId AND muted.muted_user_id = post.author_id

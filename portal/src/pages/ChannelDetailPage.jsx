@@ -6,6 +6,7 @@ import { PostComposer } from '../components/PostComposer.jsx'
 import { ChannelPostModeration } from '../components/ChannelPostModeration.jsx'
 import { PageFrame } from './PageFrame.jsx'
 import { joinRealtimeRoom } from '../lib/realtime.js'
+import { ReportButton } from '../components/ReportButton.jsx'
 
 export function ChannelDetailPage({ slug, router, currentUserId }) {
   const channel = signal(null)
@@ -207,6 +208,7 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
                 {channel.value.notificationsEnabled ? 'Turn off alerts' : 'Turn on alerts'}
               </Button>
             </>}
+            {!channel.value.isOwner && <ReportButton targetType="channel" targetId={channel.value.id} label="Report channel" />}
           </div>
         </Card>
         {channel.value.rules && <Card class="channel-rules-card"><Label size="small" tone="accent">CHANNEL RULES</Label><pre>{channel.value.rules}</pre></Card>}

@@ -1,6 +1,8 @@
 import { signal } from '../lib/vendor.js'
 import { Button, Card } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
+import { ReportButton } from './ReportButton.jsx'
+import { AppealButton } from './AppealButton.jsx'
 
 export function ChatMessage({ message, currentUserId, onUpdated, onDeleted }) {
   const editing = signal(false)
@@ -36,20 +38,6 @@ export function ChatMessage({ message, currentUserId, onUpdated, onDeleted }) {
     }
   }
 
-  async function report() {
-    busy.value = true
-    try {
-      await apiRequest(`/api/chat/messages/${encodeURIComponent(message.id)}/reports`, {
-        method: 'POST', body: JSON.stringify({ reason: 'Reported from chat conversation' })
-      })
-      error.value = 'Reported for review.'
-    } catch (requestError) {
-      error.value = requestError.message || 'Could not report message'
-    } finally {
-      busy.value = false
-    }
-  }
-
   return (
     <Card class={own ? 'chat-message chat-message-own' : 'chat-message'}>
       <div class="chat-message-meta">
@@ -62,6 +50,11 @@ export function ChatMessage({ message, currentUserId, onUpdated, onDeleted }) {
           ? <textarea class="chat-edit-input" use:bind={body} maxlength="4000" rows="3" />
           : <p>{message.body}</p>}
       {message.editedAt && !message.deletedAt && <small>edited</small>}
+      {message.moderationStatus === 'flagged' && <small class="chat-message-moderation">Flagged for review</small>}
+      {message.moderationStatus === 'hidden' && <small class="chat-message-moderation">Hidden by moderation</small>}
+      {message.moderationStatus === 'appeal_pending' && <small class="chat-message-moderation">Appeal pending</small>}
+      {message.moderationStatus === 'appeal_accepted' && <small class="chat-message-moderation">Appeal accepted</small>}
+      {message.moderationStatus === 'appeal_rejected' && <small class="chat-message-moderation">Appeal rejected</small>}
       <small>{message.readBy.length ? `Read by ${message.readBy.map(reader => `@${reader.username}`).join(', ')}` : ''}</small>
       {!message.deletedAt && (
         <div class="chat-message-actions">
@@ -69,7 +62,8 @@ export function ChatMessage({ message, currentUserId, onUpdated, onDeleted }) {
           {own && editing.value && <Button size="small" loading={busy} onClick={save}>Save</Button>}
           {own && editing.value && <Button variant="tertiary" size="small" onClick={() => editing.value = false}>Cancel</Button>}
           {own && <Button variant="tertiary" size="small" loading={busy} onClick={remove}>Delete</Button>}
-          {!own && <Button variant="tertiary" size="small" loading={busy} onClick={report}>Report</Button>}
+          {!own && <ReportButton targetType="message" targetId={message.id} />}
+          {own && ['hidden', 'appeal_rejected'].includes(message.moderationStatus) && <AppealButton targetType="message" targetId={message.id} />}
         </div>
       )}
       <div class="chat-message-error" role="status">{error}</div>

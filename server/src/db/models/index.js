@@ -26,6 +26,7 @@ export const User = sequelize.define('User', {
   email: { type: DataTypes.STRING(320), allowNull: false },
   passwordHash: { type: DataTypes.TEXT, allowNull: false, field: 'password_hash' },
   status: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'active' },
+  globalRole: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'user', field: 'global_role' },
   deletedAt: { type: DataTypes.DATE, field: 'deleted_at' }
 }, {
   tableName: 'users',
@@ -134,6 +135,10 @@ export const Post = sequelize.define('Post', {
   channelModerationStatus: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'approved', field: 'channel_moderation_status' },
   channelModeratedBy: { type: DataTypes.UUID, field: 'channel_moderated_by' },
   channelModeratedAt: { type: DataTypes.DATE, field: 'channel_moderated_at' },
+  moderationStatus: { type: DataTypes.STRING(24), allowNull: false, defaultValue: 'active', field: 'moderation_status' },
+  moderationRemovedBy: { type: DataTypes.UUID, field: 'moderation_removed_by' },
+  moderationRemovedAt: { type: DataTypes.DATE, field: 'moderation_removed_at' },
+  moderationReason: { type: DataTypes.STRING(500), field: 'moderation_reason' },
   deletedAt: { type: DataTypes.DATE, field: 'deleted_at' }
 }, {
   tableName: 'posts',
@@ -309,7 +314,10 @@ export const ChatMessage = sequelize.define('ChatMessage', {
   senderId: { type: DataTypes.UUID, allowNull: false, field: 'sender_id' },
   body: { type: DataTypes.TEXT, allowNull: false },
   editedAt: { type: DataTypes.DATE, field: 'edited_at' },
-  moderationStatus: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'active', field: 'moderation_status' },
+  moderationStatus: { type: DataTypes.STRING(24), allowNull: false, defaultValue: 'active', field: 'moderation_status' },
+  moderationRemovedBy: { type: DataTypes.UUID, field: 'moderation_removed_by' },
+  moderationRemovedAt: { type: DataTypes.DATE, field: 'moderation_removed_at' },
+  moderationReason: { type: DataTypes.STRING(500), field: 'moderation_reason' },
   deletedAt: { type: DataTypes.DATE, field: 'deleted_at' }
 }, {
   tableName: 'chat_messages',
@@ -324,6 +332,69 @@ export const ChatReadState = sequelize.define('ChatReadState', {
 }, {
   tableName: 'chat_read_states',
   timestamps: false
+})
+
+export const ModerationReport = sequelize.define('ModerationReport', {
+  id: { ...uuid, primaryKey: true },
+  reporterId: { type: DataTypes.UUID, allowNull: false, field: 'reporter_id' },
+  targetType: { type: DataTypes.STRING(16), allowNull: false, field: 'target_type' },
+  targetId: { type: DataTypes.UUID, allowNull: false, field: 'target_id' },
+  reason: { type: DataTypes.STRING(500), allowNull: false },
+  status: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'open' },
+  reviewedBy: { type: DataTypes.UUID, field: 'reviewed_by' },
+  reviewedAt: { type: DataTypes.DATE, field: 'reviewed_at' },
+  resolutionNote: { type: DataTypes.STRING(500), field: 'resolution_note' }
+}, {
+  tableName: 'moderation_reports',
+  ...timestamps
+})
+
+export const ModerationAppeal = sequelize.define('ModerationAppeal', {
+  id: { ...uuid, primaryKey: true },
+  appellantId: { type: DataTypes.UUID, allowNull: false, field: 'appellant_id' },
+  targetType: { type: DataTypes.STRING(16), allowNull: false, field: 'target_type' },
+  targetId: { type: DataTypes.UUID, allowNull: false, field: 'target_id' },
+  reason: { type: DataTypes.STRING(500), allowNull: false },
+  status: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'open' },
+  reviewedBy: { type: DataTypes.UUID, field: 'reviewed_by' },
+  reviewedAt: { type: DataTypes.DATE, field: 'reviewed_at' },
+  resolutionNote: { type: DataTypes.STRING(500), field: 'resolution_note' }
+}, {
+  tableName: 'moderation_appeals',
+  ...timestamps
+})
+
+export const ModerationAuditLog = sequelize.define('ModerationAuditLog', {
+  id: { ...uuid, primaryKey: true },
+  moderatorId: { type: DataTypes.UUID, field: 'moderator_id' },
+  reportId: { type: DataTypes.UUID, field: 'report_id' },
+  appealId: { type: DataTypes.UUID, field: 'appeal_id' },
+  targetType: { type: DataTypes.STRING(16), allowNull: false, field: 'target_type' },
+  targetId: { type: DataTypes.UUID, allowNull: false, field: 'target_id' },
+  action: { type: DataTypes.STRING(32), allowNull: false },
+  previousState: { type: DataTypes.JSONB, allowNull: false, defaultValue: {}, field: 'previous_state' },
+  nextState: { type: DataTypes.JSONB, allowNull: false, defaultValue: {}, field: 'next_state' },
+  note: { type: DataTypes.STRING(500) }
+}, {
+  tableName: 'moderation_audit_logs',
+  timestamps: true,
+  createdAt: 'createdAt',
+  updatedAt: false,
+  underscored: true
+})
+
+export const ModerationSignal = sequelize.define('ModerationSignal', {
+  id: { ...uuid, primaryKey: true },
+  userId: { type: DataTypes.UUID, field: 'user_id' },
+  eventType: { type: DataTypes.STRING(32), allowNull: false, field: 'event_type' },
+  action: { type: DataTypes.STRING(32), allowNull: false },
+  metadata: { type: DataTypes.JSONB, allowNull: false, defaultValue: {} }
+}, {
+  tableName: 'moderation_signals',
+  timestamps: true,
+  createdAt: 'createdAt',
+  updatedAt: false,
+  underscored: true
 })
 
 User.hasOne(Profile, { as: 'profile', foreignKey: 'userId' })
@@ -382,6 +453,12 @@ Notification.belongsTo(Post, { as: 'post', foreignKey: 'postId' })
 Notification.belongsTo(Channel, { as: 'channel', foreignKey: 'channelId' })
 Notification.belongsTo(ChatConversation, { as: 'conversation', foreignKey: 'conversationId' })
 User.hasMany(Notification, { as: 'notifications', foreignKey: 'recipientId' })
+User.hasMany(ModerationReport, { as: 'submittedReports', foreignKey: 'reporterId' })
+ModerationReport.belongsTo(User, { as: 'reporter', foreignKey: 'reporterId' })
+User.hasMany(ModerationAppeal, { as: 'appeals', foreignKey: 'appellantId' })
+ModerationAppeal.belongsTo(User, { as: 'appellant', foreignKey: 'appellantId' })
+User.hasMany(ModerationAuditLog, { as: 'moderationActions', foreignKey: 'moderatorId' })
+ModerationAuditLog.belongsTo(User, { as: 'moderator', foreignKey: 'moderatorId' })
 User.hasMany(UserNotificationPreference, { as: 'notificationPreferences', foreignKey: 'userId' })
 UserNotificationPreference.belongsTo(User, { as: 'user', foreignKey: 'userId' })
 User.hasOne(UserEmailPreference, { as: 'emailPreference', foreignKey: 'userId' })
@@ -420,6 +497,10 @@ export const models = Object.freeze({
   Notification,
   UserNotificationPreference,
   UserEmailPreference,
+  ModerationReport,
+  ModerationAppeal,
+  ModerationAuditLog,
+  ModerationSignal,
   Note,
   ChatConversation,
   ChatMember,

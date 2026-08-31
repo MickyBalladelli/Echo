@@ -374,6 +374,7 @@ export async function setPinnedPost(userId, postId) {
         AND author_id = :userId
         AND deleted_at IS NULL
         AND visibility = 'public'
+        AND moderation_status IN ('active', 'flagged', 'appeal_accepted')
       LIMIT 1
     `, {
       replacements: { postId, userId },

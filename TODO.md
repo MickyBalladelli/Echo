@@ -239,14 +239,14 @@ learn and use components in Prism for all your UI
 
 ### Moderation and safety
 
-- [ ] Add report post, user, channel, and message actions.
-- [ ] Add moderation queue data model.
-- [ ] Add admin/moderator roles.
-- [ ] Add admin review screens.
-- [ ] Add content removal and appeal states.
-- [ ] Add abuse rate limits for posting, replies, likes, follows, and messages.
-- [ ] Add spam and suspicious-login detection hooks.
-- [ ] Add audit log for moderation actions.
+- [x] Add report post, user, channel, and message actions.
+- [x] Add moderation queue data model.
+- [x] Add admin/moderator roles.
+- [x] Add admin review screens.
+- [x] Add content removal and appeal states.
+- [x] Add abuse rate limits for posting, replies, likes, follows, and messages.
+- [x] Add spam and suspicious-login detection hooks.
+- [x] Add audit log for moderation actions.
 
 ## P2 — Reliability, security, and operations
 

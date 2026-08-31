@@ -2,6 +2,8 @@ import { computed, signal } from '../lib/vendor.js'
 import { Badge, Button, Card, Label } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { UserBadges } from './UserBadges.jsx'
+import { ReportButton } from './ReportButton.jsx'
+import { AppealButton } from './AppealButton.jsx'
 
 function formatPostTime(value) {
   const date = new Date(value)
@@ -89,6 +91,7 @@ export function PostCard({
   const error = signal('')
   const edited = signal(Boolean(post.isEdited || new Date(post.updatedAt).getTime() > new Date(post.createdAt).getTime() + 1000))
   const isOwnPost = post.author.id === currentUserId
+  const canAppeal = isOwnPost && ['removed', 'appeal_rejected'].includes(post.contentStatus)
   const canEdit = isOwnPost && Date.now() - new Date(post.createdAt).getTime() <= 24 * 60 * 60 * 1000
   const likeLabel = computed(() => `${likeCount.value} ${likeCount.value === 1 ? 'like' : 'likes'}`)
   const isEdited = computed(() => edited.value)
@@ -279,6 +282,11 @@ export function PostCard({
           {post.visibility !== 'public' && <Badge tone="accent">{post.visibility}</Badge>}
           {post.moderationStatus === 'pending' && <Badge tone="accent">Pending approval</Badge>}
           {post.moderationStatus === 'rejected' && <Badge tone="error">Rejected</Badge>}
+          {post.contentStatus === 'flagged' && <Badge tone="accent">Flagged for review</Badge>}
+          {post.contentStatus === 'removed' && <Badge tone="error">Removed by moderation</Badge>}
+          {post.contentStatus === 'appeal_pending' && <Badge tone="accent">Appeal pending</Badge>}
+          {post.contentStatus === 'appeal_accepted' && <Badge tone="success">Appeal accepted</Badge>}
+          {post.contentStatus === 'appeal_rejected' && <Badge tone="error">Appeal rejected</Badge>}
           {post.following && <Badge tone="success">Following</Badge>}
         </div>
       </div>
@@ -330,6 +338,8 @@ export function PostCard({
         {canEdit && <Button variant="tertiary" size="small" onClick={() => editing.value = true}>Edit</Button>}
         {isOwnPost && isEdited && <Button variant="tertiary" size="small" loading={historyLoading} onClick={loadHistory}>History</Button>}
         {isOwnPost && <Button variant="tertiary" size="small" loading={deleting} onClick={deleteOwnPost}>Delete</Button>}
+        {!isOwnPost && <ReportButton targetType="post" targetId={post.id} />}
+        {canAppeal && <AppealButton targetType="post" targetId={post.id} />}
       </div>
       {quoting.value && (
         <form class="post-quote-form" onSubmit={submitQuote}>

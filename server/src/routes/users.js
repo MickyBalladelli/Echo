@@ -4,10 +4,11 @@ import { decodeCursor } from '../http/pagination.js'
 import { idSchema, paginationSchema, parse } from '../http/validation.js'
 import { suggestionQuerySchema, usernameSchema } from '../users/schemas.js'
 import { getPublicProfile, listConnections, listSuggestedUsers, listUserPosts, followUser, setRelationship, unfollowUser } from '../users/service.js'
+import { abuseRateLimit } from '../moderation/rate-limit.js'
 
 export const usersRouter = Router()
 
-usersRouter.put('/:id/follow', async (request, response, next) => {
+usersRouter.put('/:id/follow', abuseRateLimit('follow'), async (request, response, next) => {
   try {
     const userId = parse(idSchema, request.params.id, 'user id')
     response.json(ok({ follow: await followUser(request.auth.userId, userId) }))
@@ -16,7 +17,7 @@ usersRouter.put('/:id/follow', async (request, response, next) => {
   }
 })
 
-usersRouter.delete('/:id/follow', async (request, response, next) => {
+usersRouter.delete('/:id/follow', abuseRateLimit('follow'), async (request, response, next) => {
   try {
     const userId = parse(idSchema, request.params.id, 'user id')
     response.json(ok({ follow: await unfollowUser(request.auth.userId, userId) }))

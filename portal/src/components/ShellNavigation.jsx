@@ -39,7 +39,10 @@ function NavigationLink({ item, router, unreadNotifications }) {
 }
 
 export function ShellNavigation({ router, user, unreadNotifications }) {
-  const links = navItems.map(item => NavigationLink({ item, router, unreadNotifications }))
+  const visibleItems = user.role === 'moderator' || user.role === 'admin'
+    ? [...navItems, { path: '/moderation', label: 'Moderation', mark: '⚑' }]
+    : navItems
+  const links = visibleItems.map(item => NavigationLink({ item, router, unreadNotifications }))
 
   return Navigator({
     ariaLabel: 'Echo primary navigation',

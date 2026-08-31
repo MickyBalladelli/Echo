@@ -6,6 +6,7 @@ import { UserProfilePage } from '../pages/UserProfilePage.jsx'
 import { ChannelDetailPage } from '../pages/ChannelDetailPage.jsx'
 import { BookmarksPage } from '../pages/BookmarksPage.jsx'
 import { HashtagPage } from '../pages/HashtagPage.jsx'
+import { ModerationPage } from '../pages/ModerationPage.jsx'
 import {
   ChannelsPage,
   ChatPage,
@@ -78,6 +79,7 @@ export function AppShell({
       view: () => ProfilePage({ userState, onLogout, onUpdated, router })
     },
     { path: '/preferences', title: 'Preferences', view: () => PreferencesPage() },
+    { path: '/moderation', title: 'Moderation', view: () => ModerationPage({ user: userState.value }) },
     {
       path: '/users/:username',
       title: 'Profile',

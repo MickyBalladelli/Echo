@@ -3,6 +3,7 @@ import { HttpError } from '../http/errors.js'
 import { sequelize, withTransaction } from '../db/pool.js'
 import { createSession } from './sessions.js'
 import { DUMMY_PASSWORD_HASH, hashPassword, verifyPassword } from './password.js'
+import { recordSuspiciousLogin } from '../moderation/signals.js'
 
 function publicUser(row) {
   return {
@@ -10,6 +11,7 @@ function publicUser(row) {
     username: row.username,
     email: row.email,
     createdAt: row.created_at,
+    role: row.global_role || row.role || 'user',
     profile: {
       displayName: row.display_name || row.username,
       bio: row.bio || '',
@@ -31,6 +33,7 @@ async function findUserByIdentifier(identifier, transaction) {
       u.email,
       u.password_hash,
       u.status,
+      u.global_role,
       u.created_at,
       p.display_name,
       p.bio,
@@ -65,7 +68,7 @@ export async function registerUser(input, requestInfo = {}) {
       const rows = await sequelize.query(`
         INSERT INTO users (username, email, password_hash)
         VALUES (:username, :email, :passwordHash)
-        RETURNING id, username, email, created_at
+        RETURNING id, username, email, created_at, global_role
       `, {
         replacements: { ...input, passwordHash },
         type: QueryTypes.SELECT,
@@ -107,8 +110,21 @@ export async function loginUser(input, requestInfo = {}) {
   const passwordMatches = await verifyPassword(input.password, passwordHash)
 
   if (!user || user.status !== 'active' || !passwordMatches) {
+    await recordSuspiciousLogin({
+      userId: user?.id || null,
+      ipAddress: requestInfo.ipAddress,
+      userAgent: requestInfo.userAgent,
+      success: false
+    })
     throw new HttpError(401, 'INVALID_CREDENTIALS', 'Invalid username, email, or password')
   }
+
+  await recordSuspiciousLogin({
+    userId: user.id,
+    ipAddress: requestInfo.ipAddress,
+    userAgent: requestInfo.userAgent,
+    success: true
+  })
 
   const session = await createSession(user.id, requestInfo)
 

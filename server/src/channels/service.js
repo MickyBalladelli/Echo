@@ -59,6 +59,7 @@ const channelSelect = `
   LEFT JOIN posts ON posts.channel_id = c.id
     AND posts.deleted_at IS NULL
     AND posts.channel_moderation_status = 'approved'
+    AND posts.moderation_status IN ('active', 'flagged', 'appeal_accepted')
     AND NOT EXISTS (
       SELECT 1 FROM user_blocks channel_block
       WHERE (channel_block.blocker_id = :viewerId AND channel_block.blocked_id = posts.author_id)
@@ -466,6 +467,7 @@ export async function setPinnedPost(userId, slug, postId) {
       SELECT id FROM posts
       WHERE id = :postId AND channel_id = :channelId
         AND deleted_at IS NULL AND visibility = 'public' AND channel_moderation_status = 'approved'
+        AND moderation_status IN ('active', 'flagged', 'appeal_accepted')
       LIMIT 1
     `, { replacements: { postId, channelId: channel.id }, type: QueryTypes.SELECT })
     if (!rows[0]) throw new HttpError(400, 'PINNED_CHANNEL_POST_INVALID', 'Only approved posts from this channel can be pinned')

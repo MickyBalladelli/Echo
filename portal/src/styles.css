@@ -220,6 +220,113 @@ textarea {
   font-size: 13px;
 }
 
+.moderation-action {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.moderation-action-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: min(360px, 100%);
+}
+
+.moderation-action-form textarea {
+  width: 100%;
+  min-height: 54px;
+  padding: 8px 10px;
+  border: 1px solid #4a5663;
+  border-radius: 8px;
+  background: #171b21;
+  color: #f5f7fb;
+  resize: vertical;
+}
+
+.moderation-action-result,
+.moderation-action-error {
+  font-size: 12px;
+}
+
+.moderation-action-result {
+  color: #8ed0b7;
+}
+
+.moderation-action-error,
+.moderation-queue-card .post-feed-error {
+  color: #ff9eb1;
+}
+
+.moderation-queue-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.moderation-queue-card {
+  display: grid;
+  gap: 16px;
+}
+
+.moderation-queue-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+}
+
+.moderation-queue-heading p {
+  margin: 6px 0 0;
+  color: #aeb8c1;
+}
+
+.moderation-item-list {
+  display: grid;
+  gap: 10px;
+}
+
+.moderation-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid #39414b;
+  border-radius: 12px;
+  background: rgba(16, 18, 23, 0.64);
+}
+
+.moderation-item-copy {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.moderation-item-copy strong,
+.moderation-item-copy span {
+  overflow-wrap: anywhere;
+}
+
+.moderation-item-copy span {
+  color: #d9dfe5;
+}
+
+.moderation-item-copy small {
+  color: #8c98a4;
+}
+
+.moderation-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: end;
+  gap: 8px;
+}
+
+.chat-message-moderation {
+  color: #ffcc7a;
+}
+
 .shell-nav-link:hover {
   border-color: #39414b;
   background: rgba(47, 56, 66, 0.65);
@@ -1731,6 +1838,14 @@ textarea {
   .post-reply-depth-2,
   .post-reply-depth-3 {
     margin-left: 0;
+  }
+
+  .moderation-item {
+    flex-direction: column;
+  }
+
+  .moderation-item-actions {
+    justify-content: start;
   }
 }
 

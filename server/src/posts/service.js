@@ -3,6 +3,7 @@ import { sequelize, withTransaction } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
 import { encodeCursor } from '../http/pagination.js'
 import { notifyChannelPost, notifyLike, notifyReply } from '../notifications/service.js'
+import { inspectContent } from '../moderation/signals.js'
 
 export const MAX_REPLY_DEPTH = 3
 const MAX_THREAD_REPLIES = 500
@@ -61,6 +62,15 @@ const postVisibilityAccess = alias => `(
         AND moderation_member.user_id = :viewerId
         AND moderation_member.left_at IS NULL
         AND moderation_member.role IN ('owner', 'moderator')
+      )
+  )
+  AND (
+    ${alias}.moderation_status IN ('active', 'flagged', 'appeal_accepted')
+    OR ${alias}.author_id = :viewerId
+    OR EXISTS (
+      SELECT 1 FROM users moderation_user
+      WHERE moderation_user.id = :viewerId
+        AND moderation_user.global_role IN ('moderator', 'admin')
     )
   )
 )`
@@ -81,6 +91,7 @@ const postSelect = (extraSelect = '') => `
     p.content_warning,
     p.link_preview,
     p.channel_moderation_status,
+    p.moderation_status,
     u.username,
     pr.display_name,
     COALESCE((
@@ -159,6 +170,7 @@ function mapPost(row) {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     moderationStatus: row.channel_moderation_status || 'approved',
+    contentStatus: row.moderation_status || 'active',
     imageUrl: row.image_url || null,
     imageAltText: row.image_alt_text || null,
     contentWarning: row.content_warning || null,
@@ -445,6 +457,8 @@ export async function getPostById(viewerId, postId, transaction) {
 
 export async function createPost(authorId, input) {
   const postId = await withTransaction(async transaction => {
+    const contentSignal = await inspectContent({ userId: authorId, action: 'post', body: input.body, transaction })
+    const contentModerationStatus = contentSignal.flagged ? 'flagged' : 'active'
     let channelModerationStatus = 'approved'
     if (input.channelId) {
       const channel = await sequelize.query(
@@ -497,7 +511,8 @@ export async function createPost(authorId, input) {
         image_alt_text,
         content_warning,
         link_preview,
-        channel_moderation_status
+        channel_moderation_status,
+        moderation_status
       )
       VALUES (
         :authorId,
@@ -509,7 +524,8 @@ export async function createPost(authorId, input) {
         :imageAltText,
         :contentWarning,
         CAST(:linkPreview AS JSONB),
-        :channelModerationStatus
+        :channelModerationStatus,
+        :contentModerationStatus
       )
       RETURNING id
     `, {
@@ -523,7 +539,8 @@ export async function createPost(authorId, input) {
         imageAltText: input.imageAltText || null,
         contentWarning: input.contentWarning || null,
         linkPreview: JSON.stringify(linkPreviewForBody(input.body)),
-        channelModerationStatus
+        channelModerationStatus,
+        contentModerationStatus
       },
       type: QueryTypes.SELECT,
       transaction
@@ -547,6 +564,8 @@ export async function createPost(authorId, input) {
 
 export async function createReply(authorId, parentPostId, input) {
   const reply = await withTransaction(async transaction => {
+    const contentSignal = await inspectContent({ userId: authorId, action: 'reply', body: input.body, transaction })
+    const contentModerationStatus = contentSignal.flagged ? 'flagged' : 'active'
     const parentRows = await sequelize.query(`
       SELECT p.id, p.author_id, p.channel_id
       FROM posts p
@@ -629,9 +648,9 @@ export async function createReply(authorId, parentPostId, input) {
 
     const replyRows = await sequelize.query(`
       INSERT INTO posts (
-        author_id, parent_post_id, channel_id, body, visibility, channel_moderation_status
+        author_id, parent_post_id, channel_id, body, visibility, channel_moderation_status, moderation_status
       )
-      VALUES (:authorId, :parentPostId, :channelId, :body, 'public', :channelModerationStatus)
+      VALUES (:authorId, :parentPostId, :channelId, :body, 'public', :channelModerationStatus, :contentModerationStatus)
       RETURNING id
     `, {
       replacements: {
@@ -639,7 +658,8 @@ export async function createReply(authorId, parentPostId, input) {
         parentPostId,
         channelId: parent.channel_id || null,
         body: input.body,
-        channelModerationStatus
+        channelModerationStatus,
+        contentModerationStatus
       },
       type: QueryTypes.SELECT,
       transaction
@@ -733,6 +753,7 @@ export async function updatePost(authorId, postId, input) {
     if (!body && !current.repost_of_post_id) {
       throw new HttpError(400, 'POST_BODY_REQUIRED', 'Post text cannot be empty')
     }
+    const contentSignal = await inspectContent({ userId: authorId, action: 'post_edit', body, transaction })
     const next = {
       body,
       visibility: input.visibility || current.visibility,
@@ -757,6 +778,7 @@ export async function updatePost(authorId, postId, input) {
           image_url = :imageUrl,
           image_alt_text = :imageAltText,
           content_warning = :contentWarning,
+          moderation_status = CASE WHEN :contentFlagged = TRUE THEN 'flagged' ELSE moderation_status END,
           link_preview = CAST(:linkPreview AS JSONB),
           updated_at = CURRENT_TIMESTAMP
       WHERE id = :postId
@@ -764,7 +786,8 @@ export async function updatePost(authorId, postId, input) {
       replacements: {
         postId,
         ...next,
-        linkPreview: JSON.stringify(linkPreviewForBody(body))
+        linkPreview: JSON.stringify(linkPreviewForBody(body)),
+        contentFlagged: contentSignal.flagged
       },
       transaction
     })

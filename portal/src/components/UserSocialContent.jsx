@@ -6,6 +6,7 @@ import { ProfileRelationshipControls } from './ProfileRelationshipControls.jsx'
 import { UserBadges } from './UserBadges.jsx'
 import { PostCard } from './PostCard.jsx'
 import { UserList } from './UserList.jsx'
+import { ReportButton } from './ReportButton.jsx'
 
 function formatJoinDate(value) {
   const date = new Date(value)
@@ -137,6 +138,7 @@ export function UserSocialContent({ username, router, currentUserId, showIdentit
                   }
                 }}
               />
+              <ReportButton targetType="user" targetId={user.value.id} label="Report profile" />
             </div>}
           </Card>
         )}

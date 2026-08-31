@@ -46,6 +46,7 @@ export async function findSessionByToken(token, transaction) {
       s.user_id,
       s.expires_at,
       s.last_seen_at,
+      u.global_role,
       u.username,
       u.email,
       u.created_at AS user_created_at,
@@ -98,6 +99,7 @@ export async function findSessionByToken(token, transaction) {
       id: row.user_id,
       username: row.username,
       email: row.email,
+      role: row.global_role || 'user',
       createdAt: row.user_created_at,
       profile: {
         displayName: row.display_name || row.username,

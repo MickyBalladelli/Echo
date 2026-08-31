@@ -16,6 +16,7 @@ import {
   updatePost,
   unlikePost
 } from '../posts/service.js'
+import { abuseRateLimit } from '../moderation/rate-limit.js'
 
 export const postsRouter = Router()
 
@@ -43,7 +44,7 @@ postsRouter.get('/:id/edits', async (request, response, next) => {
   }
 })
 
-postsRouter.post('/:id/repost', async (request, response, next) => {
+postsRouter.post('/:id/repost', abuseRateLimit('post'), async (request, response, next) => {
   try {
     const postId = parse(idSchema, request.params.id, 'post id')
     const input = parse(createPostSchema, {
@@ -76,7 +77,7 @@ postsRouter.delete('/:id/bookmark', async (request, response, next) => {
   }
 })
 
-postsRouter.post('/', async (request, response, next) => {
+postsRouter.post('/', abuseRateLimit('post'), async (request, response, next) => {
   try {
     const input = parse(createPostSchema, request.body, 'post request')
     const post = await createPost(request.auth.userId, input)
@@ -86,7 +87,7 @@ postsRouter.post('/', async (request, response, next) => {
   }
 })
 
-postsRouter.post('/:id/replies', async (request, response, next) => {
+postsRouter.post('/:id/replies', abuseRateLimit('reply'), async (request, response, next) => {
   try {
     const parentPostId = parse(idSchema, request.params.id, 'parent post id')
     const input = parse(createReplySchema, request.body, 'reply request')
@@ -97,7 +98,7 @@ postsRouter.post('/:id/replies', async (request, response, next) => {
   }
 })
 
-postsRouter.put('/:id/likes', async (request, response, next) => {
+postsRouter.put('/:id/likes', abuseRateLimit('like'), async (request, response, next) => {
   try {
     const postId = parse(idSchema, request.params.id, 'post id')
     const like = await likePost(request.auth.userId, postId)
@@ -107,7 +108,7 @@ postsRouter.put('/:id/likes', async (request, response, next) => {
   }
 })
 
-postsRouter.delete('/:id/likes', async (request, response, next) => {
+postsRouter.delete('/:id/likes', abuseRateLimit('like'), async (request, response, next) => {
   try {
     const postId = parse(idSchema, request.params.id, 'post id')
     const like = await unlikePost(request.auth.userId, postId)

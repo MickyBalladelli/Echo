@@ -5,6 +5,8 @@ import { encodeCursor } from '../http/pagination.js'
 import { notifyChatMessage } from '../notifications/service.js'
 import { publishRealtimeEvent } from '../realtime/events.js'
 import { roomName } from '../realtime/rooms.js'
+import { inspectContent } from '../moderation/signals.js'
+import { reportTarget } from '../moderation/service.js'
 
 function mapMember(row) {
   return {
@@ -178,6 +180,7 @@ export async function listConversations(userId) {
       last_message.body AS last_body, last_message.created_at AS last_message_at,
       COUNT(message.id) FILTER (
         WHERE message.sender_id <> :userId AND message.deleted_at IS NULL
+          AND message.moderation_status IN ('active', 'flagged', 'appeal_accepted')
           AND message.created_at > COALESCE(read_state.last_read_at, member.joined_at)
           AND NOT EXISTS (
             SELECT 1 FROM user_blocks unread_block
@@ -193,6 +196,7 @@ export async function listConversations(userId) {
     LEFT JOIN LATERAL (
       SELECT body, created_at FROM chat_messages latest
       WHERE latest.conversation_id = conversation.id AND latest.deleted_at IS NULL
+        AND latest.moderation_status IN ('active', 'flagged', 'appeal_accepted')
         AND NOT EXISTS (
           SELECT 1 FROM user_blocks latest_block
           WHERE (latest_block.blocker_id = :userId AND latest_block.blocked_id = latest.sender_id)
@@ -240,7 +244,7 @@ export async function listMessages(userId, conversationId, { cursor, limit }) {
     replacements.cursorCreatedAt = cursor.createdAt
     replacements.cursorId = cursor.id
   }
-  const rows = await sequelize.query(`
+    const rows = await sequelize.query(`
     SELECT message.*, sender.username, profile.display_name, profile.avatar_url,
       COALESCE((
         SELECT jsonb_agg(jsonb_build_object('id', reader.id, 'username', reader.username))
@@ -257,6 +261,15 @@ export async function listMessages(userId, conversationId, { cursor, limit }) {
         SELECT 1 FROM user_blocks message_block
         WHERE (message_block.blocker_id = :userId AND message_block.blocked_id = message.sender_id)
            OR (message_block.blocker_id = message.sender_id AND message_block.blocked_id = :userId)
+      )
+      AND (
+        message.moderation_status IN ('active', 'flagged', 'appeal_accepted')
+        OR message.sender_id = :userId
+        OR EXISTS (
+          SELECT 1 FROM users moderation_user
+          WHERE moderation_user.id = :userId
+            AND moderation_user.global_role IN ('moderator', 'admin')
+        )
       )
     ORDER BY message.created_at DESC, message.id DESC
     LIMIT :limit
@@ -284,6 +297,8 @@ async function getMessage(messageId, transaction) {
 
 export async function sendMessage(userId, conversationId, body) {
   return withTransaction(async transaction => {
+    const contentSignal = await inspectContent({ userId, action: 'message', body, transaction })
+    const moderationStatus = contentSignal.flagged ? 'flagged' : 'active'
     const conversation = await requireMembership(userId, conversationId, transaction)
     if (conversation.kind === 'direct') {
       const others = await sequelize.query(`
@@ -298,9 +313,9 @@ export async function sendMessage(userId, conversationId, body) {
       }
     }
     const rows = await sequelize.query(`
-      INSERT INTO chat_messages (conversation_id, sender_id, body)
-      VALUES (:conversationId, :userId, :body) RETURNING id
-    `, { replacements: { conversationId, userId, body }, type: QueryTypes.SELECT, transaction })
+      INSERT INTO chat_messages (conversation_id, sender_id, body, moderation_status)
+      VALUES (:conversationId, :userId, :body, :moderationStatus) RETURNING id
+    `, { replacements: { conversationId, userId, body, moderationStatus }, type: QueryTypes.SELECT, transaction })
     const message = await getMessage(rows[0].id, transaction)
     await sequelize.query(`
       UPDATE chat_conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = :conversationId
@@ -438,18 +453,5 @@ export async function blockUser(userId, blockedId, blocked) {
 }
 
 export async function reportMessage(userId, messageId, reason) {
-  const messages = await sequelize.query(`SELECT conversation_id FROM chat_messages WHERE id = :messageId`, {
-    replacements: { messageId }, type: QueryTypes.SELECT
-  })
-  if (!messages[0]) throw new HttpError(404, 'MESSAGE_NOT_FOUND', 'Message not found')
-  await requireMembership(userId, messages[0].conversation_id)
-  await sequelize.query(`
-    INSERT INTO chat_message_reports (message_id, reporter_id, reason)
-    VALUES (:messageId, :userId, :reason)
-    ON CONFLICT (message_id, reporter_id) DO UPDATE SET reason = EXCLUDED.reason, created_at = CURRENT_TIMESTAMP
-  `, { replacements: { messageId, userId, reason } })
-  await sequelize.query(`UPDATE chat_messages SET moderation_status = 'flagged' WHERE id = :messageId`, {
-    replacements: { messageId }
-  })
-  return { messageId, reported: true }
+  return reportTarget(userId, { targetType: 'message', targetId: messageId, reason })
 }

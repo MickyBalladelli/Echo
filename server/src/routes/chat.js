@@ -18,6 +18,7 @@ import {
   sendMessage,
   updateChatPreferences
 } from '../chat/service.js'
+import { abuseRateLimit } from '../moderation/rate-limit.js'
 
 export const chatRouter = Router()
 
@@ -60,7 +61,7 @@ chatRouter.get('/conversations/:id/messages', async (request, response, next) =>
   }
 })
 
-chatRouter.post('/conversations/:id/messages', async (request, response, next) => {
+chatRouter.post('/conversations/:id/messages', abuseRateLimit('message'), async (request, response, next) => {
   try {
     const conversationId = parse(idSchema, request.params.id, 'conversation id')
     const input = parse(messageSchema, request.body, 'message request')
@@ -129,7 +130,7 @@ chatRouter.delete('/messages/:id', async (request, response, next) => {
   }
 })
 
-chatRouter.post('/messages/:id/reports', async (request, response, next) => {
+chatRouter.post('/messages/:id/reports', abuseRateLimit('report'), async (request, response, next) => {
   try {
     const messageId = parse(idSchema, request.params.id, 'message id')
     const input = parse(reportSchema, request.body, 'message report request')

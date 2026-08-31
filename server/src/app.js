@@ -17,6 +17,7 @@ import { notificationsRouter } from './routes/notifications.js'
 import { channelsRouter } from './routes/channels.js'
 import { notesRouter } from './routes/notes.js'
 import { chatRouter } from './routes/chat.js'
+import { moderationRouter } from './routes/moderation.js'
 
 export function createApp() {
   const app = express()
@@ -49,6 +50,7 @@ export function createApp() {
   app.use('/api/channels', requireAuth, channelsRouter)
   app.use('/api/notes', requireAuth, notesRouter)
   app.use('/api/chat', requireAuth, chatRouter)
+  app.use('/api/moderation', requireAuth, moderationRouter)
   app.use(express.static(portalDist, { index: 'index.html' }))
   app.use((request, response, next) => {
     if (request.method !== 'GET' || request.path.startsWith('/api')) {

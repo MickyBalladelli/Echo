@@ -29,6 +29,7 @@ import {
 import { ok, cursorMeta } from '../http/api.js'
 import { decodeCursor } from '../http/pagination.js'
 import { idSchema, paginationSchema, parse } from '../http/validation.js'
+import { abuseRateLimit } from '../moderation/rate-limit.js'
 
 export const channelsRouter = Router()
 
@@ -68,7 +69,7 @@ channelsRouter.get('/:slug/posts', async (request, response, next) => {
   }
 })
 
-channelsRouter.post('/:slug/posts', async (request, response, next) => {
+channelsRouter.post('/:slug/posts', abuseRateLimit('post'), async (request, response, next) => {
   try {
     const slug = parse(channelSlugSchema, request.params.slug, 'channel slug')
     const input = parse(postBodySchema, request.body, 'channel post request')
