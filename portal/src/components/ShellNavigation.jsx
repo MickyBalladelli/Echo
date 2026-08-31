@@ -131,8 +131,6 @@ export function ShellNavigation({ router, user, unreadNotifications }) {
 
   return Navigator({
     ariaLabel: 'Echo primary navigation',
-    title: 'Echo',
-    description: `@${user.username}`,
     sticky: true,
     stickyTop: '3.7rem',
     class: 'shell-navigator',
