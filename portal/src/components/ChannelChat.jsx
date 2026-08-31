@@ -176,6 +176,12 @@ export function ChannelChat({ slug, channel, currentUserId }) {
     body.value = body.value.trim() ? `${prefix}${body.value}` : prefix
   }
 
+  function handleBodyKeyDown(event) {
+    if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return
+    event.preventDefault()
+    event.currentTarget.form?.requestSubmit()
+  }
+
   function renderMessage(message, index) {
     const previous = messages.value[index - 1]
     const compact = Boolean(previous && previous.sender.id === message.sender.id &&
@@ -204,7 +210,7 @@ export function ChannelChat({ slug, channel, currentUserId }) {
           title="Add an attachment"
           onClick={openAttachmentPicker}
         />
-        <textarea use:bind={body} maxlength="4000" rows="1" placeholder={`Message #${readChannel().slug}`} aria-label="Channel chat message" />
+        <textarea use:bind={body} maxlength="4000" rows="1" placeholder={`Message #${readChannel().slug}`} aria-label="Channel chat message" onKeyDown={handleBodyKeyDown} />
         <Button type="submit" loading={busy}>Send message</Button>
         {attachments.value.length > 0 && (
           <div class="channel-chat-selected-attachments" aria-label="Selected attachments">

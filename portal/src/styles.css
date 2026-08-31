@@ -2914,6 +2914,21 @@ img {
   font-size: 11px;
 }
 
+.channel-chat-message-actions .prism-button-icon-only {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0;
+}
+
+.channel-chat-message-actions .prism-button-icon-only .prism-button-icon {
+  width: 19px;
+  height: 19px;
+  flex-basis: 19px;
+  font-size: 19px;
+}
+
 .channel-chat-reaction-picker {
   display: flex;
   align-items: center;

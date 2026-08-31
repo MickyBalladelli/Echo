@@ -32,7 +32,9 @@ export {
   ArrowLeftIcon,
   ChatIcon,
   ClockIcon,
+  CopyIcon,
   FileIcon,
   MapPinIcon,
   MoreHorizontalIcon,
+  SparkIcon,
 } from '@mickyballadelli/prism'

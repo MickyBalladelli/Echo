@@ -1,5 +1,5 @@
 import { signal } from '../lib/vendor.js'
-import { Button } from '../lib/vendor.js'
+import { ChatIcon, CopyIcon, IconButton, SparkIcon } from '../lib/vendor.js'
 import { formatClockTime } from '../lib/dates.js'
 import { UserAvatar } from './UserAvatar.jsx'
 
@@ -130,9 +130,30 @@ export function ChannelChatMessage({ message, currentUserId, compact = false, on
               ))}
             </div>
           )}
-          <Button variant="tertiary" size="small" onClick={() => reactionPickerOpen.value = !reactionPickerOpen.value}>React</Button>
-          <Button variant="tertiary" size="small" onClick={() => onReply?.(message)}>Reply</Button>
-          <Button variant="tertiary" size="small" onClick={copyMessage}>Copy</Button>
+          <IconButton
+            variant="tertiary"
+            size="small"
+            icon={SparkIcon()}
+            ariaLabel="React to message"
+            title="React"
+            onClick={() => reactionPickerOpen.value = !reactionPickerOpen.value}
+          />
+          <IconButton
+            variant="tertiary"
+            size="small"
+            icon={ChatIcon()}
+            ariaLabel="Reply to message"
+            title="Reply"
+            onClick={() => onReply?.(message)}
+          />
+          <IconButton
+            variant="tertiary"
+            size="small"
+            icon={CopyIcon()}
+            ariaLabel="Copy message"
+            title="Copy"
+            onClick={copyMessage}
+          />
           {copied.value && <span class="channel-chat-message-copied" role="status">Copied</span>}
         </div>
       </div>
