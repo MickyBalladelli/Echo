@@ -56,6 +56,10 @@ export function FeedPage({ router, currentUserId, feed = 'home' }) {
     posts.value = posts.value.filter(post => post.id !== postId)
   }
 
+  function updatePost(updatedPost) {
+    posts.value = posts.value.map(post => post.id === updatedPost.id ? { ...post, ...updatedPost } : post)
+  }
+
   const feedContent = computed(() => {
     if (state.value === 'loading') {
       return <Card class="route-card feed-status-card"><div role="status">Loading posts…</div></Card>
@@ -94,6 +98,8 @@ export function FeedPage({ router, currentUserId, feed = 'home' }) {
             router={router}
             currentUserId={currentUserId}
             onDeleted={removePost}
+            onReposted={addPost}
+            onUpdated={updatePost}
           />
         ))}
         {nextCursor.value && (
@@ -204,6 +210,8 @@ export function PostDetailPage({ id, router, currentUserId }) {
           currentUserId={currentUserId}
           onDeleted={handleDeleted}
           onReply={selectReplyTarget}
+          onReposted={newPost => router.navigate(`/posts/${newPost.id}`)}
+          onUpdated={updatedPost => post.value = { ...post.value, ...updatedPost }}
         />
         <ReplyComposer replyTarget={replyTarget} onCreated={addReply} onCancel={resetReplyTarget} />
         <div class="post-replies-heading">
@@ -220,6 +228,13 @@ export function PostDetailPage({ id, router, currentUserId }) {
                   currentUserId={currentUserId}
                   onDeleted={loadPost}
                   onReply={selectReplyTarget}
+                  onReposted={newPost => router.navigate(`/posts/${newPost.id}`)}
+                  onUpdated={updatedPost => {
+                    post.value = {
+                      ...post.value,
+                      replies: post.value.replies.map(item => item.id === updatedPost.id ? { ...item, ...updatedPost } : item)
+                    }
+                  }}
                 />
               </div>
             ))}

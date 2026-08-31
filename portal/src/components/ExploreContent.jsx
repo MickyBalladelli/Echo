@@ -6,7 +6,8 @@ import { PostCard } from './PostCard.jsx'
 const searchTypes = Object.freeze([
   { id: 'users', label: 'People' },
   { id: 'posts', label: 'Posts' },
-  { id: 'channels', label: 'Channels' }
+  { id: 'channels', label: 'Channels' },
+  { id: 'hashtags', label: 'Hashtags' }
 ])
 
 function userInitial(user) {
@@ -88,6 +89,17 @@ export function ExploreContent({ router, currentUserId }) {
     results.value = results.value.filter(item => item.id !== postId)
   }
 
+  function updatePost(updatedPost) {
+    const update = items => items.map(item => item.id === updatedPost.id ? { ...item, ...updatedPost } : item)
+    recentPosts.value = update(recentPosts.value)
+    popularPosts.value = update(popularPosts.value)
+    results.value = update(results.value)
+  }
+
+  function addPost(post) {
+    recentPosts.value = [post, ...recentPosts.value.filter(item => item.id !== post.id)]
+  }
+
   function renderPosts(posts, emptyTitle) {
     if (!posts.length) return <Card><EmptyState title={emptyTitle} /></Card>
     return (
@@ -99,6 +111,8 @@ export function ExploreContent({ router, currentUserId }) {
             router={router}
             currentUserId={currentUserId}
             onDeleted={removePost}
+            onUpdated={updatePost}
+            onReposted={addPost}
           />
         ))}
       </div>
@@ -117,6 +131,21 @@ export function ExploreContent({ router, currentUserId }) {
       return <Card><EmptyState title="No matches" description={`Nothing found for “${submittedQuery.value}”.`} /></Card>
     }
     if (searchType.value === 'posts') return renderPosts(results.value, 'No posts found')
+    if (searchType.value === 'hashtags') {
+      return (
+        <div class="search-result-grid">
+          {results.value.map(item => (
+            <Card key={item.id} class="search-result-card hashtag-search-card">
+              <div>
+                <Label size="large">#{item.tag}</Label>
+                <p>{item.postCount} {item.postCount === 1 ? 'post' : 'posts'}</p>
+              </div>
+              <a class="back-link" href={`/hashtags/${encodeURIComponent(item.tag)}`} onClick={router.link(`/hashtags/${encodeURIComponent(item.tag)}`)}>View hashtag →</a>
+            </Card>
+          ))}
+        </div>
+      )
+    }
 
     return (
       <div class="search-result-grid">

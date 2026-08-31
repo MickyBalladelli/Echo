@@ -313,6 +313,35 @@ textarea {
   gap: 12px;
 }
 
+.mention-suggestions {
+  display: grid;
+  gap: 4px;
+  margin-top: -4px;
+  padding: 6px;
+  border: 1px solid #39414b;
+  border-radius: 10px;
+  background: #171b20;
+}
+
+.mention-suggestions button {
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #d9dfe5;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mention-suggestions button:hover {
+  background: rgba(103, 128, 255, 0.16);
+}
+
+.mention-suggestions span,
+.post-mention {
+  color: #8fa5ff;
+}
+
 .post-composer-input {
   width: 100%;
   padding: 14px;
@@ -326,6 +355,96 @@ textarea {
 
 .post-composer-footer {
   align-items: flex-start;
+}
+
+.post-composer-status,
+.post-composer-options,
+.post-composer-actions,
+.post-image-preview,
+.post-edit-options,
+.post-quote-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.post-composer-status {
+  justify-content: flex-end;
+  color: #84909b;
+  font-size: 12px;
+}
+
+.post-composer-options {
+  align-items: end;
+}
+
+.post-composer-options label,
+.post-warning-toggle,
+.post-image-picker {
+  display: grid;
+  gap: 5px;
+  color: #84909b;
+  font-size: 12px;
+}
+
+.post-composer-options select,
+.post-edit-options select,
+.post-edit-options input,
+.post-warning-toggle input,
+.post-image-preview input {
+  min-height: 36px;
+  padding: 7px 10px;
+  border: 1px solid #52606c;
+  border-radius: 9px;
+  background: #171b20;
+  color: #f5f7fb;
+}
+
+.post-image-picker {
+  min-height: 36px;
+  padding: 8px 10px;
+  border: 1px solid #52606c;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.post-image-picker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.post-image-preview {
+  align-items: flex-start;
+  padding: 10px;
+  border: 1px solid rgba(142, 208, 183, 0.28);
+  border-radius: 12px;
+  background: rgba(24, 31, 32, 0.65);
+}
+
+.post-image-preview img {
+  width: 110px;
+  height: 82px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.post-image-preview > div {
+  display: grid;
+  gap: 7px;
+}
+
+.post-image-preview span {
+  color: #b9c1ca;
+  font-size: 12px;
+}
+
+.post-composer-actions {
+  justify-content: flex-end;
 }
 
 .post-composer-error,
@@ -831,6 +950,138 @@ textarea {
   line-height: 1.55;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.post-hashtag {
+  color: #8ed0b7;
+  text-decoration: none;
+}
+
+.post-hashtag:hover {
+  text-decoration: underline;
+}
+
+.post-media {
+  display: block;
+  width: min(100%, 640px);
+  max-height: 520px;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.post-media-compact {
+  max-height: 260px;
+}
+
+.post-repost-source {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid #52606c;
+  border-radius: 14px;
+  background: rgba(27, 32, 39, 0.72);
+}
+
+.post-repost-source-heading {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: #8ed0b7;
+  font-size: 13px;
+}
+
+.post-repost-source-heading a {
+  color: #d9dfe5;
+  text-decoration: none;
+}
+
+.post-repost-source p {
+  margin: 0;
+  color: #d9dfe5;
+  white-space: pre-wrap;
+}
+
+.post-link-preview {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid #39414b;
+  border-radius: 12px;
+  color: #d9dfe5;
+  text-decoration: none;
+}
+
+.post-link-preview:hover {
+  border-color: #8ed0b7;
+}
+
+.post-link-preview span,
+.post-link-preview small,
+.post-edit-history time,
+.post-edit-history > span {
+  color: #84909b;
+  font-size: 12px;
+}
+
+.post-content-warning {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border: 1px dashed #efb365;
+  border-radius: 12px;
+  background: rgba(239, 179, 101, 0.08);
+}
+
+.post-content-warning span {
+  color: #b9c1ca;
+  font-size: 13px;
+}
+
+.post-edit-form,
+.post-edit-history {
+  display: grid;
+  gap: 12px;
+}
+
+.post-edit-options input {
+  flex: 1;
+  min-width: 180px;
+}
+
+.post-quote-form {
+  align-items: flex-end;
+}
+
+.post-quote-form textarea {
+  flex: 1;
+  min-width: 220px;
+  padding: 10px;
+  border: 1px solid #52606c;
+  border-radius: 10px;
+  background: #171b20;
+  color: #f5f7fb;
+  resize: vertical;
+}
+
+.post-edit-history {
+  padding: 14px;
+  border-top: 1px solid rgba(104, 119, 132, 0.3);
+}
+
+.post-edit-history > div {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(104, 119, 132, 0.2);
+}
+
+.post-edit-history p {
+  margin: 5px 0 0;
+  color: #d9dfe5;
+  white-space: pre-wrap;
+}
+
+.profile-pinned-post {
+  display: grid;
+  gap: 0;
 }
 
 .post-card-footer {

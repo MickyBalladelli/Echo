@@ -29,7 +29,18 @@ async function canJoinPost(userId, postId) {
     LEFT JOIN channels channel ON channel.id = post.channel_id AND channel.deleted_at IS NULL
     LEFT JOIN channel_members member ON member.channel_id = channel.id
       AND member.user_id = :userId AND member.left_at IS NULL
-    WHERE post.id = :postId AND post.deleted_at IS NULL AND post.visibility = 'public'
+    WHERE post.id = :postId AND post.deleted_at IS NULL
+      AND (
+        post.visibility = 'public'
+        OR (post.visibility = 'followers' AND (
+          post.author_id = :userId OR EXISTS (
+            SELECT 1 FROM follows visibility_follow
+            WHERE visibility_follow.follower_id = :userId
+              AND visibility_follow.following_id = post.author_id
+          )
+        ))
+        OR (post.visibility = 'private' AND post.author_id = :userId)
+      )
       AND (post.channel_id IS NULL OR channel.visibility = 'public' OR member.user_id IS NOT NULL)
     LIMIT 1
   `, { replacements: { userId, postId }, type: QueryTypes.SELECT })

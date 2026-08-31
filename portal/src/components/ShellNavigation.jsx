@@ -6,6 +6,7 @@ const navItems = Object.freeze([
   { path: '/following', label: 'Following', mark: '◇' },
   { path: '/explore', label: 'Explore', mark: '⌕' },
   { path: '/notifications', label: 'Notifications', mark: '●' },
+  { path: '/bookmarks', label: 'Bookmarks', mark: '▱' },
   { path: '/notes', label: 'Notes', mark: '▤' },
   { path: '/channels', label: 'Channels', mark: '◈' },
   { path: '/chat', label: 'Chat', mark: '◌' },

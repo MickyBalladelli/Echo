@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { createPostSchema } from '../posts/schemas.js'
+import { postBodySchema } from '../posts/schemas.js'
 import { createPost } from '../posts/service.js'
 import {
   channelInviteSchema,
@@ -65,7 +65,7 @@ channelsRouter.get('/:slug/posts', async (request, response, next) => {
 channelsRouter.post('/:slug/posts', async (request, response, next) => {
   try {
     const slug = parse(channelSlugSchema, request.params.slug, 'channel slug')
-    const input = parse(createPostSchema.pick({ body: true }), request.body, 'channel post request')
+    const input = parse(postBodySchema, request.body, 'channel post request')
     const channel = await getChannel(request.auth.userId, slug)
     const post = await createPost(request.auth.userId, { body: input.body, channelId: channel.id, visibility: 'public' })
     response.status(201).json(ok({ post }))

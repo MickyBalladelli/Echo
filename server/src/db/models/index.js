@@ -37,7 +37,8 @@ export const Profile = sequelize.define('Profile', {
   displayName: { type: DataTypes.STRING(80), allowNull: false, field: 'display_name' },
   bio: { type: DataTypes.STRING(280), allowNull: false, defaultValue: '' },
   avatarUrl: { type: DataTypes.TEXT, field: 'avatar_url' },
-  bannerUrl: { type: DataTypes.TEXT, field: 'banner_url' }
+  bannerUrl: { type: DataTypes.TEXT, field: 'banner_url' },
+  pinnedPostId: { type: DataTypes.UUID, field: 'pinned_post_id' }
 }, {
   tableName: 'profiles',
   ...timestamps
@@ -103,6 +104,11 @@ export const Post = sequelize.define('Post', {
   channelId: { type: DataTypes.UUID, field: 'channel_id' },
   body: { type: DataTypes.STRING(280), allowNull: false },
   visibility: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'public' },
+  repostOfPostId: { type: DataTypes.UUID, field: 'repost_of_post_id' },
+  imageUrl: { type: DataTypes.TEXT, field: 'image_url' },
+  imageAltText: { type: DataTypes.STRING(120), field: 'image_alt_text' },
+  contentWarning: { type: DataTypes.STRING(120), field: 'content_warning' },
+  linkPreview: { type: DataTypes.JSONB, field: 'link_preview' },
   deletedAt: { type: DataTypes.DATE, field: 'deleted_at' }
 }, {
   tableName: 'posts',
@@ -118,6 +124,67 @@ export const PostLike = sequelize.define('PostLike', {
   createdAt: 'createdAt',
   updatedAt: false,
   underscored: true
+})
+
+export const PostBookmark = sequelize.define('PostBookmark', {
+  postId: { type: DataTypes.UUID, allowNull: false, primaryKey: true, field: 'post_id' },
+  userId: { type: DataTypes.UUID, allowNull: false, primaryKey: true, field: 'user_id' }
+}, {
+  tableName: 'post_bookmarks',
+  timestamps: true,
+  createdAt: 'createdAt',
+  updatedAt: false,
+  underscored: true
+})
+
+export const PostDraft = sequelize.define('PostDraft', {
+  id: { ...uuid, primaryKey: true },
+  userId: { type: DataTypes.UUID, allowNull: false, field: 'user_id' },
+  channelId: { type: DataTypes.UUID, field: 'channel_id' },
+  body: { type: DataTypes.STRING(280), allowNull: false, defaultValue: '' },
+  visibility: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'public' },
+  imageUrl: { type: DataTypes.TEXT, field: 'image_url' },
+  imageAltText: { type: DataTypes.STRING(120), field: 'image_alt_text' },
+  contentWarning: { type: DataTypes.STRING(120), field: 'content_warning' }
+}, {
+  tableName: 'post_drafts',
+  ...timestamps
+})
+
+export const PostEdit = sequelize.define('PostEdit', {
+  id: { ...uuid, primaryKey: true },
+  postId: { type: DataTypes.UUID, allowNull: false, field: 'post_id' },
+  editorId: { type: DataTypes.UUID, allowNull: false, field: 'editor_id' },
+  body: { type: DataTypes.STRING(280), allowNull: false },
+  visibility: { type: DataTypes.STRING(16), allowNull: false },
+  imageUrl: { type: DataTypes.TEXT, field: 'image_url' },
+  imageAltText: { type: DataTypes.STRING(120), field: 'image_alt_text' },
+  contentWarning: { type: DataTypes.STRING(120), field: 'content_warning' }
+}, {
+  tableName: 'post_edits',
+  timestamps: true,
+  createdAt: 'createdAt',
+  updatedAt: false,
+  underscored: true
+})
+
+export const Hashtag = sequelize.define('Hashtag', {
+  id: { ...uuid, primaryKey: true },
+  tag: { type: DataTypes.STRING(64), allowNull: false, unique: true }
+}, {
+  tableName: 'hashtags',
+  timestamps: true,
+  createdAt: 'createdAt',
+  updatedAt: false,
+  underscored: true
+})
+
+export const PostHashtag = sequelize.define('PostHashtag', {
+  postId: { type: DataTypes.UUID, allowNull: false, primaryKey: true, field: 'post_id' },
+  hashtagId: { type: DataTypes.UUID, allowNull: false, primaryKey: true, field: 'hashtag_id' }
+}, {
+  tableName: 'post_hashtags',
+  timestamps: false
 })
 
 export const Follow = sequelize.define('Follow', {
@@ -236,10 +303,25 @@ Post.belongsTo(Post, { as: 'parent', foreignKey: 'parentPostId' })
 Post.hasMany(Post, { as: 'replies', foreignKey: 'parentPostId' })
 Post.belongsTo(Channel, { as: 'channel', foreignKey: 'channelId' })
 Channel.hasMany(Post, { as: 'posts', foreignKey: 'channelId' })
+Profile.belongsTo(Post, { as: 'pinnedPost', foreignKey: 'pinnedPostId' })
 Post.hasMany(PostLike, { as: 'likes', foreignKey: 'postId' })
 PostLike.belongsTo(Post, { as: 'post', foreignKey: 'postId' })
 User.hasMany(PostLike, { as: 'postLikes', foreignKey: 'userId' })
 PostLike.belongsTo(User, { as: 'user', foreignKey: 'userId' })
+Post.belongsTo(Post, { as: 'repostOf', foreignKey: 'repostOfPostId' })
+Post.hasMany(PostBookmark, { as: 'bookmarks', foreignKey: 'postId' })
+PostBookmark.belongsTo(Post, { as: 'post', foreignKey: 'postId' })
+User.hasMany(PostBookmark, { as: 'bookmarks', foreignKey: 'userId' })
+PostBookmark.belongsTo(User, { as: 'user', foreignKey: 'userId' })
+User.hasMany(PostDraft, { as: 'postDrafts', foreignKey: 'userId' })
+PostDraft.belongsTo(User, { as: 'user', foreignKey: 'userId' })
+PostDraft.belongsTo(Channel, { as: 'channel', foreignKey: 'channelId' })
+Post.hasMany(PostEdit, { as: 'edits', foreignKey: 'postId' })
+PostEdit.belongsTo(Post, { as: 'post', foreignKey: 'postId' })
+PostEdit.belongsTo(User, { as: 'editor', foreignKey: 'editorId' })
+User.hasMany(PostEdit, { as: 'postEdits', foreignKey: 'editorId' })
+Post.belongsToMany(Hashtag, { through: PostHashtag, as: 'hashtags', foreignKey: 'postId', otherKey: 'hashtagId' })
+Hashtag.belongsToMany(Post, { through: PostHashtag, as: 'posts', foreignKey: 'hashtagId', otherKey: 'postId' })
 
 Follow.belongsTo(User, { as: 'follower', foreignKey: 'followerId' })
 Follow.belongsTo(User, { as: 'following', foreignKey: 'followingId' })

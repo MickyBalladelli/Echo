@@ -2,14 +2,18 @@ import { Router } from 'express'
 import { ok, cursorMeta } from '../http/api.js'
 import { decodeCursor } from '../http/pagination.js'
 import { idSchema, parse } from '../http/validation.js'
-import { createPostSchema, createReplySchema, postFeedSchema } from '../posts/schemas.js'
+import { createPostSchema, createReplySchema, postFeedSchema, updatePostSchema } from '../posts/schemas.js'
 import {
+  bookmarkPost,
   createPost,
   createReply,
   deletePost,
   getPostById,
+  getPostEditHistory,
   likePost,
   listPosts,
+  unbookmarkPost,
+  updatePost,
   unlikePost
 } from '../posts/service.js'
 
@@ -21,9 +25,52 @@ postsRouter.get('/', async (request, response, next) => {
     const result = await listPosts(request.auth.userId, {
       cursor: decodeCursor(page.cursor),
       limit: page.limit,
-      feed: page.feed
+      feed: page.feed,
+      hashtag: page.hashtag
     })
     response.json(ok(result.posts, cursorMeta(result.nextCursor)))
+  } catch (error) {
+    next(error)
+  }
+})
+
+postsRouter.get('/:id/edits', async (request, response, next) => {
+  try {
+    const postId = parse(idSchema, request.params.id, 'post id')
+    response.json(ok({ edits: await getPostEditHistory(request.auth.userId, postId) }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+postsRouter.post('/:id/repost', async (request, response, next) => {
+  try {
+    const postId = parse(idSchema, request.params.id, 'post id')
+    const input = parse(createPostSchema, {
+      ...(request.body || {}),
+      channelId: null,
+      repostOfPostId: postId
+    }, 'repost request')
+    const post = await createPost(request.auth.userId, input)
+    response.status(201).json(ok({ post }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+postsRouter.put('/:id/bookmark', async (request, response, next) => {
+  try {
+    const postId = parse(idSchema, request.params.id, 'post id')
+    response.json(ok({ bookmark: await bookmarkPost(request.auth.userId, postId) }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+postsRouter.delete('/:id/bookmark', async (request, response, next) => {
+  try {
+    const postId = parse(idSchema, request.params.id, 'post id')
+    response.json(ok({ bookmark: await unbookmarkPost(request.auth.userId, postId) }))
   } catch (error) {
     next(error)
   }
@@ -74,6 +121,17 @@ postsRouter.get('/:id', async (request, response, next) => {
   try {
     const postId = parse(idSchema, request.params.id, 'post id')
     const post = await getPostById(request.auth.userId, postId)
+    response.json(ok({ post }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+postsRouter.patch('/:id', async (request, response, next) => {
+  try {
+    const postId = parse(idSchema, request.params.id, 'post id')
+    const input = parse(updatePostSchema, request.body, 'post update request')
+    const post = await updatePost(request.auth.userId, postId, input)
     response.json(ok({ post }))
   } catch (error) {
     next(error)

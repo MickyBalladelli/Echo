@@ -6,6 +6,7 @@ import { notifyLike, notifyReply } from '../notifications/service.js'
 
 export const MAX_REPLY_DEPTH = 3
 const MAX_THREAD_REPLIES = 500
+export const POST_EDIT_WINDOW_MS = 24 * 60 * 60 * 1000
 const channelAccess = alias => `(
   ${alias}.channel_id IS NULL OR EXISTS (
     SELECT 1 FROM channels access_channel
@@ -16,6 +17,17 @@ const channelAccess = alias => `(
       AND (access_channel.visibility = 'public' OR access_member.user_id IS NOT NULL)
   )
 )`
+const postVisibilityAccess = alias => `(
+  ${alias}.visibility = 'public'
+  OR (${alias}.visibility = 'followers' AND (
+    ${alias}.author_id = :viewerId OR EXISTS (
+      SELECT 1 FROM follows visibility_follow
+      WHERE visibility_follow.follower_id = :viewerId
+        AND visibility_follow.following_id = ${alias}.author_id
+    )
+  ))
+  OR (${alias}.visibility = 'private' AND ${alias}.author_id = :viewerId)
+)`
 
 const postSelect = (extraSelect = '') => `
   SELECT
@@ -23,10 +35,15 @@ const postSelect = (extraSelect = '') => `
     p.body,
     p.author_id,
     p.parent_post_id,
+    p.repost_of_post_id,
     p.channel_id,
     p.visibility,
     p.created_at,
     p.updated_at,
+    p.image_url,
+    p.image_alt_text,
+    p.content_warning,
+    p.link_preview,
     u.username,
     pr.display_name,
     pr.avatar_url,
@@ -40,6 +57,33 @@ const postSelect = (extraSelect = '') => `
       SELECT 1 FROM follows follow_row
       WHERE follow_row.follower_id = :viewerId AND follow_row.following_id = p.author_id
     ) AS following
+    , EXISTS (
+      SELECT 1 FROM post_bookmarks own_bookmark
+      WHERE own_bookmark.post_id = p.id AND own_bookmark.user_id = :viewerId
+    ) AS bookmarked
+    , (
+      SELECT jsonb_build_object(
+        'id', source.id,
+        'body', source.body,
+        'createdAt', source.created_at,
+        'imageUrl', source.image_url,
+        'imageAltText', source.image_alt_text,
+        'contentWarning', source.content_warning,
+        'author', jsonb_build_object(
+          'id', source.author_id,
+          'username', source_user.username,
+          'displayName', COALESCE(source_profile.display_name, source_user.username),
+          'avatarUrl', source_profile.avatar_url
+        )
+      )
+      FROM posts source
+      JOIN users source_user ON source_user.id = source.author_id
+        AND source_user.deleted_at IS NULL
+        AND source_user.status = 'active'
+      LEFT JOIN profiles source_profile ON source_profile.user_id = source_user.id
+      WHERE source.id = p.repost_of_post_id
+        AND source.deleted_at IS NULL
+    ) AS repost_of
     ${extraSelect}
   FROM posts p
   JOIN users u ON u.id = p.author_id AND u.deleted_at IS NULL AND u.status = 'active'
@@ -59,14 +103,22 @@ function mapPost(row) {
       avatarUrl: row.avatar_url || null
     },
     parentPostId: row.parent_post_id,
+    repostOfPostId: row.repost_of_post_id,
     channelId: row.channel_id,
     visibility: row.visibility,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    imageUrl: row.image_url || null,
+    imageAltText: row.image_alt_text || null,
+    contentWarning: row.content_warning || null,
+    linkPreview: row.link_preview || null,
     likeCount: Number(row.like_count),
     replyCount: Number(row.reply_count),
     liked: Boolean(row.liked),
-    following: Boolean(row.following)
+    following: Boolean(row.following),
+    bookmarked: Boolean(row.bookmarked),
+    repostOf: row.repost_of || null,
+    isEdited: row.updated_at && row.created_at && new Date(row.updated_at).getTime() > new Date(row.created_at).getTime() + 1000
   }
 
   if (row.reply_depth !== undefined && row.reply_depth !== null) {
@@ -106,17 +158,71 @@ async function selectPosts({
   return rows.map(mapPost)
 }
 
+function extractHashtags(body = '') {
+  return [...body.matchAll(/(?:^|\s)#([a-z0-9_]{1,64})\b/gi)]
+    .map(match => match[1].toLowerCase())
+    .filter((tag, index, tags) => tags.indexOf(tag) === index)
+}
+
+function linkPreviewForBody(body = '') {
+  const match = body.match(/https?:\/\/[^\s<]+/i)
+  if (!match) return null
+
+  const url = match[0].replace(/[),.!?]+$/, '')
+  try {
+    const parsed = new URL(url)
+    return {
+      url,
+      hostname: parsed.hostname,
+      label: parsed.hostname.replace(/^www\./, '')
+    }
+  } catch {
+    return null
+  }
+}
+
+async function syncPostHashtags(postId, body, transaction) {
+  const tags = extractHashtags(body)
+  await sequelize.query('DELETE FROM post_hashtags WHERE post_id = :postId', {
+    replacements: { postId },
+    transaction
+  })
+
+  for (const tag of tags) {
+    const rows = await sequelize.query(`
+      INSERT INTO hashtags (tag)
+      VALUES (:tag)
+      ON CONFLICT (tag) DO UPDATE SET tag = EXCLUDED.tag
+      RETURNING id
+    `, {
+      replacements: { tag },
+      type: QueryTypes.SELECT,
+      transaction
+    })
+    await sequelize.query(`
+      INSERT INTO post_hashtags (post_id, hashtag_id)
+      VALUES (:postId, :hashtagId)
+      ON CONFLICT DO NOTHING
+    `, {
+      replacements: { postId, hashtagId: rows[0].id },
+      transaction
+    })
+  }
+}
+
 export async function listPosts(viewerId, {
   cursor,
   limit,
   feed = 'home',
   authorId = null,
   channelId = null,
-  searchQuery = null
+  searchQuery = null,
+  hashtag = null,
+  bookmarkedOnly = false
 }) {
   const where = [
     "p.deleted_at IS NULL",
-    "p.visibility = 'public'",
+    postVisibilityAccess('p'),
     channelAccess('p')
   ]
   const replacements = {}
@@ -146,6 +252,23 @@ export async function listPosts(viewerId, {
     replacements.searchPattern = `%${searchQuery}%`
   }
 
+  if (hashtag) {
+    where.push(`EXISTS (
+      SELECT 1
+      FROM post_hashtags matching_post_hashtag
+      JOIN hashtags matching_hashtag ON matching_hashtag.id = matching_post_hashtag.hashtag_id
+      WHERE matching_post_hashtag.post_id = p.id AND matching_hashtag.tag = :hashtag
+    )`)
+    replacements.hashtag = hashtag.toLowerCase()
+  }
+
+  if (bookmarkedOnly) {
+    where.push(`EXISTS (
+      SELECT 1 FROM post_bookmarks viewer_bookmark
+      WHERE viewer_bookmark.post_id = p.id AND viewer_bookmark.user_id = :viewerId
+    )`)
+  }
+
   if (cursor) {
     where.push('(p.created_at, p.id) < (CAST(:cursorCreatedAt AS timestamptz), CAST(:cursorId AS uuid))')
     replacements.cursorCreatedAt = cursor.createdAt
@@ -171,7 +294,7 @@ export async function listPosts(viewerId, {
 export async function listPopularPosts(viewerId, limit) {
   return selectPosts({
     viewerId,
-    where: `p.deleted_at IS NULL AND p.visibility = 'public' AND ${channelAccess('p')}`,
+    where: `p.deleted_at IS NULL AND ${postVisibilityAccess('p')} AND ${channelAccess('p')}`,
     replacements: {},
     limit,
     orderBy: 'like_count DESC, reply_count DESC, p.created_at DESC, p.id DESC'
@@ -192,7 +315,7 @@ async function listThreadReplies(viewerId, postId, transaction) {
         JOIN users u ON u.id = p.author_id AND u.deleted_at IS NULL AND u.status = 'active'
         WHERE p.parent_post_id = :rootPostId
           AND p.deleted_at IS NULL
-          AND p.visibility = 'public'
+          AND ${postVisibilityAccess('p')}
 
         UNION ALL
 
@@ -207,7 +330,7 @@ async function listThreadReplies(viewerId, postId, transaction) {
           AND child_user.status = 'active'
         JOIN reply_tree ON reply_tree.id = child.parent_post_id
         WHERE child.deleted_at IS NULL
-          AND child.visibility = 'public'
+          AND ${postVisibilityAccess('child')}
           AND reply_tree.depth < :maxReplyDepth
           AND NOT child.id = ANY(reply_tree.path)
       )
@@ -215,7 +338,7 @@ async function listThreadReplies(viewerId, postId, transaction) {
     extraFrom: 'JOIN reply_tree ON reply_tree.id = p.id',
     extraSelect: ', reply_tree.depth AS reply_depth',
     extraGroupBy: 'reply_tree.depth',
-    where: `p.deleted_at IS NULL AND p.visibility = 'public' AND ${channelAccess('p')}`,
+    where: `p.deleted_at IS NULL AND ${postVisibilityAccess('p')} AND ${channelAccess('p')}`,
     replacements: {
       rootPostId: postId,
       maxReplyDepth: MAX_REPLY_DEPTH
@@ -229,7 +352,7 @@ async function listThreadReplies(viewerId, postId, transaction) {
 export async function getPostById(viewerId, postId, transaction) {
   const posts = await selectPosts({
     viewerId,
-    where: `p.id = :postId AND p.deleted_at IS NULL AND p.visibility = 'public' AND ${channelAccess('p')}`,
+    where: `p.id = :postId AND p.deleted_at IS NULL AND ${postVisibilityAccess('p')} AND ${channelAccess('p')}`,
     replacements: { postId },
     limit: 1,
     transaction
@@ -264,20 +387,65 @@ export async function createPost(authorId, input) {
       if (!channel[0].member_id) throw new HttpError(403, 'CHANNEL_MEMBERSHIP_REQUIRED', 'Join channel before posting')
     }
 
+    if (input.repostOfPostId) {
+      const sourceRows = await sequelize.query(`
+        SELECT p.id
+        FROM posts p
+        JOIN users u ON u.id = p.author_id AND u.deleted_at IS NULL AND u.status = 'active'
+        WHERE p.id = :sourcePostId
+          AND p.deleted_at IS NULL
+          AND p.visibility = 'public'
+          AND ${channelAccess('p')}
+        LIMIT 1
+      `, {
+        replacements: { sourcePostId: input.repostOfPostId, viewerId: authorId },
+        type: QueryTypes.SELECT,
+        transaction
+      })
+      if (!sourceRows[0]) throw new HttpError(404, 'SOURCE_POST_NOT_FOUND', 'Post to repost not found')
+    }
+
     const rows = await sequelize.query(`
-      INSERT INTO posts (author_id, channel_id, body, visibility)
-      VALUES (:authorId, :channelId, :body, :visibility)
+      INSERT INTO posts (
+        author_id,
+        channel_id,
+        body,
+        visibility,
+        repost_of_post_id,
+        image_url,
+        image_alt_text,
+        content_warning,
+        link_preview
+      )
+      VALUES (
+        :authorId,
+        :channelId,
+        :body,
+        :visibility,
+        :repostOfPostId,
+        :imageUrl,
+        :imageAltText,
+        :contentWarning,
+        CAST(:linkPreview AS JSONB)
+      )
       RETURNING id
     `, {
       replacements: {
         authorId,
         channelId: input.channelId || null,
-        body: input.body,
-        visibility: input.visibility
+        body: input.body || '',
+        visibility: input.visibility,
+        repostOfPostId: input.repostOfPostId || null,
+        imageUrl: input.imageUrl || null,
+        imageAltText: input.imageAltText || null,
+        contentWarning: input.contentWarning || null,
+        linkPreview: JSON.stringify(linkPreviewForBody(input.body))
       },
       type: QueryTypes.SELECT,
       transaction
     })
+
+    await syncPostHashtags(rows[0].id, input.body, transaction)
 
     return rows[0].id
   })
@@ -293,7 +461,7 @@ export async function createReply(authorId, parentPostId, input) {
       JOIN users u ON u.id = p.author_id AND u.deleted_at IS NULL AND u.status = 'active'
       WHERE p.id = :parentPostId
         AND p.deleted_at IS NULL
-        AND p.visibility = 'public'
+        AND ${postVisibilityAccess('p')}
         AND ${channelAccess('p')}
       LIMIT 1
     `, {
@@ -358,6 +526,8 @@ export async function createReply(authorId, parentPostId, input) {
     })
     const replyId = replyRows[0].id
 
+    await syncPostHashtags(replyId, input.body, transaction)
+
     await notifyReply({
       recipientId: parent.author_id,
       actorId: authorId,
@@ -370,7 +540,7 @@ export async function createReply(authorId, parentPostId, input) {
 
   const rows = await selectPosts({
     viewerId: authorId,
-    where: `p.id = :replyId AND p.deleted_at IS NULL AND p.visibility = 'public' AND ${channelAccess('p')}`,
+    where: `p.id = :replyId AND p.deleted_at IS NULL AND ${postVisibilityAccess('p')} AND ${channelAccess('p')}`,
     replacements: { replyId: reply.replyId },
     limit: 1
   })
@@ -401,6 +571,135 @@ export async function deletePost(authorId, postId) {
   return { id: rows[0].id }
 }
 
+export async function updatePost(authorId, postId, input) {
+  return withTransaction(async transaction => {
+    const rows = await sequelize.query(`
+      SELECT id, body, visibility, image_url, image_alt_text, content_warning, repost_of_post_id, created_at
+      FROM posts
+      WHERE id = :postId AND author_id = :authorId AND deleted_at IS NULL
+      LIMIT 1
+    `, {
+      replacements: { postId, authorId },
+      type: QueryTypes.SELECT,
+      transaction
+    })
+    const current = rows[0]
+
+    if (!current) throw new HttpError(404, 'POST_NOT_FOUND', 'Post not found')
+    if (Date.now() - new Date(current.created_at).getTime() > POST_EDIT_WINDOW_MS) {
+      throw new HttpError(400, 'POST_EDIT_WINDOW_EXPIRED', 'Posts can only be edited for 24 hours')
+    }
+
+    const body = input.body
+    if (!body && !current.repost_of_post_id) {
+      throw new HttpError(400, 'POST_BODY_REQUIRED', 'Post text cannot be empty')
+    }
+    const next = {
+      body,
+      visibility: input.visibility || current.visibility,
+      imageUrl: Object.hasOwn(input, 'imageUrl') ? input.imageUrl : current.image_url,
+      imageAltText: Object.hasOwn(input, 'imageAltText') ? input.imageAltText : current.image_alt_text,
+      contentWarning: Object.hasOwn(input, 'contentWarning') ? input.contentWarning : current.content_warning
+    }
+
+    await sequelize.query(`
+      INSERT INTO post_edits (
+        post_id, editor_id, body, visibility, image_url, image_alt_text, content_warning
+      )
+      VALUES (:postId, :authorId, :body, :visibility, :imageUrl, :imageAltText, :contentWarning)
+    `, {
+      replacements: { postId, authorId, ...current, ...next },
+      transaction
+    })
+    await sequelize.query(`
+      UPDATE posts
+      SET body = :body,
+          visibility = :visibility,
+          image_url = :imageUrl,
+          image_alt_text = :imageAltText,
+          content_warning = :contentWarning,
+          link_preview = CAST(:linkPreview AS JSONB),
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = :postId
+    `, {
+      replacements: {
+        postId,
+        ...next,
+        linkPreview: JSON.stringify(linkPreviewForBody(body))
+      },
+      transaction
+    })
+    await syncPostHashtags(postId, body, transaction)
+
+    return getPostById(authorId, postId, transaction)
+  })
+}
+
+export async function getPostEditHistory(viewerId, postId) {
+  await getPostById(viewerId, postId)
+  const rows = await sequelize.query(`
+    SELECT id, body, visibility, image_url, image_alt_text, content_warning, created_at
+    FROM post_edits
+    WHERE post_id = :postId
+    ORDER BY created_at DESC, id DESC
+  `, {
+    replacements: { postId },
+    type: QueryTypes.SELECT
+  })
+
+  return rows.map(row => ({
+    id: row.id,
+    body: row.body,
+    visibility: row.visibility,
+    imageUrl: row.image_url || null,
+    imageAltText: row.image_alt_text || null,
+    contentWarning: row.content_warning || null,
+    createdAt: row.created_at
+  }))
+}
+
+export async function bookmarkPost(userId, postId) {
+  return withTransaction(async transaction => {
+    const rows = await sequelize.query(`
+      SELECT p.id
+      FROM posts p
+      JOIN users u ON u.id = p.author_id AND u.deleted_at IS NULL AND u.status = 'active'
+      WHERE p.id = :postId
+        AND p.deleted_at IS NULL
+        AND ${postVisibilityAccess('p')}
+        AND ${channelAccess('p')}
+      LIMIT 1
+    `, {
+      replacements: { postId, viewerId: userId },
+      type: QueryTypes.SELECT,
+      transaction
+    })
+    if (!rows[0]) throw new HttpError(404, 'POST_NOT_FOUND', 'Post not found')
+
+    await sequelize.query(`
+      INSERT INTO post_bookmarks (post_id, user_id)
+      VALUES (:postId, :userId)
+      ON CONFLICT (post_id, user_id) DO NOTHING
+    `, {
+      replacements: { postId, userId },
+      transaction
+    })
+    return { postId, bookmarked: true }
+  })
+}
+
+export async function unbookmarkPost(userId, postId) {
+  await sequelize.query(`
+    DELETE FROM post_bookmarks
+    WHERE post_id = :postId AND user_id = :userId
+  `, { replacements: { postId, userId } })
+  return { postId, bookmarked: false }
+}
+
+export async function listBookmarkedPosts(viewerId, options) {
+  return listPosts(viewerId, { ...options, bookmarkedOnly: true })
+}
+
 async function getLikeState(userId, postId, transaction) {
   const rows = await sequelize.query(`
     SELECT
@@ -414,7 +713,7 @@ async function getLikeState(userId, postId, transaction) {
     LEFT JOIN post_likes ON post_likes.post_id = posts.id
     WHERE posts.id = :postId
       AND posts.deleted_at IS NULL
-      AND posts.visibility = 'public'
+      AND ${postVisibilityAccess('posts')}
       AND ${channelAccess('posts')}
     GROUP BY posts.id
   `, {
@@ -442,7 +741,7 @@ export async function likePost(userId, postId) {
       JOIN users u ON u.id = p.author_id AND u.deleted_at IS NULL AND u.status = 'active'
       WHERE p.id = :postId
         AND p.deleted_at IS NULL
-        AND p.visibility = 'public'
+        AND ${postVisibilityAccess('p')}
         AND ${channelAccess('p')}
       LIMIT 1
     `, {

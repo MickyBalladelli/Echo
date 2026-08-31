@@ -50,6 +50,26 @@ export function UserSocialContent({ username, router, currentUserId, showIdentit
     posts.value = posts.value.filter(post => post.id !== postId)
   }
 
+  function updatePost(updatedPost) {
+    posts.value = posts.value.map(post => post.id === updatedPost.id ? { ...post, ...updatedPost } : post)
+    if (user.value?.pinnedPost?.id === updatedPost.id) {
+      user.value = { ...user.value, pinnedPost: { ...user.value.pinnedPost, ...updatedPost } }
+    }
+  }
+
+  async function togglePinned(post) {
+    const nextPostId = user.value.pinnedPost?.id === post.id ? null : post.id
+    const result = await apiRequest('/api/me/pinned-post', {
+      method: 'PATCH',
+      body: JSON.stringify({ postId: nextPostId })
+    })
+    user.value = {
+      ...user.value,
+      pinnedPostId: result.data.pin.pinnedPostId,
+      pinnedPost: nextPostId ? post : null
+    }
+  }
+
   const content = computed(() => {
     if (state.value === 'loading') {
       return <Card class="route-card feed-status-card"><div role="status">Loading profile…</div></Card>
@@ -99,6 +119,23 @@ export function UserSocialContent({ username, router, currentUserId, showIdentit
           <span><strong>{user.value.followerCount}</strong> followers</span>
           <span><strong>{user.value.followingCount}</strong> following</span>
         </div>
+        {user.value.pinnedPost && (
+          <div class="profile-pinned-post">
+            <div class="post-replies-heading"><Label size="small" tone="accent">PINNED POST</Label></div>
+            <PostCard
+              post={user.value.pinnedPost}
+              router={router}
+              currentUserId={currentUserId}
+              onDeleted={postId => {
+                removePost(postId)
+                if (user.value.pinnedPost?.id === postId) user.value = { ...user.value, pinnedPost: null, pinnedPostId: null }
+              }}
+              pinned
+              onTogglePinned={user.value.isSelf ? togglePinned : undefined}
+              onUpdated={updatePost}
+            />
+          </div>
+        )}
         <div class="social-lists-grid">
           <UserList title="Followers" users={followers.value} router={router} />
           <UserList title="Following" users={following.value} router={router} />
@@ -116,6 +153,8 @@ export function UserSocialContent({ username, router, currentUserId, showIdentit
                 router={router}
                 currentUserId={currentUserId}
                 onDeleted={removePost}
+                onUpdated={updatePost}
+                onReposted={post => posts.value = [post, ...posts.value.filter(item => item.id !== post.id)]}
               />
             ))}
           </div>

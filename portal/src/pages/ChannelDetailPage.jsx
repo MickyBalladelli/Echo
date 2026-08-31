@@ -121,6 +121,10 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
     posts.value = posts.value.filter(post => post.id !== postId)
   }
 
+  function updatePost(updatedPost) {
+    posts.value = posts.value.map(post => post.id === updatedPost.id ? { ...post, ...updatedPost } : post)
+  }
+
   const content = computed(() => {
     if (state.value === 'loading') return <Card><div role="status">Loading channel…</div></Card>
     if (state.value === 'error') return <Card><EmptyState status="error" title="Channel unavailable" description={error.value} /></Card>
@@ -182,7 +186,7 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
         {channel.value.membershipRole && <PostComposer channelId={channel.value.id} onCreated={addPost} />}
         <div class="post-replies-heading"><Label size="small" tone="accent">CHANNEL FEED</Label></div>
         {posts.value.length
-          ? <div class="post-feed">{posts.value.map(post => <PostCard key={post.id} post={post} router={router} currentUserId={currentUserId} onDeleted={removePost} />)}</div>
+          ? <div class="post-feed">{posts.value.map(post => <PostCard key={post.id} post={post} router={router} currentUserId={currentUserId} onDeleted={removePost} onUpdated={updatePost} onReposted={addPost} />)}</div>
           : <Card><EmptyState title="No posts yet" description="Members can start this channel." /></Card>}
         <div class="post-feed-error" role="alert">{error}</div>
       </div>

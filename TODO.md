@@ -197,18 +197,18 @@ learn and use components in Prism for all your UI
 
 ### Post quality of life
 
-- [ ] Add repost/quote-post behavior.
-- [ ] Add bookmarks.
-- [ ] Add drafts.
-- [ ] Add post editing policy and edit history if allowed.
-- [ ] Add hashtags and hashtag pages.
-- [ ] Add mentions and mention autocomplete.
-- [ ] Add link previews.
-- [ ] Add image upload and image previews.
+- [x] Add repost/quote-post behavior.
+- [x] Add bookmarks.
+- [x] Add drafts.
+- [x] Add post editing policy and edit history if allowed.
+- [x] Add hashtags and hashtag pages.
+- [x] Add mentions and mention autocomplete.
+- [x] Add link previews.
+- [x] Add image upload and image previews.
 - [ ] Add video or GIF support only after storage limits are defined.
-- [ ] Add content warnings.
-- [ ] Add post visibility options.
-- [ ] Add pinned post on profile.
+- [x] Add content warnings.
+- [x] Add post visibility options.
+- [x] Add pinned post on profile.
 
 ### Profiles and social graph
 

@@ -2,7 +2,7 @@ import { QueryTypes } from 'sequelize'
 import { sequelize, withTransaction } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
 import { encodeCursor } from '../http/pagination.js'
-import { listPosts } from '../posts/service.js'
+import { getPostById, listPosts } from '../posts/service.js'
 import { notifyFollow } from '../notifications/service.js'
 
 function mapUser(row) {
@@ -14,14 +14,15 @@ function mapUser(row) {
       displayName: row.display_name || row.username,
       bio: row.bio || '',
       avatarUrl: row.avatar_url || null,
-      bannerUrl: row.banner_url || null
+      bannerUrl: row.banner_url || null,
+      pinnedPostId: row.pinned_post_id || null
     }
   }
 }
 
 async function findPublicUser(identifier, transaction) {
   const rows = await sequelize.query(`
-    SELECT u.id, u.username, u.created_at, p.display_name, p.bio, p.avatar_url, p.banner_url
+    SELECT u.id, u.username, u.created_at, p.display_name, p.bio, p.avatar_url, p.banner_url, p.pinned_post_id
     FROM users u
     LEFT JOIN profiles p ON p.user_id = u.id
     WHERE ${identifier.id ? 'u.id = :id' : 'LOWER(u.username) = LOWER(:username)'}
@@ -60,12 +61,22 @@ export async function getPublicProfile(viewerId, username) {
   })
   const counts = rows[0]
 
+  let pinnedPost = null
+  if (user.pinned_post_id) {
+    try {
+      pinnedPost = await getPostById(viewerId, user.pinned_post_id)
+    } catch (error) {
+      if (error.code !== 'POST_NOT_FOUND') throw error
+    }
+  }
+
   return {
     ...mapUser(user),
     followerCount: Number(counts.follower_count),
     followingCount: Number(counts.following_count),
     followedByViewer: Boolean(counts.followed_by_viewer),
-    isSelf: user.id === viewerId
+    isSelf: user.id === viewerId,
+    pinnedPost
   }
 }
 
@@ -175,4 +186,30 @@ export async function listConnections(username, kind, { cursor, limit }) {
 export async function listUserPosts(viewerId, username, options) {
   const user = await findPublicUser({ username })
   return listPosts(viewerId, { ...options, authorId: user.id })
+}
+
+export async function setPinnedPost(userId, postId) {
+  if (postId) {
+    const rows = await sequelize.query(`
+      SELECT id
+      FROM posts
+      WHERE id = :postId
+        AND author_id = :userId
+        AND deleted_at IS NULL
+        AND visibility = 'public'
+      LIMIT 1
+    `, {
+      replacements: { postId, userId },
+      type: QueryTypes.SELECT
+    })
+    if (!rows[0]) throw new HttpError(400, 'PINNED_POST_INVALID', 'Only your public posts can be pinned')
+  }
+
+  await sequelize.query(`
+    UPDATE profiles
+    SET pinned_post_id = :postId, updated_at = CURRENT_TIMESTAMP
+    WHERE user_id = :userId
+  `, { replacements: { userId, postId: postId || null } })
+
+  return { pinnedPostId: postId || null }
 }

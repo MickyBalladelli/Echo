@@ -4,6 +4,8 @@ import { ContextRail } from './ContextRail.jsx'
 import { ShellNavigation } from './ShellNavigation.jsx'
 import { UserProfilePage } from '../pages/UserProfilePage.jsx'
 import { ChannelDetailPage } from '../pages/ChannelDetailPage.jsx'
+import { BookmarksPage } from '../pages/BookmarksPage.jsx'
+import { HashtagPage } from '../pages/HashtagPage.jsx'
 import {
   ChannelsPage,
   ChatPage,
@@ -46,6 +48,11 @@ export function AppShell({
         notificationVersion
       })
     },
+    {
+      path: '/bookmarks',
+      title: 'Bookmarks',
+      view: () => BookmarksPage({ router, currentUserId: userState.value.id })
+    },
     { path: '/notes', title: 'Notes', view: () => NotesPage({ router }) },
     {
       path: '/notes/:id',
@@ -78,6 +85,11 @@ export function AppShell({
       path: '/posts/:id',
       title: 'Post',
       view: ({ id }) => PostDetailPage({ id, router, currentUserId: userState.value.id })
+    },
+    {
+      path: '/hashtags/:tag',
+      title: 'Hashtag',
+      view: ({ tag }) => HashtagPage({ tag, router, currentUserId: userState.value.id })
     },
     {
       path: '*path',

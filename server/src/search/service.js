@@ -28,6 +28,15 @@ function mapChannel(row) {
   }
 }
 
+function mapHashtag(row) {
+  return {
+    id: row.id,
+    tag: row.tag,
+    createdAt: row.created_at,
+    postCount: Number(row.post_count)
+  }
+}
+
 function cursorWhere(cursor, replacements, column = 'u') {
   if (!cursor) return ''
   replacements.cursorCreatedAt = cursor.createdAt
@@ -77,6 +86,24 @@ async function searchChannels(query, { cursor, limit }) {
   return pageRows(rows, limit, mapChannel)
 }
 
+async function searchHashtags(query, { cursor, limit }) {
+  const replacements = { pattern: `%${query.toLowerCase()}%` }
+  const rows = await sequelize.query(`
+    SELECT h.id, h.tag, h.created_at, COUNT(DISTINCT ph.post_id)::INTEGER AS post_count
+    FROM hashtags h
+    LEFT JOIN post_hashtags ph ON ph.hashtag_id = h.id
+    WHERE h.tag ILIKE :pattern
+      ${cursorWhere(cursor, replacements, 'h')}
+    GROUP BY h.id
+    ORDER BY h.created_at DESC, h.id DESC
+    LIMIT :limit
+  `, {
+    replacements: { ...replacements, limit: limit + 1 },
+    type: QueryTypes.SELECT
+  })
+  return pageRows(rows, limit, mapHashtag)
+}
+
 function pageRows(rows, limit, mapper) {
   const hasMore = rows.length > limit
   const page = hasMore ? rows.slice(0, limit) : rows
@@ -90,6 +117,7 @@ function pageRows(rows, limit, mapper) {
 export async function search(viewerId, query, type, options) {
   if (type === 'users') return searchUsers(query, options)
   if (type === 'channels') return searchChannels(query, options)
+  if (type === 'hashtags') return searchHashtags(query.replace(/^#/, ''), options)
 
   const result = await listPosts(viewerId, { ...options, searchQuery: query })
   return { items: result.posts, nextCursor: result.nextCursor }
