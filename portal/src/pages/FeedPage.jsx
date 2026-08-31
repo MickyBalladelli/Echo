@@ -6,6 +6,8 @@ import { PostComposer } from '../components/PostComposer.jsx'
 import { ReplyComposer } from '../components/ReplyComposer.jsx'
 import { PageFrame } from './PageFrame.jsx'
 import { joinRealtimeRoom } from '../lib/realtime.js'
+import { KeyboardList } from '../components/KeyboardList.jsx'
+import { VirtualList } from '../components/VirtualList.jsx'
 
 function getRequestMessage(error) {
   return error?.message || 'Could not load posts'
@@ -91,17 +93,23 @@ export function FeedPage({ router, currentUserId, feed = 'home' }) {
 
     return (
       <div class="post-feed">
-        {posts.value.map(post => (
-          <PostCard
-            key={post.id}
-            post={post}
-            router={router}
-            currentUserId={currentUserId}
-            onDeleted={removePost}
-            onReposted={addPost}
-            onUpdated={updatePost}
+        <KeyboardList label="Post feed" className="post-feed-keyboard">
+          <VirtualList
+            items={posts}
+            estimateSize={360}
+            label="Post feed"
+            renderItem={post => (
+              <PostCard
+                post={post}
+                router={router}
+                currentUserId={currentUserId}
+                onDeleted={removePost}
+                onReposted={addPost}
+                onUpdated={updatePost}
+              />
+            )}
           />
-        ))}
+        </KeyboardList>
         {nextCursor.value && (
           <div class="feed-load-more">
             <Button variant="secondary" loading={loadingMore} onClick={() => loadFeed({ append: true })}>Load more</Button>
@@ -219,7 +227,7 @@ export function PostDetailPage({ id, router, currentUserId }) {
           <span>{post.value.replies.length ? `${post.value.replies.length} in this thread` : 'No replies yet'}</span>
         </div>
         {post.value.replies.length > 0 && (
-          <div class="post-feed">
+          <KeyboardList label="Post replies" className="post-feed-keyboard post-feed">
             {post.value.replies.map(reply => (
               <div key={reply.id} class={`post-reply post-reply-depth-${Math.min(reply.depth || 1, 3)}`}>
                 <PostCard
@@ -238,7 +246,7 @@ export function PostDetailPage({ id, router, currentUserId }) {
                 />
               </div>
             ))}
-          </div>
+          </KeyboardList>
         )}
       </div>
     )

@@ -29,6 +29,7 @@ function showBrowserNotification() {
 }
 
 export function App() {
+  const reducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const status = signal('checking')
   const authStatus = signal('checking')
   const currentUser = signal(null)
@@ -157,7 +158,7 @@ export function App() {
 
   return (
     <div class="echo-root" use:style={prismTheme}>
-      <Background palette="midnight" animation="veil" intensity={0.65} grain={0.018} minHeight="100vh">
+      <Background palette="midnight" animation={reducedMotion ? undefined : 'veil'} intensity={0.65} grain={0.018} minHeight="100vh">
         {authView}
       </Background>
     </div>

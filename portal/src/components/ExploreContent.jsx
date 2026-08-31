@@ -4,6 +4,8 @@ import { apiRequest } from '../lib/api.js'
 import { PostCard } from './PostCard.jsx'
 import { SuggestedUsers } from './SuggestedUsers.jsx'
 import { UserBadges } from './UserBadges.jsx'
+import { KeyboardList } from './KeyboardList.jsx'
+import { VirtualList } from './VirtualList.jsx'
 
 const searchTypes = Object.freeze([
   { id: 'users', label: 'People' },
@@ -105,19 +107,23 @@ export function ExploreContent({ router, currentUserId }) {
   function renderPosts(posts, emptyTitle) {
     if (!posts.length) return <Card><EmptyState title={emptyTitle} /></Card>
     return (
-      <div class="post-feed">
-        {posts.map(post => (
-          <PostCard
-            key={post.id}
-            post={post}
-            router={router}
-            currentUserId={currentUserId}
-            onDeleted={removePost}
-            onUpdated={updatePost}
-            onReposted={addPost}
-          />
-        ))}
-      </div>
+      <KeyboardList label="Explore post feed" className="post-feed-keyboard post-feed">
+        <VirtualList
+          items={posts}
+          estimateSize={360}
+          label="Explore post feed"
+          renderItem={post => (
+            <PostCard
+              post={post}
+              router={router}
+              currentUserId={currentUserId}
+              onDeleted={removePost}
+              onUpdated={updatePost}
+              onReposted={addPost}
+            />
+          )}
+        />
+      </KeyboardList>
     )
   }
 
@@ -155,7 +161,7 @@ export function ExploreContent({ router, currentUserId }) {
           ? (
             <Card key={item.id} class="search-result-card">
               {item.profile.avatarUrl
-                ? <img class="social-user-avatar" src={item.profile.avatarUrl} alt="" loading="lazy" />
+                ? <img class="social-user-avatar" src={item.profile.avatarUrl} alt="" loading="lazy" decoding="async" />
                 : <span class="social-user-avatar" aria-hidden="true">{userInitial(item)}</span>}
               <div>
                 <Label size="large">{item.profile.displayName}</Label>

@@ -26,6 +26,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       DB_QUERY_TIMEOUT_MS: ${DB_QUERY_TIMEOUT_MS:-5000}
       DB_CONNECTION_TIMEOUT_MS: ${DB_CONNECTION_TIMEOUT_MS:-5000}
+      DB_PROFILE_SLOW_MS: ${DB_PROFILE_SLOW_MS:-250}
       MAX_JSON_BODY_BYTES: ${MAX_JSON_BODY_BYTES:-2097152}
       MAX_SOCKET_BUFFER_BYTES: ${MAX_SOCKET_BUFFER_BYTES:-2097152}
     command: sh -c "npm run db:migrate --workspace server && npm run start --workspace server"

@@ -2,6 +2,8 @@ import { computed, onMount, signal } from '../lib/vendor.js'
 import { Button, Card, EmptyState } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { PostCard } from '../components/PostCard.jsx'
+import { KeyboardList } from '../components/KeyboardList.jsx'
+import { VirtualList } from '../components/VirtualList.jsx'
 import { PageFrame } from './PageFrame.jsx'
 
 export function BookmarksPage({ router, currentUserId }) {
@@ -49,7 +51,14 @@ export function BookmarksPage({ router, currentUserId }) {
     if (!posts.value.length) return <Card><EmptyState title="No bookmarks yet" description="Save posts you want to find again." /></Card>
     return (
       <div class="post-feed">
-        {posts.value.map(post => <PostCard key={post.id} post={post} router={router} currentUserId={currentUserId} onDeleted={removePost} onUpdated={updatePost} onReposted={newPost => posts.value = [newPost, ...posts.value]} onBookmarkChanged={bookmark => !bookmark.bookmarked && removePost(post.id)} />)}
+        <KeyboardList label="Bookmarked posts" className="post-feed-keyboard">
+          <VirtualList
+            items={posts}
+            estimateSize={360}
+            label="Bookmarked posts"
+            renderItem={post => <PostCard post={post} router={router} currentUserId={currentUserId} onDeleted={removePost} onUpdated={updatePost} onReposted={newPost => posts.value = [newPost, ...posts.value]} onBookmarkChanged={bookmark => !bookmark.bookmarked && removePost(post.id)} />}
+          />
+        </KeyboardList>
         {nextCursor.value && <div class="feed-load-more"><Button variant="secondary" loading={loadingMore} onClick={() => load({ append: true })}>Load more</Button></div>}
         {error.value && <div class="post-feed-error" role="alert">{error}</div>}
       </div>

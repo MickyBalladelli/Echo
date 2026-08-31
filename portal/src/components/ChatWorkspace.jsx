@@ -3,6 +3,9 @@ import { Button, Card, CheckBox, EmptyState, FormField, Label, TextField } from 
 import { apiRequest } from '../lib/api.js'
 import { emitRealtime, joinRealtimeRoom, onRealtimeControl, onRealtimeEvent } from '../lib/realtime.js'
 import { ChatMessage } from './ChatMessage.jsx'
+import { KeyboardList } from './KeyboardList.jsx'
+import { LiveRegion } from './LiveRegion.jsx'
+import { VirtualList } from './VirtualList.jsx'
 
 export function ChatWorkspace({ router, conversationId = null, currentUserId }) {
   const conversations = signal([])
@@ -19,6 +22,7 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId }) 
   const typingUsers = signal([])
   const onlineUserIds = signal([])
   const busy = signal(false)
+  const announcement = signal('')
   let leaveRoom
   let typingTimer
 
@@ -77,7 +81,21 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId }) 
   function markLatestRead() {
     const latest = messages.value.at(-1)
     if (!latest || latest.sender.id === currentUserId) return
-    emitRealtime('chat:read', { conversationId, messageId: latest.id })
+    const previousConversation = conversations.value.find(item => item.id === conversationId)
+    if (previousConversation?.unreadCount) {
+      conversations.value = conversations.value.map(item => item.id === conversationId
+        ? { ...item, unreadCount: 0 }
+        : item)
+    }
+    emitRealtime('chat:read', { conversationId, messageId: latest.id }, response => {
+      if (response.ok) {
+        announcement.value = 'Messages marked read'
+        return
+      }
+      if (previousConversation) {
+        conversations.value = conversations.value.map(item => item.id === conversationId ? previousConversation : item)
+      }
+    })
   }
 
   function addMessage(message) {
@@ -178,7 +196,7 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId }) 
     if (state.value === 'loading') return <Card><div role="status">Loading messages…</div></Card>
     if (state.value === 'error') return <Card><EmptyState status="error" title="Chat unavailable" description={error.value} /></Card>
     return (
-      <div class="chat-thread">
+      <div class="chat-thread" aria-label={`Conversation ${conversation.value.title}`}>
         <Card class="chat-thread-header">
           <div><Label size="large">{conversation.value.title}</Label><span>{conversation.value.members.length} members</span></div>
           <div class="chat-thread-actions">
@@ -190,7 +208,7 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId }) 
               <span key={member.id} class={onlineUserIds.value.includes(member.id) ? 'chat-member-online' : ''}>
                 {member.displayName}{onlineUserIds.value.includes(member.id) ? ' ●' : ''}
                 {conversation.value.kind === 'group' && conversation.value.role === 'owner' && member.id !== currentUserId && (
-                  <Button variant="tertiary" size="small" onClick={() => removeMember(member)}>Remove</Button>
+                  <Button variant="tertiary" size="small" ariaLabel={`Remove ${member.displayName} from conversation`} onClick={() => removeMember(member)}>Remove</Button>
                 )}
               </span>
             ))}
@@ -203,14 +221,20 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId }) 
           )}
         </Card>
         {nextCursor.value && <Button variant="secondary" loading={busy} onClick={loadOlder}>Load older messages</Button>}
-        <div class="chat-messages">
-          {messages.value.map(message => <ChatMessage key={message.id} message={message} currentUserId={currentUserId} onUpdated={updateMessage} onDeleted={updateMessage} />)}
-        </div>
+        <KeyboardList label="Chat messages" className="chat-messages-keyboard">
+          <VirtualList
+            items={messages}
+            estimateSize={104}
+            label="Message history"
+            renderItem={message => <ChatMessage message={message} currentUserId={currentUserId} onUpdated={updateMessage} onDeleted={updateMessage} />}
+          />
+        </KeyboardList>
         <div class="chat-typing" aria-live="polite">{typingUsers.value.length ? 'Someone is typing…' : ''}</div>
         <form class="chat-compose" onSubmit={send}>
           <textarea use:bind={messageBody} onInput={typeMessage} maxlength="4000" rows="3" placeholder="Write a message" aria-label="Message" />
           <Button type="submit" loading={busy}>Send</Button>
         </form>
+        <LiveRegion message={announcement} />
       </div>
     )
   })
@@ -267,15 +291,15 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId }) 
           {groupTitleField}
           <Button type="submit" size="small" loading={busy}>Start chat</Button>
         </form>
-        <div class="chat-conversation-list">
+        <KeyboardList label="Conversations" className="chat-conversation-list">
           {conversations.value.map(item => (
-            <a key={item.id} class={item.id === conversationId ? 'chat-conversation-active' : ''} href={`/chat/${item.id}`} onClick={router.link(`/chat/${item.id}`)}>
+            <a key={item.id} data-keyboard-item="true" class={item.id === conversationId ? 'chat-conversation-active' : ''} href={`/chat/${item.id}`} onClick={router.link(`/chat/${item.id}`)}>
               <strong>{item.title}</strong>
               <span>{item.lastMessage?.body || 'No messages yet'}</span>
               {item.unreadCount > 0 && <b>{item.unreadCount}</b>}
             </a>
           ))}
-        </div>
+        </KeyboardList>
       </Card>
       {conversationView}
       <div class="post-feed-error" role="alert">{error}</div>

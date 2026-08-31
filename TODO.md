@@ -270,15 +270,15 @@ learn and use components in Prism for all your UI
 
 ## P2 — Performance and accessibility
 
-- [ ] Add optimistic updates for likes, follows, joins, and read states.
-- [ ] Add virtualized long feeds and message lists.
-- [ ] Add image resizing and lazy loading.
-- [ ] Add database query profiling for feed and search queries.
-- [ ] Add mobile layout support.
-- [ ] Add screen-reader labels for actions and live updates.
-- [ ] Add reduced-motion support.
-- [ ] Add keyboard navigation for feeds, dialogs, notes, and chat.
-- [ ] Add timezone-safe date formatting.
+- [x] Add optimistic updates for likes, follows, joins, and read states.
+- [x] Add virtualized long feeds and message lists.
+- [x] Add image resizing and lazy loading.
+- [x] Add database query profiling for feed and search queries.
+- [x] Add mobile layout support.
+- [x] Add screen-reader labels for actions and live updates.
+- [x] Add reduced-motion support.
+- [x] Add keyboard navigation for feeds, dialogs, notes, and chat.
+- [x] Add timezone-safe date formatting.
 
 ## P3 — Advanced features
 

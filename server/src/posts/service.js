@@ -1,5 +1,5 @@
 import { QueryTypes } from 'sequelize'
-import { sequelize, withTransaction } from '../db/pool.js'
+import { profiledQuery, sequelize, withTransaction } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
 import { encodeCursor } from '../http/pagination.js'
 import { notifyChannelPost, notifyLike, notifyReply } from '../notifications/service.js'
@@ -203,9 +203,10 @@ async function selectPosts({
   withClause = '',
   extraFrom = '',
   extraSelect = '',
-  extraGroupBy = ''
+  extraGroupBy = '',
+  profileName = 'feed'
 }) {
-  const rows = await sequelize.query(`
+  const rows = await profiledQuery(profileName, `
     ${withClause}
     ${postSelect(extraSelect)}
     ${extraFrom}
@@ -367,7 +368,8 @@ export async function listPosts(viewerId, {
     viewerId,
     where: where.join(' AND '),
     replacements,
-    limit: limit + 1
+    limit: limit + 1,
+    profileName: searchQuery ? 'search_posts' : 'feed'
   })
   const hasMore = rows.length > limit
   const posts = hasMore ? rows.slice(0, limit) : rows
@@ -388,7 +390,8 @@ export async function listPopularPosts(viewerId, limit) {
     where: `p.deleted_at IS NULL AND ${postVisibilityAccess('p')} AND ${channelAccess('p')}`,
     replacements: {},
     limit,
-    orderBy: 'like_count DESC, reply_count DESC, p.created_at DESC, p.id DESC'
+    orderBy: 'like_count DESC, reply_count DESC, p.created_at DESC, p.id DESC',
+    profileName: 'popular_posts'
   }), 5000)
 }
 
@@ -435,6 +438,7 @@ async function listThreadReplies(viewerId, postId, transaction) {
       maxReplyDepth: MAX_REPLY_DEPTH
     },
     limit: MAX_THREAD_REPLIES,
+    profileName: 'post_replies',
     order: 'ASC',
     transaction
   })

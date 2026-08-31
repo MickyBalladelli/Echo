@@ -1,6 +1,8 @@
 import { Button, CheckBox, FormField, TextField, signal } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 
+const maxImageBytes = 10 * 1024 * 1024
+
 function resizeImage(file, maxWidth, maxHeight) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -39,6 +41,10 @@ export function ProfileEditor({ user, onSaved, onCancel }) {
     if (!file) return
     if (!file.type.startsWith('image/')) {
       error.value = 'Choose an image file.'
+      return
+    }
+    if (file.size > maxImageBytes) {
+      error.value = 'Choose an image smaller than 10 MB.'
       return
     }
     try {
@@ -88,12 +94,12 @@ export function ProfileEditor({ user, onSaved, onCancel }) {
       <div class="profile-image-fields">
         <FormField id="profile-avatar" label="Avatar" hint="Square image, resized before upload.">
           <input id="profile-avatar" type="file" accept="image/*" onChange={event => chooseImage(event, avatarUrl, 400, 400)} />
-          {avatarUrl.value && <img class="profile-editor-avatar-preview" src={avatarUrl} alt="Avatar preview" />}
+          {avatarUrl.value && <img class="profile-editor-avatar-preview" src={avatarUrl} alt="Avatar preview" decoding="async" />}
           {avatarUrl.value && <Button type="button" variant="tertiary" size="small" onClick={() => avatarUrl.value = ''}>Remove avatar</Button>}
         </FormField>
         <FormField id="profile-banner" label="Banner" hint="Wide image, resized before upload.">
           <input id="profile-banner" type="file" accept="image/*" onChange={event => chooseImage(event, bannerUrl, 1200, 420)} />
-          {bannerUrl.value && <img class="profile-editor-banner-preview" src={bannerUrl} alt="Banner preview" />}
+          {bannerUrl.value && <img class="profile-editor-banner-preview" src={bannerUrl} alt="Banner preview" decoding="async" />}
           {bannerUrl.value && <Button type="button" variant="tertiary" size="small" onClick={() => bannerUrl.value = ''}>Remove banner</Button>}
         </FormField>
       </div>

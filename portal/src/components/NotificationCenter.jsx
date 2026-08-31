@@ -1,16 +1,9 @@
 import { computed, onMount, signal } from '../lib/vendor.js'
 import { Button, Card, EmptyState, Label } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
-
-function formatTime(value) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'recently'
-  const seconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000))
-  if (seconds < 60) return `${seconds}s ago`
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`
-  return `${Math.floor(seconds / 86400)}d ago`
-}
+import { LiveRegion } from './LiveRegion.jsx'
+import { formatRelativeTime } from '../lib/dates.js'
+import { KeyboardList } from './KeyboardList.jsx'
 
 function notificationText(notification) {
   const actor = notification.actor?.displayName || 'Someone'
@@ -38,6 +31,7 @@ export function NotificationCenter({ router, unreadCount, notificationVersion })
   const error = signal('')
   const loadingMore = signal(false)
   const markingAll = signal(false)
+  const announcement = signal('')
 
   async function load({ append = false } = {}) {
     if (append) loadingMore.value = true
@@ -62,15 +56,24 @@ export function NotificationCenter({ router, unreadCount, notificationVersion })
   async function openNotification(event, notification) {
     event.preventDefault()
     if (!notification.readAt) {
+      const previousNotifications = notifications.value
+      const previousUnread = unreadCount.value
+      const optimisticCount = notification.groupCount || 1
+      const readAt = new Date().toISOString()
+      notifications.value = notifications.value.map(item => item.groupKey === notification.groupKey
+        ? { ...item, readAt }
+        : item)
+      unreadCount.value = Math.max(0, previousUnread - optimisticCount)
+      announcement.value = 'Notification marked read'
       try {
         const result = await apiRequest(`/api/notifications/groups/${encodeURIComponent(notification.groupKey)}/read`, {
           method: 'PUT'
         })
-        notifications.value = notifications.value.map(item => item.id === notification.id
-          ? { ...item, readAt: new Date().toISOString() }
-          : item)
-        unreadCount.value = Math.max(0, unreadCount.value - (result.data.notification.updatedCount || 1))
+        unreadCount.value = Math.max(0, previousUnread - (result.data.notification.updatedCount || optimisticCount))
       } catch (requestError) {
+        notifications.value = previousNotifications
+        unreadCount.value = previousUnread
+        announcement.value = 'Mark read failed. Previous state restored.'
         error.value = requestError.message || 'Could not mark notification read'
       }
     }
@@ -79,14 +82,20 @@ export function NotificationCenter({ router, unreadCount, notificationVersion })
 
   async function markAllRead() {
     if (markingAll.value || unreadCount.value === 0) return
+    const previousNotifications = notifications.value
+    const previousUnread = unreadCount.value
     markingAll.value = true
     error.value = ''
+    const readAt = new Date().toISOString()
+    notifications.value = notifications.value.map(notification => ({ ...notification, readAt: notification.readAt || readAt }))
+    unreadCount.value = 0
+    announcement.value = 'All notifications marked read'
     try {
       await apiRequest('/api/notifications/read-all', { method: 'PUT' })
-      const readAt = new Date().toISOString()
-      notifications.value = notifications.value.map(notification => ({ ...notification, readAt: notification.readAt || readAt }))
-      unreadCount.value = 0
     } catch (requestError) {
+      notifications.value = previousNotifications
+      unreadCount.value = previousUnread
+      announcement.value = 'Mark all read failed. Previous state restored.'
       error.value = requestError.message || 'Could not mark notifications read'
     } finally {
       markingAll.value = false
@@ -111,10 +120,11 @@ export function NotificationCenter({ router, unreadCount, notificationVersion })
       return <Card><EmptyState title="All quiet" description="New replies, likes, follows, channel events, and messages appear here." /></Card>
     }
     return (
-      <div class="notification-list">
+      <KeyboardList label="Notifications" className="notification-list">
         {notifications.value.map(notification => (
           <a
             key={notification.id}
+            data-keyboard-item="true"
             class={notification.readAt ? 'notification-card' : 'notification-card notification-card-unread'}
             href={notification.href}
             onClick={event => openNotification(event, notification)}
@@ -122,12 +132,12 @@ export function NotificationCenter({ router, unreadCount, notificationVersion })
             <span class="notification-avatar" aria-hidden="true">{actorInitial(notification)}</span>
             <span class="notification-copy">
               <strong>{notificationText(notification)}</strong>
-              <time datetime={notification.createdAt}>{formatTime(notification.createdAt)}</time>
+              <time datetime={notification.createdAt}>{formatRelativeTime(notification.createdAt)}</time>
             </span>
-            {!notification.readAt && <span class="notification-unread-dot" aria-label="Unread" />}
+            {!notification.readAt && <span class="notification-unread-dot" role="img" aria-label="Unread" />}
           </a>
         ))}
-      </div>
+      </KeyboardList>
     )
   })
   const pagination = computed(() => nextCursor.value
@@ -153,6 +163,7 @@ export function NotificationCenter({ router, unreadCount, notificationVersion })
       {content}
       {pagination}
       {inlineError}
+      <LiveRegion message={announcement} />
     </div>
   )
 }

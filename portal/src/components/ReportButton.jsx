@@ -32,12 +32,16 @@ export function ReportButton({ targetType, targetId, label = 'Report' }) {
     }
   }
 
+  function closeOnEscape(event) {
+    if (event.key === 'Escape') open.value = false
+  }
+
   return (
     <span class="moderation-action">
       {!result.value && <Button variant="tertiary" size="small" onClick={() => open.value = !open.value}>{open.value ? 'Cancel' : label}</Button>}
       {result.value && <span class="moderation-action-result">{result.value}</span>}
       {open.value && (
-        <form class="moderation-action-form" onSubmit={submit}>
+        <form class="moderation-action-form" role="dialog" aria-label={`Report ${targetType}`} onSubmit={submit} onKeyDown={closeOnEscape}>
           <textarea use:bind={reason} maxlength="500" rows="2" placeholder="Why should we review this?" aria-label={`Reason for reporting ${targetType}`} />
           <Button type="submit" size="small" loading={busy}>Send report</Button>
         </form>

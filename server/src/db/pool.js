@@ -45,3 +45,14 @@ export async function checkDatabaseHealth() {
   await sequelize.query('SELECT 1 AS healthy', { type: QueryTypes.SELECT })
   return true
 }
+
+export async function profiledQuery(name, sql, options = {}) {
+  const startedAt = process.hrtime.bigint()
+  try {
+    return await sequelize.query(sql, options)
+  } finally {
+    const durationMs = Number(process.hrtime.bigint() - startedAt) / 1e6
+    const log = durationMs >= env.dbProfileSlowMs ? logger.warn.bind(logger) : logger.debug.bind(logger)
+    log({ queryName: name, durationMs: Math.round(durationMs * 100) / 100 }, 'Database query profile')
+  }
+}

@@ -7,12 +7,9 @@ import { UserBadges } from './UserBadges.jsx'
 import { PostCard } from './PostCard.jsx'
 import { UserList } from './UserList.jsx'
 import { ReportButton } from './ReportButton.jsx'
-
-function formatJoinDate(value) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'recently'
-  return new Intl.DateTimeFormat(undefined, { month: 'long', year: 'numeric' }).format(date)
-}
+import { formatMonthYear } from '../lib/dates.js'
+import { KeyboardList } from './KeyboardList.jsx'
+import { VirtualList } from './VirtualList.jsx'
 
 function initial(user) {
   return (user.profile.displayName || user.username).slice(0, 1).toUpperCase()
@@ -20,7 +17,7 @@ function initial(user) {
 
 function profileAvatar(user) {
   return user.profile.avatarUrl
-    ? <img class="profile-avatar" src={user.profile.avatarUrl} alt="" />
+    ? <img class="profile-avatar" src={user.profile.avatarUrl} alt="" loading="lazy" decoding="async" />
     : <div class="profile-avatar" aria-hidden="true">{initial(user)}</div>
 }
 
@@ -102,7 +99,7 @@ export function UserSocialContent({ username, router, currentUserId, showIdentit
         {showIdentity && (
           <Card class="public-profile-card">
             <div class="public-profile-media">
-              {user.value.profile.bannerUrl && <img class="profile-banner" src={user.value.profile.bannerUrl} alt="" />}
+              {user.value.profile.bannerUrl && <img class="profile-banner" src={user.value.profile.bannerUrl} alt="" loading="lazy" decoding="async" />}
               {profileAvatar(user.value)}
             </div>
             <div class="profile-copy">
@@ -110,20 +107,21 @@ export function UserSocialContent({ username, router, currentUserId, showIdentit
               <UserBadges badges={user.value.badges} />
               <span class="profile-handle">@{user.value.username}</span>
               <p>{user.value.profile.bio || 'No bio yet.'}</p>
-              <span class="profile-joined">Joined {formatJoinDate(user.value.createdAt)}</span>
+              <span class="profile-joined">Joined {formatMonthYear(user.value.createdAt)}</span>
             </div>
             {!user.value.isSelf && <div class="public-profile-actions">
               <FollowButton
                 userId={user.value.id}
                 following={user.value.followedByViewer}
+                followerCount={user.value.followerCount}
                 onChanged={follow => {
                   user.value = {
                     ...user.value,
                     followedByViewer: follow.following,
-                    followerCount: follow.followerCount,
+                    followerCount: follow.followerCount ?? user.value.followerCount,
                     isPrivate: user.value.profile.profileVisibility === 'followers' && !follow.following
                   }
-                  loadAll()
+                  if (!follow.optimistic) loadAll()
                 }}
               />
               <ProfileRelationshipControls
@@ -180,19 +178,23 @@ export function UserSocialContent({ username, router, currentUserId, showIdentit
           <span>{posts.value.length ? `${posts.value.length} recent` : 'No posts yet'}</span>
         </div>
         {posts.value.length > 0 && (
-          <div class="post-feed">
-            {posts.value.map(post => (
-              <PostCard
-                key={post.id}
-                post={post}
-                router={router}
-                currentUserId={currentUserId}
-                onDeleted={removePost}
-                onUpdated={updatePost}
-                onReposted={post => posts.value = [post, ...posts.value.filter(item => item.id !== post.id)]}
-              />
-            ))}
-          </div>
+          <KeyboardList label="User post feed" className="post-feed-keyboard post-feed">
+            <VirtualList
+              items={posts}
+              estimateSize={360}
+              label="User post feed"
+              renderItem={post => (
+                <PostCard
+                  post={post}
+                  router={router}
+                  currentUserId={currentUserId}
+                  onDeleted={removePost}
+                  onUpdated={updatePost}
+                  onReposted={newPost => posts.value = [newPost, ...posts.value.filter(item => item.id !== newPost.id)]}
+                />
+              )}
+            />
+          </KeyboardList>
         )}
           </>}
       </div>

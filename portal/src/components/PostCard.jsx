@@ -4,22 +4,8 @@ import { apiRequest } from '../lib/api.js'
 import { UserBadges } from './UserBadges.jsx'
 import { ReportButton } from './ReportButton.jsx'
 import { AppealButton } from './AppealButton.jsx'
-
-function formatPostTime(value) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'recently'
-
-  const seconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000))
-  if (seconds < 60) return `${seconds}s`
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`
-  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`
-  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d`
-
-  return new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric'
-  }).format(date)
-}
+import { LiveRegion } from './LiveRegion.jsx'
+import { formatDateTime, formatRelativeTime } from '../lib/dates.js'
 
 function authorInitial(post) {
   return (post.author.displayName || post.author.username).slice(0, 1).toUpperCase()
@@ -89,6 +75,7 @@ export function PostCard({
   const likeCount = signal(post.likeCount)
   const bookmarked = signal(Boolean(post.bookmarked))
   const error = signal('')
+  const announcement = signal('')
   const edited = signal(Boolean(post.isEdited || new Date(post.updatedAt).getTime() > new Date(post.createdAt).getTime() + 1000))
   const isOwnPost = post.author.id === currentUserId
   const canAppeal = isOwnPost && ['removed', 'appeal_rejected'].includes(post.contentStatus)
@@ -98,16 +85,25 @@ export function PostCard({
 
   async function toggleLike() {
     if (updatingLike.value) return
+    const previousLiked = liked.value
+    const previousCount = likeCount.value
+    const nextLiked = !previousLiked
     error.value = ''
     updatingLike.value = true
+    liked.value = nextLiked
+    likeCount.value = Math.max(0, previousCount + (nextLiked ? 1 : -1))
+    announcement.value = nextLiked ? 'Post liked' : 'Like removed'
 
     try {
       const result = await apiRequest(`/api/posts/${encodeURIComponent(post.id)}/likes`, {
-        method: liked.value ? 'DELETE' : 'PUT'
+        method: nextLiked ? 'PUT' : 'DELETE'
       })
       liked.value = result.data.like.liked
       likeCount.value = result.data.like.likeCount
     } catch (requestError) {
+      liked.value = previousLiked
+      likeCount.value = previousCount
+      announcement.value = 'Like change failed. Previous state restored.'
       error.value = requestError.message || 'Could not update like'
     } finally {
       updatingLike.value = false
@@ -116,16 +112,22 @@ export function PostCard({
 
   async function toggleBookmark() {
     if (updatingBookmark.value) return
+    const previousBookmarked = bookmarked.value
+    const nextBookmarked = !previousBookmarked
     error.value = ''
     updatingBookmark.value = true
+    bookmarked.value = nextBookmarked
+    announcement.value = nextBookmarked ? 'Post bookmarked' : 'Bookmark removed'
 
     try {
       const result = await apiRequest(`/api/posts/${encodeURIComponent(post.id)}/bookmark`, {
-        method: bookmarked.value ? 'DELETE' : 'PUT'
+        method: nextBookmarked ? 'PUT' : 'DELETE'
       })
       bookmarked.value = result.data.bookmark.bookmarked
       onBookmarkChanged?.(result.data.bookmark)
     } catch (requestError) {
+      bookmarked.value = previousBookmarked
+      announcement.value = 'Bookmark change failed. Previous state restored.'
       error.value = requestError.message || 'Could not update bookmark'
     } finally {
       updatingBookmark.value = false
@@ -260,11 +262,12 @@ export function PostCard({
     ))
 
   return (
-    <Card class="post-card">
+    <div class="post-card-keyboard-item" role="group" tabIndex={0} data-keyboard-item="true" aria-label={`Post by ${post.author.displayName}`}>
+      <Card class="post-card">
       <div class="post-card-header">
         <div class="post-author-avatar" aria-hidden="true">
           {post.author.avatarUrl
-            ? <img src={post.author.avatarUrl} alt="" loading="lazy" />
+            ? <img src={post.author.avatarUrl} alt="" loading="lazy" decoding="async" />
             : authorInitial(post)}
         </div>
         <a
@@ -277,7 +280,7 @@ export function PostCard({
           <span>@{post.author.username}</span>
         </a>
         <div class="post-card-meta">
-          <time datetime={post.createdAt} title={new Date(post.createdAt).toLocaleString()}>{formatPostTime(post.createdAt)}</time>
+          <time datetime={post.createdAt} title={formatDateTime(post.createdAt)}>{formatRelativeTime(post.createdAt)}</time>
           {isEdited && <span title="This post has been edited">edited</span>}
           {post.visibility !== 'public' && <Badge tone="accent">{post.visibility}</Badge>}
           {post.moderationStatus === 'pending' && <Badge tone="accent">Pending approval</Badge>}
@@ -326,7 +329,14 @@ export function PostCard({
           <span aria-hidden="true">{computed(() => liked.value ? '♥' : '♡')}</span>
           <span>{likeLabel}</span>
         </Button>
-        <Button variant="tertiary" size="small" pressed={bookmarked} loading={updatingBookmark} onClick={toggleBookmark}>
+        <Button
+          variant="tertiary"
+          size="small"
+          pressed={bookmarked}
+          loading={updatingBookmark}
+          ariaLabel={computed(() => bookmarked.value ? 'Remove bookmark from this post' : 'Bookmark this post')}
+          onClick={toggleBookmark}
+        >
           {computed(() => bookmarked.value ? 'Bookmarked' : 'Bookmark')}
         </Button>
         <Button variant="tertiary" size="small" loading={reposting} onClick={() => repost()}>
@@ -353,11 +363,13 @@ export function PostCard({
           {historyLoading.value
             ? <span role="status">Loading history…</span>
             : editHistory.value.length
-              ? editHistory.value.map(edit => <div key={edit.id}><time>{new Date(edit.createdAt).toLocaleString()}</time><p>{edit.body || 'Repost'}</p></div>)
+              ? editHistory.value.map(edit => <div key={edit.id}><time datetime={edit.createdAt}>{formatDateTime(edit.createdAt)}</time><p>{edit.body || 'Repost'}</p></div>)
               : <span>No earlier versions.</span>}
         </div>
       )}
       <div class="post-card-error" role="alert" aria-live="polite">{error}</div>
-    </Card>
+        <LiveRegion message={announcement} />
+      </Card>
+    </div>
   )
 }

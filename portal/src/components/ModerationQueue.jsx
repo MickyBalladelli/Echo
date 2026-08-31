@@ -1,6 +1,7 @@
 import { computed, onMount, signal } from '../lib/vendor.js'
 import { Button, Card, EmptyState, Label } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
+import { formatDateTime } from '../lib/dates.js'
 
 function targetLabel(item) {
   return `${item.targetType} · ${item.target.preview}`
@@ -80,7 +81,7 @@ export function ModerationQueue() {
                 <div class="moderation-item-copy">
                   <strong>{targetLabel(report)}</strong>
                   <span>{report.reason}</span>
-                  <small>Reported by @{report.reporter.username} · {new Date(report.createdAt).toLocaleString()}</small>
+                  <small>Reported by @{report.reporter.username} · {formatDateTime(report.createdAt)}</small>
                 </div>
                 <div class="moderation-item-actions">
                   {['removed', 'hidden', 'suspended'].includes(report.target.status)
@@ -103,7 +104,7 @@ export function ModerationQueue() {
                 <div class="moderation-item-copy">
                   <strong>{targetLabel(appeal)}</strong>
                   <span>{appeal.reason}</span>
-                  <small>Appeal by @{appeal.appellant.username} · {new Date(appeal.createdAt).toLocaleString()}</small>
+                  <small>Appeal by @{appeal.appellant.username} · {formatDateTime(appeal.createdAt)}</small>
                 </div>
                 <div class="moderation-item-actions">
                   <Button size="small" loading={busy.value === `appeal:${appeal.id}`} onClick={() => reviewAppeal(appeal, 'accept')}>Accept</Button>

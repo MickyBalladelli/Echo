@@ -10,6 +10,7 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   DB_QUERY_TIMEOUT_MS: z.coerce.number().int().min(100).max(30000).default(5000),
   DB_CONNECTION_TIMEOUT_MS: z.coerce.number().int().min(100).max(30000).default(5000),
+  DB_PROFILE_SLOW_MS: z.coerce.number().int().min(10).max(30000).default(250),
   MAX_JSON_BODY_BYTES: z.coerce.number().int().min(1024).max(10 * 1024 * 1024).default(2 * 1024 * 1024),
   MAX_SOCKET_BUFFER_BYTES: z.coerce.number().int().min(1024).max(10 * 1024 * 1024).default(2 * 1024 * 1024),
   SHUTDOWN_TIMEOUT_MS: z.coerce.number().int().min(1000).max(60000).default(10000)
@@ -50,6 +51,7 @@ export const env = Object.freeze({
   logLevel: result.data.LOG_LEVEL,
   dbQueryTimeoutMs: result.data.DB_QUERY_TIMEOUT_MS,
   dbConnectionTimeoutMs: result.data.DB_CONNECTION_TIMEOUT_MS,
+  dbProfileSlowMs: result.data.DB_PROFILE_SLOW_MS,
   maxJsonBodyBytes: result.data.MAX_JSON_BODY_BYTES,
   maxSocketBufferBytes: result.data.MAX_SOCKET_BUFFER_BYTES,
   shutdownTimeoutMs: result.data.SHUTDOWN_TIMEOUT_MS

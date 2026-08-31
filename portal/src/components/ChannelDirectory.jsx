@@ -74,7 +74,7 @@ export function ChannelDirectory({ router }) {
           <a key={channel.id} class="channel-card-link" href={`/channels/${channel.slug}`} onClick={router.link(`/channels/${channel.slug}`)}>
             <Card class="channel-card">
               {channel.imageUrl
-                ? <img class="channel-card-image" src={channel.imageUrl} alt="" />
+                ? <img class="channel-card-image" src={channel.imageUrl} alt="" loading="lazy" decoding="async" />
                 : <span class="channel-card-placeholder" aria-hidden="true">{channelInitial(channel)}</span>}
               <div>
                 <Label size="large">{channel.name}</Label>

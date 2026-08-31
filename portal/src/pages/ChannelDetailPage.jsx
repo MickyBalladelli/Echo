@@ -7,6 +7,9 @@ import { ChannelPostModeration } from '../components/ChannelPostModeration.jsx'
 import { PageFrame } from './PageFrame.jsx'
 import { joinRealtimeRoom } from '../lib/realtime.js'
 import { ReportButton } from '../components/ReportButton.jsx'
+import { LiveRegion } from '../components/LiveRegion.jsx'
+import { KeyboardList } from '../components/KeyboardList.jsx'
+import { VirtualList } from '../components/VirtualList.jsx'
 
 export function ChannelDetailPage({ slug, router, currentUserId }) {
   const channel = signal(null)
@@ -22,6 +25,7 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
   const rules = signal('')
   const postApprovalRequired = signal(false)
   const privateChannel = signal(false)
+  const announcement = signal('')
 
   async function load() {
     state.value = 'loading'
@@ -50,14 +54,29 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
   }
 
   async function toggleMembership() {
+    if (busy.value || !channel.value) return
+    const previous = channel.value
+    const joining = !previous.membershipRole
     busy.value = true
     error.value = ''
+    channel.value = {
+      ...previous,
+      membershipRole: joining ? 'member' : null,
+      memberCount: Math.max(0, previous.memberCount + (joining ? 1 : -1)),
+      invited: joining ? false : previous.invited,
+      muted: joining ? false : previous.muted,
+      notificationsEnabled: joining ? true : previous.notificationsEnabled
+    }
+    announcement.value = joining ? 'Joining channel' : 'Leaving channel'
     try {
-      await apiRequest(`/api/channels/${encodeURIComponent(slug)}/membership`, {
-        method: channel.value.membershipRole ? 'DELETE' : 'PUT'
+      const result = await apiRequest(`/api/channels/${encodeURIComponent(slug)}/membership`, {
+        method: joining ? 'PUT' : 'DELETE'
       })
-      await load()
+      if (result.data.channel) channel.value = result.data.channel
+      announcement.value = joining ? 'Joined channel' : 'Left channel'
     } catch (requestError) {
+      channel.value = previous
+      announcement.value = 'Channel change failed. Previous state restored.'
       error.value = requestError.message || 'Could not update membership'
     } finally {
       busy.value = false
@@ -185,7 +204,7 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
       <div class="channel-detail-stack">
         <Card class="channel-hero-card">
           {channel.value.imageUrl
-            ? <img class="channel-hero-image" src={channel.value.imageUrl} alt="" />
+            ? <img class="channel-hero-image" src={channel.value.imageUrl} alt="" loading="lazy" decoding="async" />
             : <span class="channel-hero-placeholder" aria-hidden="true">{channel.value.name.slice(0, 1).toUpperCase()}</span>}
           <div>
             <Label size="large">{channel.value.name}</Label>
@@ -196,7 +215,12 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
           </div>
           <div class="channel-hero-actions">
             {!channel.value.isOwner && (
-              <Button loading={busy} variant={channel.value.membershipRole ? 'secondary' : 'primary'} onClick={toggleMembership}>
+              <Button
+                loading={busy}
+                variant={channel.value.membershipRole ? 'secondary' : 'primary'}
+                ariaLabel={computed(() => channel.value.membershipRole ? 'Leave this channel' : 'Join this channel')}
+                onClick={toggleMembership}
+              >
                 {channel.value.membershipRole ? 'Leave' : channel.value.invited ? 'Accept invite' : 'Join'}
               </Button>
             )}
@@ -255,9 +279,22 @@ export function ChannelDetailPage({ slug, router, currentUserId }) {
         {channel.value.membershipRole && <PostComposer channelId={channel.value.id} onCreated={addPost} />}
         <div class="post-replies-heading"><Label size="small" tone="accent">CHANNEL FEED</Label></div>
         {posts.value.length
-          ? <div class="post-feed">{posts.value.map(post => <div class="channel-post-item" key={post.id}><PostCard post={post} router={router} currentUserId={currentUserId} onDeleted={removePost} onUpdated={updatePost} onReposted={addPost} />{channel.value.canModerate && <ChannelPostModeration slug={slug} post={post} canPin pinned={channel.value.pinnedPost?.id === post.id} onChanged={updatePost} onPinned={updatePinned} />}</div>)}</div>
+          ? <KeyboardList label="Channel post feed" className="post-feed-keyboard post-feed">
+            <VirtualList
+              items={posts}
+              estimateSize={420}
+              label="Channel post feed"
+              renderItem={post => (
+                <div class="channel-post-item">
+                  <PostCard post={post} router={router} currentUserId={currentUserId} onDeleted={removePost} onUpdated={updatePost} onReposted={addPost} />
+                  {channel.value.canModerate && <ChannelPostModeration slug={slug} post={post} canPin pinned={channel.value.pinnedPost?.id === post.id} onChanged={updatePost} onPinned={updatePinned} />}
+                </div>
+              )}
+            />
+          </KeyboardList>
           : <Card><EmptyState title="No posts yet" description="Members can start this channel." /></Card>}
         <div class="post-feed-error" role="alert">{error}</div>
+        <LiveRegion message={announcement} />
       </div>
     )
   })

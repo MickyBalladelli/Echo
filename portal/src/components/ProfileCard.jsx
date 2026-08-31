@@ -2,16 +2,7 @@ import { computed, signal } from '../lib/vendor.js'
 import { Button, Card, Label } from '../lib/vendor.js'
 import { ProfileEditor } from './ProfileEditor.jsx'
 import { UserBadges } from './UserBadges.jsx'
-
-function formatJoinDate(value) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'recently'
-
-  return new Intl.DateTimeFormat(undefined, {
-    month: 'long',
-    year: 'numeric'
-  }).format(date)
-}
+import { formatMonthYear } from '../lib/dates.js'
 
 export function ProfileCard({ user, onLogout, onUpdated }) {
   const profile = user.profile || {}
@@ -29,9 +20,9 @@ export function ProfileCard({ user, onLogout, onUpdated }) {
     />
     : <>
       <div class="profile-card-media">
-        {profile.bannerUrl && <img class="profile-banner" src={profile.bannerUrl} alt="" />}
+        {profile.bannerUrl && <img class="profile-banner" src={profile.bannerUrl} alt="" loading="lazy" decoding="async" />}
         {profile.avatarUrl
-          ? <img class="profile-avatar" src={profile.avatarUrl} alt="" />
+          ? <img class="profile-avatar" src={profile.avatarUrl} alt="" loading="lazy" decoding="async" />
           : <div class="profile-avatar" aria-hidden="true">{initials}</div>}
       </div>
       <div class="profile-copy">
@@ -39,7 +30,7 @@ export function ProfileCard({ user, onLogout, onUpdated }) {
         <UserBadges badges={user.badges} />
         <span class="profile-handle">@{user.username}</span>
         <p>{profile.bio || 'No bio yet.'}</p>
-        <span class="profile-joined">Joined {formatJoinDate(user.createdAt)}</span>
+        <span class="profile-joined">Joined {formatMonthYear(user.createdAt)}</span>
       </div>
       <div class="profile-actions">
         <Button variant="tertiary" onClick={() => editing.value = true}>Edit profile</Button>

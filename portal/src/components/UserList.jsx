@@ -1,4 +1,5 @@
 import { Card, EmptyState, Label } from '../lib/vendor.js'
+import { KeyboardList } from './KeyboardList.jsx'
 
 function initial(user) {
   return (user.profile.displayName || user.username).slice(0, 1).toUpperCase()
@@ -10,16 +11,17 @@ export function UserList({ title, users, router }) {
       <Label size="small" tone="accent">{title.toUpperCase()}</Label>
       {users.length === 0
         ? <EmptyState title={`No ${title.toLowerCase()} yet`} />
-        : <div class="social-user-list">
+        : <KeyboardList label={`${title} list`} className="social-user-list">
           {users.map(user => (
             <a
               key={user.id}
+              data-keyboard-item="true"
               class="social-user-row"
               href={`/users/${user.username}`}
               onClick={router.link(`/users/${user.username}`)}
             >
               {user.profile.avatarUrl
-                ? <img class="social-user-avatar" src={user.profile.avatarUrl} alt="" loading="lazy" />
+                ? <img class="social-user-avatar" src={user.profile.avatarUrl} alt="" loading="lazy" decoding="async" />
                 : <span class="social-user-avatar" aria-hidden="true">{initial(user)}</span>}
               <span>
                 <strong>{user.profile.displayName}</strong>
@@ -29,7 +31,7 @@ export function UserList({ title, users, router }) {
               </span>
             </a>
           ))}
-        </div>}
+        </KeyboardList>}
     </Card>
   )
 }

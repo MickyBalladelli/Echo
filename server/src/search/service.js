@@ -1,5 +1,5 @@
 import { QueryTypes } from 'sequelize'
-import { sequelize } from '../db/pool.js'
+import { profiledQuery } from '../db/pool.js'
 import { encodeCursor } from '../http/pagination.js'
 import { listPopularPosts, listPosts } from '../posts/service.js'
 
@@ -48,7 +48,7 @@ function cursorWhere(cursor, replacements, column = 'u') {
 
 async function searchUsers(viewerId, query, { cursor, limit }) {
   const replacements = { pattern: `%${query}%`, viewerId }
-  const rows = await sequelize.query(`
+  const rows = await profiledQuery('search_users', `
     SELECT u.id, u.username, u.created_at, p.display_name, p.bio, p.avatar_url,
       COALESCE((
         SELECT jsonb_agg(badge.badge_type ORDER BY CASE badge.badge_type WHEN 'staff' THEN 0 ELSE 1 END)
@@ -83,7 +83,7 @@ async function searchUsers(viewerId, query, { cursor, limit }) {
 
 async function searchChannels(viewerId, query, { cursor, limit }) {
   const replacements = { pattern: `%${query}%`, viewerId }
-  const rows = await sequelize.query(`
+  const rows = await profiledQuery('search_channels', `
     SELECT c.id, c.name, c.slug, c.description, c.created_at,
       COUNT(DISTINCT members.user_id)::INTEGER AS member_count,
       COUNT(DISTINCT posts.id)::INTEGER AS post_count
@@ -119,7 +119,7 @@ async function searchChannels(viewerId, query, { cursor, limit }) {
 
 async function searchHashtags(viewerId, query, { cursor, limit }) {
   const replacements = { pattern: `%${query.toLowerCase()}%`, viewerId }
-  const rows = await sequelize.query(`
+  const rows = await profiledQuery('search_hashtags', `
     SELECT h.id, h.tag, h.created_at, COUNT(DISTINCT tagged_post.id)::INTEGER AS post_count
     FROM hashtags h
     LEFT JOIN post_hashtags ph ON ph.hashtag_id = h.id

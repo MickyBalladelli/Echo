@@ -5,6 +5,7 @@
 - `GET /api/health/live` checks that the Node process is alive.
 - `GET /api/health` checks the process and PostgreSQL readiness.
 - PostgreSQL queries have a bounded statement timeout. Tune `DB_QUERY_TIMEOUT_MS` only after checking slow-query logs.
+- Feed, popular-feed, and search queries emit duration-only profiles. Slow ones are logged at warning level; tune `DB_PROFILE_SLOW_MS` for the deployment.
 
 ## Backup and restore
 

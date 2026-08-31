@@ -3,6 +3,7 @@ import { Button, Card, Label } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 
 const maxPostLength = 280
+const maxImageBytes = 10 * 1024 * 1024
 
 function resizeImage(file) {
   return new Promise((resolve, reject) => {
@@ -102,6 +103,10 @@ export function PostComposer({ onCreated, channelId = null }) {
     if (!file) return
     if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
       error.value = 'Choose an image file.'
+      return
+    }
+    if (file.size > maxImageBytes) {
+      error.value = 'Choose an image smaller than 10 MB.'
       return
     }
     imageBusy.value = true
@@ -282,7 +287,7 @@ export function PostComposer({ onCreated, channelId = null }) {
         {imageBusy.value && <div role="status">Preparing image…</div>}
         {imageUrl.value && (
           <div class="post-image-preview">
-            <img src={imageUrl} alt={imageAltText.value || 'Selected image preview'} />
+            <img src={imageUrl} alt={imageAltText.value || 'Selected image preview'} decoding="async" />
             <div>
               <span>{imageName}</span>
               <input type="text" use:bind={imageAltText} maxlength="120" placeholder="Describe the image" aria-label="Image description" />

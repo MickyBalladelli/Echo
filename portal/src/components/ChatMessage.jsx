@@ -3,6 +3,7 @@ import { Button, Card } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { ReportButton } from './ReportButton.jsx'
 import { AppealButton } from './AppealButton.jsx'
+import { formatClockTime } from '../lib/dates.js'
 
 export function ChatMessage({ message, currentUserId, onUpdated, onDeleted }) {
   const editing = signal(false)
@@ -39,10 +40,11 @@ export function ChatMessage({ message, currentUserId, onUpdated, onDeleted }) {
   }
 
   return (
-    <Card class={own ? 'chat-message chat-message-own' : 'chat-message'}>
+    <div class="chat-message-keyboard-item" role="group" tabIndex={0} data-keyboard-item="true" aria-label={`Message from ${message.sender.displayName}`}>
+      <Card class={own ? 'chat-message chat-message-own' : 'chat-message'}>
       <div class="chat-message-meta">
         <strong>{message.sender.displayName}</strong>
-        <time datetime={message.createdAt}>{new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>
+        <time datetime={message.createdAt}>{formatClockTime(message.createdAt)}</time>
       </div>
       {message.deletedAt
         ? <p class="chat-message-deleted">Message deleted</p>
@@ -67,6 +69,7 @@ export function ChatMessage({ message, currentUserId, onUpdated, onDeleted }) {
         </div>
       )}
       <div class="chat-message-error" role="status">{error}</div>
-    </Card>
+      </Card>
+    </div>
   )
 }

@@ -2,6 +2,7 @@ import { computed, onMount, signal } from '../lib/vendor.js'
 import { Button, Card, CheckBox, EmptyState, FormField, Label, TextField } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { NoteEditor } from './NoteEditor.jsx'
+import { KeyboardList } from './KeyboardList.jsx'
 
 export function NotesWorkspace({ router, noteId = null }) {
   const notes = signal([])
@@ -89,10 +90,11 @@ export function NotesWorkspace({ router, noteId = null }) {
     if (state.value === 'error') return <EmptyState status="error" title="Notes unavailable" description={error.value} />
     if (!notes.value.length) return <EmptyState title="No notes found" description="Create a note or change filters." />
     return (
-      <div class="notes-list">
-        {notes.value.map(note => (
-          <a
-            key={note.id}
+      <KeyboardList label="Notes list" className="notes-list">
+          {notes.value.map(note => (
+            <a
+              key={note.id}
+              data-keyboard-item="true"
             class={selected.value?.id === note.id ? 'note-list-item note-list-item-active' : 'note-list-item'}
             href={`/notes/${note.id}`}
             onClick={router.link(`/notes/${note.id}`)}
@@ -100,9 +102,9 @@ export function NotesWorkspace({ router, noteId = null }) {
             <strong>{note.isPinned ? '◆ ' : ''}{note.title || 'Untitled note'}</strong>
             <span>{note.body.slice(0, 80) || 'Empty note'}</span>
             <small>{note.tags.length ? note.tags.map(value => `#${value}`).join(' ') : note.visibility}</small>
-          </a>
-        ))}
-      </div>
+            </a>
+          ))}
+      </KeyboardList>
     )
   })
   const editor = computed(() => selected.value

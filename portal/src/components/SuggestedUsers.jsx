@@ -5,7 +5,7 @@ import { FollowButton } from './FollowButton.jsx'
 
 function avatar(user) {
   return user.profile.avatarUrl
-    ? <img class="social-user-avatar" src={user.profile.avatarUrl} alt="" loading="lazy" />
+    ? <img class="social-user-avatar" src={user.profile.avatarUrl} alt="" loading="lazy" decoding="async" />
     : <span class="social-user-avatar" aria-hidden="true">{(user.profile.displayName || user.username).slice(0, 1).toUpperCase()}</span>
 }
 
@@ -43,7 +43,9 @@ export function SuggestedUsers({ router }) {
             <FollowButton
               userId={user.id}
               following={false}
-              onChanged={() => users.value = users.value.filter(item => item.id !== user.id)}
+              onChanged={follow => {
+                if (!follow.optimistic) users.value = users.value.filter(item => item.id !== user.id)
+              }}
             />
           </div>
         ))}

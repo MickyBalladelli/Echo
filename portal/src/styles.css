@@ -1929,3 +1929,145 @@ h1 {
 .status-offline span {
   background: #ef7777;
 }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.post-feed-keyboard,
+.chat-messages-keyboard {
+  display: grid;
+  min-width: 0;
+}
+
+.virtual-list {
+  display: grid;
+  max-height: min(72vh, 960px);
+  min-height: 0;
+  gap: 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.virtual-list-item {
+  min-width: 0;
+}
+
+.virtual-list-spacer {
+  pointer-events: none;
+}
+
+[data-keyboard-item]:focus-visible {
+  outline: 3px solid #8ed0b7;
+  outline-offset: 4px;
+}
+
+.post-card-keyboard-item,
+.chat-message-keyboard-item {
+  min-width: 0;
+}
+
+img {
+  max-width: 100%;
+}
+
+.channel-hero-image,
+.channel-card-image,
+.profile-banner {
+  display: block;
+  content-visibility: auto;
+}
+
+.channel-hero-image {
+  aspect-ratio: 16 / 5;
+  object-fit: cover;
+}
+
+.channel-card-image {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+@media (max-width: 900px) {
+  .app-main,
+  .route-page,
+  .post-card,
+  .chat-thread,
+  .chat-sidebar {
+    min-width: 0;
+  }
+
+  .post-card-footer .prism-button {
+    margin-left: 0;
+  }
+
+  .chat-messages-keyboard {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .post-card-footer,
+  .chat-compose,
+  .chat-thread-actions,
+  .profile-actions,
+  .channel-hero-actions {
+    align-items: stretch;
+  }
+
+  .post-card-footer .prism-button,
+  .post-card-action,
+  .chat-compose .prism-button {
+    min-height: 44px;
+  }
+
+  .post-card-meta {
+    flex-wrap: wrap;
+  }
+
+  .post-card-body {
+    font-size: 16px;
+  }
+
+  .chat-compose {
+    display: grid;
+  }
+
+  .chat-compose .prism-button {
+    width: 100%;
+  }
+
+  .notifications-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .social-counts {
+    flex-wrap: wrap;
+    gap: 8px 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
