@@ -1,8 +1,10 @@
 import { computed, createRouter, onMount, routerView, signal } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import echoIconUrl from '../assets/icons/echo.png'
-import { ArrowLeftIcon, Badge, Header, IconButton, Label, Layout } from '../lib/vendor.js'
+import { ArrowLeftIcon, Header, IconButton, Label, Layout } from '../lib/vendor.js'
+import { AccountMenu } from './AccountMenu.jsx'
 import { ContextRail } from './ContextRail.jsx'
+import { HeaderStatus } from './HeaderStatus.jsx'
 import { ShellNavigation } from './ShellNavigation.jsx'
 import { UserProfilePage } from '../pages/UserProfilePage.jsx'
 import { ChannelDetailPage } from '../pages/ChannelDetailPage.jsx'
@@ -130,7 +132,7 @@ export function AppShell({
         <div class="echo-header-content">
           <div class="echo-header-brand">
             <img class="echo-header-icon" src={echoIconUrl} alt="" aria-hidden="true" />
-            <div class="echo-header-copy"><Label size="large">ECHO</Label><span>Small signals. Real people.</span></div>
+            <div class="echo-header-copy"><div class="echo-header-title-row"><Label size="large">ECHO</Label><HeaderStatus apiStatus={apiStatus} socketStatus={socketStatus} /></div><span>Small signals. Real people.</span></div>
           </div>
         </div>
       )
@@ -140,7 +142,7 @@ export function AppShell({
       <div class="echo-header-content echo-channel-header-content">
         <div class="echo-header-brand">
           <img class="echo-header-icon" src={echoIconUrl} alt="" aria-hidden="true" />
-          <div class="echo-header-copy"><Label size="large">ECHO</Label><span>Small signals. Real people.</span></div>
+          <div class="echo-header-copy"><div class="echo-header-title-row"><Label size="large">ECHO</Label><HeaderStatus apiStatus={apiStatus} socketStatus={socketStatus} /></div><span>Small signals. Real people.</span></div>
         </div>
         <div class="echo-channel-header-details">
           <div class="echo-channel-primary">
@@ -176,7 +178,7 @@ export function AppShell({
           sticky: true,
           ariaLabel: 'Echo header',
           children: globalHeader,
-          trailing: Badge({ children: 'SIGNED IN', tone: 'success' })
+          trailing: <AccountMenu user={user} router={router} onLogout={onLogout} />
         })}
         navigator={ShellNavigation({ router, user, unreadNotifications, notificationVersion })}
       >
