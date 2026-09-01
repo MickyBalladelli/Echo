@@ -313,15 +313,15 @@ textarea {
 }
 
 .echo-header-status-item.is-success {
-  --echo-led-color: #35e27d;
+  --echo-led-color: var(--prism-color-success);
 }
 
 .echo-header-status-item.is-warning {
-  --echo-led-color: #f5c84b;
+  --echo-led-color: var(--prism-color-warning);
 }
 
 .echo-header-status-item.is-error {
-  --echo-led-color: #f14d5a;
+  --echo-led-color: var(--prism-color-error);
 }
 
 .echo-header-status-item.is-success,
@@ -333,39 +333,23 @@ textarea {
 .echo-status-tooltip {
   display: flex !important;
   flex-direction: column;
-  min-width: 14rem;
-  gap: 7px;
-  color: var(--prism-color-text-strong);
+  min-width: 13rem;
+  gap: 4px;
   white-space: normal;
 }
 
 .echo-header-content .echo-status-tooltip-status {
   display: flex !important;
   flex-direction: column;
-  gap: 3px;
-  padding: 5px 6px;
-  border: 1px solid color-mix(in srgb, var(--echo-tooltip-status-color) 35%, var(--prism-color-border-strong));
-  border-left: 3px solid var(--echo-tooltip-status-color);
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--prism-color-surface) 62%, transparent);
-}
-
-.echo-header-content .echo-status-tooltip-status.is-api {
-  --echo-tooltip-status-color: #35e27d;
-}
-
-.echo-header-content .echo-status-tooltip-status.is-socket {
-  --echo-tooltip-status-color: #3b9dff;
+  gap: 2px;
 }
 
 .echo-header-content .echo-status-tooltip-row {
   display: flex !important;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
-  min-height: 20px;
-  color: var(--prism-color-text-strong);
-  font-size: 12px;
+  gap: 12px;
+  min-height: 18px;
   white-space: nowrap;
 }
 
@@ -373,36 +357,26 @@ textarea {
   display: inline-flex !important;
   align-items: center;
   gap: 6px;
-  color: var(--prism-color-text-strong);
 }
 
 .echo-header-content .echo-status-tooltip-value {
-  display: inline-flex !important;
-  align-items: center;
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--prism-color-text) 10%, transparent);
-  font-size: 11px;
+  font-weight: 700;
 }
 
 .echo-status-tooltip-value.is-api.is-success {
-  color: #35e27d;
-  background: rgb(53 226 125 / 14%);
+  color: var(--prism-color-success);
 }
 
 .echo-status-tooltip-value.is-socket.is-success {
-  color: #3b9dff;
-  background: rgb(59 157 255 / 14%);
+  color: var(--prism-color-action-end);
 }
 
 .echo-status-tooltip-value.is-warning {
-  color: #f5c84b;
-  background: rgb(245 200 75 / 14%);
+  color: var(--prism-color-warning);
 }
 
 .echo-status-tooltip-value.is-error {
-  color: #f14d5a;
-  background: rgb(241 77 90 / 14%);
+  color: var(--prism-color-error);
 }
 
 .echo-status-tooltip-led {
@@ -416,36 +390,36 @@ textarea {
 }
 
 .echo-status-tooltip-led.is-api.is-success {
-  background: #35e27d;
-  color: #35e27d;
+  background: var(--prism-color-success);
+  color: var(--prism-color-success);
 }
 
 .echo-status-tooltip-led.is-socket.is-success {
-  background: #3b9dff;
-  color: #3b9dff;
+  background: var(--prism-color-action-end);
+  color: var(--prism-color-action-end);
 }
 
 .echo-status-tooltip-led.is-warning {
-  background: #f5c84b;
-  color: #f5c84b;
+  background: var(--prism-color-warning);
+  color: var(--prism-color-warning);
 }
 
 .echo-status-tooltip-led.is-error {
-  background: #f14d5a;
-  color: #f14d5a;
+  background: var(--prism-color-error);
+  color: var(--prism-color-error);
 }
 
 .echo-header-content .echo-status-tooltip-description {
   display: block;
-  margin: -3px 0 3px 13px;
-  color: var(--prism-color-text-soft);
-  font-size: 10px;
+  margin: 0 0 3px 13px;
+  color: color-mix(in srgb, var(--prism-color-page) 72%, transparent);
+  font-size: .7rem;
 }
 
 .echo-header-content .prism-label {
-  font-family: Montserrat, Avenir Next, Arial, sans-serif;
-  font-weight: 800;
-  letter-spacing: .04em;
+  font-family: 'Zen Dots', Montserrat, Avenir Next, Arial, sans-serif;
+  font-weight: 400;
+  letter-spacing: .08em;
   text-transform: uppercase;
 }
 
@@ -457,7 +431,7 @@ textarea {
   object-position: center;
 }
 
-.echo-header-content span {
+.echo-header-copy > span {
   color: var(--prism-color-text-soft);
   font-size: 13px;
 }
