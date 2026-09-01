@@ -331,47 +331,54 @@ textarea {
 }
 
 .echo-status-tooltip {
-  display: grid !important;
+  display: flex !important;
+  flex-direction: column;
   min-width: 14rem;
   gap: 7px;
   color: var(--prism-color-text-strong);
   white-space: normal;
 }
 
-.echo-header-content .echo-status-tooltip-title {
-  display: block;
-  padding-bottom: 3px;
-  border-bottom: 1px solid color-mix(in srgb, var(--prism-color-border-strong) 55%, transparent);
-  color: var(--prism-color-text-strong);
-  font-size: 12px;
-}
-
 .echo-header-content .echo-status-tooltip-status {
-  display: grid;
+  display: flex !important;
+  flex-direction: column;
   gap: 3px;
   padding: 5px 6px;
-  border: 1px solid color-mix(in srgb, var(--prism-color-border-strong) 38%, transparent);
+  border: 1px solid color-mix(in srgb, var(--echo-tooltip-status-color) 35%, var(--prism-color-border-strong));
+  border-left: 3px solid var(--echo-tooltip-status-color);
   border-radius: 6px;
   background: color-mix(in srgb, var(--prism-color-surface) 62%, transparent);
 }
 
+.echo-header-content .echo-status-tooltip-status.is-api {
+  --echo-tooltip-status-color: #35e27d;
+}
+
+.echo-header-content .echo-status-tooltip-status.is-socket {
+  --echo-tooltip-status-color: #3b9dff;
+}
+
 .echo-header-content .echo-status-tooltip-row {
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
+  min-height: 20px;
   color: var(--prism-color-text-strong);
   font-size: 12px;
+  white-space: nowrap;
 }
 
-.echo-status-tooltip-service,
-.echo-status-tooltip-value {
-  display: inline-flex;
+.echo-header-content .echo-status-tooltip-service {
+  display: inline-flex !important;
   align-items: center;
   gap: 6px;
+  color: var(--prism-color-text-strong);
 }
 
 .echo-header-content .echo-status-tooltip-value {
+  display: inline-flex !important;
+  align-items: center;
   padding: 2px 7px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--prism-color-text) 10%, transparent);
@@ -399,6 +406,8 @@ textarea {
 }
 
 .echo-status-tooltip-led {
+  display: inline-block !important;
+  flex: 0 0 auto;
   width: 7px;
   height: 7px;
   border-radius: 50%;

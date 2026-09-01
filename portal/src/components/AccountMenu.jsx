@@ -8,7 +8,6 @@ export function AccountMenu({ user, router, onLogout }) {
   const items = [
     { id: 'profile', label: 'Profile', icon: '◎', onSelect: goTo('/profile') },
     { id: 'settings', label: 'Settings', icon: '⚙', onSelect: goTo('/preferences') },
-    { id: 'notifications', label: 'Notifications', icon: '●', onSelect: goTo('/notifications') },
     ...(user.role === 'moderator' || user.role === 'admin'
       ? [{ id: 'moderation', label: 'Moderation', icon: '⚑', onSelect: goTo('/moderation') }]
       : []),
