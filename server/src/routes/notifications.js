@@ -4,6 +4,7 @@ import { decodeCursor } from '../http/pagination.js'
 import { idSchema, paginationSchema, parse } from '../http/validation.js'
 import { notificationGroupKeySchema } from '../notifications/schemas.js'
 import {
+  getUnreadChannelCounts,
   getUnreadCount,
   listNotifications,
   markAllNotificationsRead,
@@ -29,6 +30,14 @@ notificationsRouter.get('/', async (request, response, next) => {
 notificationsRouter.get('/unread-count', async (request, response, next) => {
   try {
     response.json(ok({ unreadCount: await getUnreadCount(request.auth.userId) }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+notificationsRouter.get('/channel-unread-counts', async (request, response, next) => {
+  try {
+    response.json(ok(await getUnreadChannelCounts(request.auth.userId)))
   } catch (error) {
     next(error)
   }

@@ -97,6 +97,35 @@ export async function getUnreadCount(recipientId, transaction) {
   return Number(rows[0]?.count || 0)
 }
 
+export async function getUnreadChannelCounts(recipientId) {
+  await purgeExpiredNotifications(recipientId)
+  const rows = await sequelize.query(`
+    SELECT n.channel_id, COUNT(*)::INTEGER AS unread_count
+    FROM notifications n
+    WHERE n.recipient_id = :recipientId
+      AND n.channel_id IS NOT NULL
+      AND n.read_at IS NULL
+      AND n.expires_at > CURRENT_TIMESTAMP
+      AND (n.actor_id IS NULL OR NOT EXISTS (
+        SELECT 1 FROM user_blocks hidden_block
+        WHERE (hidden_block.blocker_id = :recipientId AND hidden_block.blocked_id = n.actor_id)
+           OR (hidden_block.blocker_id = n.actor_id AND hidden_block.blocked_id = :recipientId)
+      ))
+      AND (n.actor_id IS NULL OR NOT EXISTS (
+        SELECT 1 FROM user_mutes hidden_mute
+        WHERE hidden_mute.user_id = :recipientId AND hidden_mute.muted_user_id = n.actor_id
+      ))
+    GROUP BY n.channel_id
+  `, {
+    replacements: { recipientId },
+    type: QueryTypes.SELECT
+  })
+  return rows.map(row => ({
+    channelId: row.channel_id,
+    unreadCount: Number(row.unread_count || 0)
+  }))
+}
+
 export async function getNotificationPreferences(userId, transaction) {
   const rows = await sequelize.query(`
     SELECT notification_type, enabled

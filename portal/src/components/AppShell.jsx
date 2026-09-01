@@ -178,7 +178,7 @@ export function AppShell({
           children: globalHeader,
           trailing: Badge({ children: 'SIGNED IN', tone: 'success' })
         })}
-        navigator={ShellNavigation({ router, user, unreadNotifications })}
+        navigator={ShellNavigation({ router, user, unreadNotifications, notificationVersion })}
       >
         <div class="app-content-grid">
           <main id="main-content" class="app-main" tabindex="-1">

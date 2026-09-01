@@ -39,7 +39,7 @@ function renderTreeItem(item) {
   `
 }
 
-export function ShellNavigation({ router, user, unreadNotifications }) {
+export function ShellNavigation({ router, user, unreadNotifications, notificationVersion }) {
   const channels = signal([])
   const channelState = signal('loading')
   const visibleItems = user.role === 'moderator' || user.role === 'admin'
@@ -51,33 +51,57 @@ export function ShellNavigation({ router, user, unreadNotifications }) {
     const loadChannels = async () => {
       channelState.value = 'loading'
       try {
-        const result = await apiRequest('/api/channels?limit=100')
+        const [result, notificationResult] = await Promise.all([
+          apiRequest('/api/channels?limit=100'),
+          apiRequest('/api/notifications/channel-unread-counts')
+        ])
         if (!active) return
-        channels.value = result.data.filter(channel => channel.isOwner || channel.membershipRole)
+        const unreadByChannel = new Map((notificationResult.data || []).map(item => [item.channelId, item.unreadCount]))
+        channels.value = result.data
+          .filter(channel => channel.isOwner || channel.membershipRole)
+          .map(channel => ({ ...channel, unreadNotificationCount: unreadByChannel.get(channel.id) || 0 }))
         channelState.value = 'ready'
       } catch {
         if (active) channelState.value = 'error'
       }
     }
     const refreshChannels = () => loadChannels()
+    const refreshNotificationCounts = async () => {
+      try {
+        const result = await apiRequest('/api/notifications/channel-unread-counts')
+        if (!active) return
+        const unreadByChannel = new Map((result.data || []).map(item => [item.channelId, item.unreadCount]))
+        channels.value = channels.value.map(channel => ({
+          ...channel,
+          unreadNotificationCount: unreadByChannel.get(channel.id) || 0
+        }))
+      } catch {}
+    }
 
     window.addEventListener('echo:channels-changed', refreshChannels)
+    window.addEventListener('echo:notifications-changed', refreshNotificationCounts)
+    const stopNotificationVersion = notificationVersion?.subscribe(refreshNotificationCounts)
     loadChannels()
 
     return () => {
       active = false
       window.removeEventListener('echo:channels-changed', refreshChannels)
+      window.removeEventListener('echo:notifications-changed', refreshNotificationCounts)
+      stopNotificationVersion?.()
     }
   })
 
   const treeItems = computed(() => {
+    const unreadChannelCount = channels.value.reduce((total, channel) => total + channel.unreadNotificationCount, 0)
     const channelChildren = channels.value.length > 0
       ? channels.value.map(channel => ({
         id: `channel-${channel.id}`,
         label: channel.name,
         href: `/channels/${channel.slug}`,
         active: router.path.value === `/channels/${channel.slug}`,
-        meta: channel.isOwner ? 'owner' : 'joined',
+        meta: channel.unreadNotificationCount > 0
+          ? channel.unreadNotificationCount
+          : channel.isOwner ? 'owner' : 'joined',
         onClick: router.link(`/channels/${channel.slug}`)
       }))
       : [{
@@ -118,6 +142,7 @@ export function ShellNavigation({ router, user, unreadNotifications }) {
           hasChildren: true,
           expanded: true,
           active,
+          meta: unreadChannelCount > 0 ? unreadChannelCount : undefined,
           children: channelChildren,
           onClick: () => {
             if (router.path.value !== '/channels') router.navigate('/channels')

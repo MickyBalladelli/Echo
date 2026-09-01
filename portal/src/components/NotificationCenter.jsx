@@ -6,6 +6,10 @@ import { formatRelativeTime } from '../lib/dates.js'
 import { KeyboardList } from './KeyboardList.jsx'
 import { UserAvatar } from './UserAvatar.jsx'
 
+function announceNotificationChange() {
+  if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('echo:notifications-changed'))
+}
+
 function notificationText(notification) {
   const actor = notification.actor?.displayName || 'Someone'
   const more = notification.groupCount > 1 ? ` and ${notification.groupCount - 1} more` : ''
@@ -68,6 +72,7 @@ export function NotificationCenter({ router, unreadCount, notificationVersion })
           method: 'PUT'
         })
         unreadCount.value = Math.max(0, previousUnread - (result.data.notification.updatedCount || optimisticCount))
+        announceNotificationChange()
       } catch (requestError) {
         notifications.value = previousNotifications
         unreadCount.value = previousUnread
@@ -90,6 +95,7 @@ export function NotificationCenter({ router, unreadCount, notificationVersion })
     announcement.value = 'All notifications marked read'
     try {
       await apiRequest('/api/notifications/read-all', { method: 'PUT' })
+      announceNotificationChange()
     } catch (requestError) {
       notifications.value = previousNotifications
       unreadCount.value = previousUnread
