@@ -275,15 +275,35 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
     />
   }
 
+  const messageHistory = <VirtualList
+    items={messages}
+    estimateSize={72}
+    threshold={100}
+    label="Channel chat history"
+    renderItem={renderMessage}
+  />
+  const messageListView = computed(() => messages.value.length
+    ? messageHistory
+    : <div class="channel-chat-empty"><EmptyState title="No messages yet" description="Start the conversation." /></div>)
+  const selectedAttachmentsView = computed(() => attachments.value.length > 0 && (
+    <div class="channel-chat-selected-attachments" aria-label="Selected attachments">
+      {attachments.value.map(attachment => (
+        <div class="channel-chat-selected-attachment" key={attachment.id}>
+          <span class="channel-chat-attachment-icon" aria-hidden="true">📎︎</span>
+          <span class="channel-chat-selected-attachment-name" title={attachment.name}>{attachment.name}</span>
+          <button type="button" class="channel-chat-remove-attachment" aria-label={`Remove ${attachment.name}`} onClick={() => removeAttachment(attachment.id)}>×</button>
+        </div>
+      ))}
+    </div>
+  ))
+
   const content = computed(() => {
     if (!readChannel().membershipRole) return <Card><EmptyState title="Join to chat" description="Channel chat is available to members." /></Card>
     if (state.value === 'loading') return <Card><div role="status">Loading channel chat…</div></Card>
     if (state.value === 'error') return <Card><EmptyState status="error" title="Chat unavailable" description={error.value} action={<Button onClick={load}>Try again</Button>} /></Card>
     return <Card class="channel-chat-card">
       <KeyboardList label="Channel chat messages" className="channel-chat-list">
-        {messages.value.length
-          ? <VirtualList items={messages} estimateSize={72} threshold={100} label="Channel chat history" renderItem={renderMessage} />
-          : <div class="channel-chat-empty"><EmptyState title="No messages yet" description="Start the conversation." /></div>}
+        {messageListView}
       </KeyboardList>
       <form class="channel-chat-compose" onSubmit={send}>
         <input id="channel-chat-attachment-input" class="channel-chat-file-input" type="file" multiple onChange={selectFiles} />
@@ -306,17 +326,7 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
         />
         {mentionSuggestionsView}
         <Button type="submit" loading={busy}>Send message</Button>
-        {attachments.value.length > 0 && (
-          <div class="channel-chat-selected-attachments" aria-label="Selected attachments">
-            {attachments.value.map(attachment => (
-              <div class="channel-chat-selected-attachment" key={attachment.id}>
-                <span class="channel-chat-attachment-icon" aria-hidden="true">📎︎</span>
-                <span class="channel-chat-selected-attachment-name" title={attachment.name}>{attachment.name}</span>
-                <button type="button" class="channel-chat-remove-attachment" aria-label={`Remove ${attachment.name}`} onClick={() => removeAttachment(attachment.id)}>×</button>
-              </div>
-            ))}
-          </div>
-        )}
+        {selectedAttachmentsView}
       </form>
       <div class="post-feed-error" role="alert">{error}</div>
     </Card>
