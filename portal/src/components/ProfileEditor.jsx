@@ -1,5 +1,6 @@
-import { Button, CheckBox, FormField, Select, TextField, signal } from '../lib/vendor.js'
+import { Button, CheckBox, FilePicker, FormField, Select, TextField, signal } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
+import { mediaSrc } from '../lib/media.js'
 
 const maxImageBytes = 10 * 1024 * 1024
 
@@ -37,7 +38,8 @@ export function ProfileEditor({ user, onSaved, onCancel }) {
   const busy = signal(false)
 
   async function chooseImage(event, target, maxWidth, maxHeight) {
-    const file = event.target.files?.[0]
+    const input = event.currentTarget || event.target
+    const file = input?.files?.[0]
     if (!file) return
     if (!file.type.startsWith('image/')) {
       error.value = 'Choose an image file.'
@@ -53,7 +55,7 @@ export function ProfileEditor({ user, onSaved, onCancel }) {
     } catch (imageError) {
       error.value = imageError.message
     } finally {
-      event.target.value = ''
+      input.value = ''
     }
   }
 
@@ -92,16 +94,16 @@ export function ProfileEditor({ user, onSaved, onCancel }) {
         <textarea id="profile-bio" use:bind={bio} rows="4" maxlength="280" aria-label="Bio" />
       </FormField>
       <div class="profile-image-fields">
-        <FormField id="profile-avatar" label="Avatar" hint="Square image, resized before upload.">
-          <input id="profile-avatar" type="file" accept="image/*" onChange={event => chooseImage(event, avatarUrl, 400, 400)} />
-          {avatarUrl.value && <img class="profile-editor-avatar-preview" src={avatarUrl} alt="Avatar preview" decoding="async" />}
+        <div class="profile-image-field">
+          <FilePicker id="profile-avatar" label="Avatar" accept="image/*" emptyText="No avatar selected" ariaDescription="Square image, resized before upload." onChange={event => chooseImage(event, avatarUrl, 400, 400)} />
+          {avatarUrl.value && <img class="profile-editor-avatar-preview" src={mediaSrc(avatarUrl.value)} alt="Avatar preview" decoding="async" />}
           {avatarUrl.value && <Button type="button" variant="tertiary" size="small" onClick={() => avatarUrl.value = ''}>Remove avatar</Button>}
-        </FormField>
-        <FormField id="profile-banner" label="Banner" hint="Wide image, resized before upload.">
-          <input id="profile-banner" type="file" accept="image/*" onChange={event => chooseImage(event, bannerUrl, 1200, 420)} />
-          {bannerUrl.value && <img class="profile-editor-banner-preview" src={bannerUrl} alt="Banner preview" decoding="async" />}
+        </div>
+        <div class="profile-image-field">
+          <FilePicker id="profile-banner" label="Banner" accept="image/*" emptyText="No banner selected" ariaDescription="Wide image, resized before upload." onChange={event => chooseImage(event, bannerUrl, 1200, 420)} />
+          {bannerUrl.value && <img class="profile-editor-banner-preview" src={mediaSrc(bannerUrl.value)} alt="Banner preview" decoding="async" />}
           {bannerUrl.value && <Button type="button" variant="tertiary" size="small" onClick={() => bannerUrl.value = ''}>Remove banner</Button>}
-        </FormField>
+        </div>
       </div>
       <FormField id="profile-visibility" label="Profile privacy" hint="Followers-only profiles still show your name and handle.">
       <Select

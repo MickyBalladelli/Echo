@@ -26,8 +26,12 @@ if (!result.success) {
   throw new Error(`Invalid environment: ${details}`)
 }
 
-const clientOrigins = (result.data.CLIENT_ORIGINS || result.data.CLIENT_ORIGIN)
-  .split(',')
+const defaultClientOrigins = result.data.NODE_ENV === 'development'
+  ? [result.data.CLIENT_ORIGIN, 'http://localhost:5173', 'http://127.0.0.1:5173']
+  : [result.data.CLIENT_ORIGIN]
+const clientOrigins = (result.data.CLIENT_ORIGINS
+  ? result.data.CLIENT_ORIGINS.split(',')
+  : defaultClientOrigins)
   .map(value => value.trim())
   .filter(Boolean)
 

@@ -1,6 +1,7 @@
 import { computed, onMount, signal } from '../lib/vendor.js'
 import { Card, EmptyState, Label, Tooltip } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
+import { mediaSrc } from '../lib/media.js'
 import { ChannelDiscoveryDialog } from './ChannelDiscoveryDialog.jsx'
 import { ChannelManagementDialog } from './ChannelManagementDialog.jsx'
 
@@ -60,7 +61,7 @@ export function ChannelDirectory({ router }) {
       <Card class="channel-card">
         <div class="channel-card-preview">
           {channel.imageUrl
-            ? <img class="channel-card-image" src={channel.imageUrl} alt="" loading="lazy" decoding="async" />
+            ? <img class="channel-card-image" src={mediaSrc(channel.imageUrl)} alt="" loading="lazy" decoding="async" />
             : <span class="channel-card-placeholder" aria-hidden="true">{channelInitial(channel)}</span>}
           <div class="channel-card-copy">
             <div class="channel-card-title-row">

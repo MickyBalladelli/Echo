@@ -1,4 +1,4 @@
-import { clearSessionCookie, sessionTokenFromHeaders, sessionTokenFromRequest } from './cookies.js'
+import { sessionTokenFromHeaders, sessionTokenFromRequest } from './cookies.js'
 import { findSessionByToken } from './sessions.js'
 import { HttpError } from '../http/errors.js'
 
@@ -8,7 +8,6 @@ export async function requireAuth(request, response, next) {
     const session = await findSessionByToken(token)
 
     if (!session) {
-      clearSessionCookie(response)
       throw new HttpError(401, 'AUTH_REQUIRED', 'Authentication required')
     }
 

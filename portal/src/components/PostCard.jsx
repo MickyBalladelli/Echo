@@ -20,6 +20,7 @@ import { ReportButton } from './ReportButton.jsx'
 import { AppealButton } from './AppealButton.jsx'
 import { LiveRegion } from './LiveRegion.jsx'
 import { formatDateTime, formatRelativeTime } from '../lib/dates.js'
+import { mediaSrc } from '../lib/media.js'
 import { Poll } from './Poll.jsx'
 import { UserAvatar } from './UserAvatar.jsx'
 
@@ -48,7 +49,7 @@ function renderRepostSource(source, router) {
         </a>
       </div>
       <p>{renderBody(source.body || 'Repost', router)}</p>
-      {source.imageUrl && <img class="post-media post-media-compact" src={source.imageUrl} alt={source.imageAltText || ''} loading="lazy" decoding="async" />}
+      {source.imageUrl && <img class="post-media post-media-compact" src={mediaSrc(source.imageUrl)} alt={source.imageAltText || ''} loading="lazy" decoding="async" />}
     </div>
   )
 }
@@ -255,7 +256,7 @@ export function PostCard({
         {post.repostOf
           ? renderRepostSource(post.repostOf, router)
           : post.repostOfPostId && <div class="post-repost-source"><span>Original post unavailable.</span></div>}
-        {imageUrl.value && <img class="post-media" src={imageUrl.value} alt={imageAltText.value || 'Image attached to post'} loading="lazy" decoding="async" />}
+        {imageUrl.value && <img class="post-media" src={mediaSrc(imageUrl.value)} alt={imageAltText.value || 'Image attached to post'} loading="lazy" decoding="async" />}
         {linkPreview.value && (
           <a class="post-link-preview" href={linkPreview.value.url} target="_blank" rel="noreferrer">
             <span>LINK PREVIEW</span>

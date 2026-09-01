@@ -7,7 +7,7 @@ import pinoHttp from 'pino-http'
 import { env } from './config/env.js'
 import { logger } from './config/logger.js'
 import { requireAuth } from './auth/middleware.js'
-import { csrfProtection, ensureCsrfCookie } from './auth/csrf.js'
+import { csrfProtection } from './auth/csrf.js'
 import { errorHandler, notFoundHandler } from './http/errors.js'
 import { authRouter } from './routes/auth.js'
 import { healthRouter } from './routes/health.js'
@@ -46,7 +46,6 @@ export function createApp() {
     response.setHeader('X-Request-Id', request.id)
     next()
   })
-  app.use(ensureCsrfCookie)
   app.use(csrfProtection)
   app.use(express.json({ limit: env.maxJsonBodyBytes }))
   app.use(express.urlencoded({ extended: false, limit: '20kb' }))

@@ -20,6 +20,7 @@ export function AuthPanel({ onAuthenticated }) {
   const recoveryPassword = signal('')
   const recoveryNotice = signal('')
   const oauthProviders = signal([])
+  let active = true
 
   const title = computed(() => mode.value === 'login' ? 'Welcome back' : 'Join Echo')
   const description = computed(() => mode.value === 'login'
@@ -37,6 +38,10 @@ export function AuthPanel({ onAuthenticated }) {
     recoveryOpen.value = false
   }
 
+  function formValue(form, name, fallback) {
+    return form?.elements?.namedItem(name)?.value ?? fallback
+  }
+
   async function submit(event, submitMode) {
     event.preventDefault()
     error.value = ''
@@ -44,12 +49,15 @@ export function AuthPanel({ onAuthenticated }) {
     busy.value = true
 
     const payload = submitMode === 'login'
-      ? { identifier: identifier.value, password: password.value }
+      ? {
+        identifier: formValue(event.currentTarget, 'identifier', identifier.value),
+        password: formValue(event.currentTarget, 'password', password.value)
+      }
       : {
-        username: username.value,
-        email: email.value,
-        displayName: displayName.value,
-        password: password.value
+        username: formValue(event.currentTarget, 'username', username.value),
+        email: formValue(event.currentTarget, 'email', email.value),
+        displayName: formValue(event.currentTarget, 'displayName', displayName.value),
+        password: formValue(event.currentTarget, 'password', password.value)
     }
 
     try {
@@ -67,12 +75,13 @@ export function AuthPanel({ onAuthenticated }) {
       }
       onAuthenticated(result.data.user)
     } catch (requestError) {
+      if (!active) return
       fieldErrors.value = requestError.details?.fieldErrors || {}
       error.value = Object.keys(fieldErrors.value).length
         ? 'Fix the marked fields and try again.'
         : requestError.message || 'Could not complete sign in'
     } finally {
-      busy.value = false
+      if (active) busy.value = false
     }
   }
 
@@ -87,9 +96,10 @@ export function AuthPanel({ onAuthenticated }) {
       })
       onAuthenticated(result.data.user)
     } catch (requestError) {
+      if (!active) return
       error.value = requestError.message || 'Could not verify authenticator code'
     } finally {
-      busy.value = false
+      if (active) busy.value = false
     }
   }
 
@@ -106,9 +116,10 @@ export function AuthPanel({ onAuthenticated }) {
       recoveryToken.value = result.data.resetToken || ''
       recoveryNotice.value = 'If the account exists, reset instructions are ready.'
     } catch (requestError) {
+      if (!active) return
       error.value = requestError.message || 'Could not request password reset'
     } finally {
-      busy.value = false
+      if (active) busy.value = false
     }
   }
 
@@ -127,9 +138,10 @@ export function AuthPanel({ onAuthenticated }) {
       recoveryToken.value = ''
       recoveryPassword.value = ''
     } catch (requestError) {
+      if (!active) return
       error.value = requestError.message || 'Could not reset password'
     } finally {
-      busy.value = false
+      if (active) busy.value = false
     }
   }
 
@@ -151,6 +163,7 @@ export function AuthPanel({ onAuthenticated }) {
           <FormField id="auth-identifier" label="Username or email" required>
             <TextField
               id="auth-identifier"
+              name="identifier"
               value={identifier}
               placeholder="you@example.com or username"
               autocomplete="username"
@@ -158,9 +171,10 @@ export function AuthPanel({ onAuthenticated }) {
             />
           </FormField>
           <FormField id="auth-login-password" label="Password" required hint="Use your Echo password.">
-            <TextField
-              id="auth-login-password"
-              value={password}
+              <TextField
+                id="auth-login-password"
+                name="password"
+                value={password}
               type="password"
               placeholder="Your password"
               autocomplete="current-password"
@@ -190,6 +204,7 @@ export function AuthPanel({ onAuthenticated }) {
           >
             <TextField
               id="auth-username"
+              name="username"
               value={username}
               placeholder="your_name"
               autocomplete="username"
@@ -202,6 +217,7 @@ export function AuthPanel({ onAuthenticated }) {
           <FormField id="auth-email" label="Email" required error={computed(() => fieldErrors.value.email?.[0])}>
             <TextField
               id="auth-email"
+              name="email"
               value={email}
               placeholder="you@example.com"
               type="email"
@@ -213,6 +229,7 @@ export function AuthPanel({ onAuthenticated }) {
           <FormField id="auth-display-name" label="Display name" required error={computed(() => fieldErrors.value.displayName?.[0])}>
             <TextField
               id="auth-display-name"
+              name="displayName"
               value={displayName}
               placeholder="Your name"
               autocomplete="name"
@@ -229,6 +246,7 @@ export function AuthPanel({ onAuthenticated }) {
           >
             <TextField
               id="auth-register-password"
+              name="password"
               value={password}
               type="password"
               placeholder="Create a password"
@@ -289,8 +307,14 @@ export function AuthPanel({ onAuthenticated }) {
 
   onMount(() => {
     apiRequest('/api/auth/oauth/providers')
-      .then(result => { oauthProviders.value = result.data.providers })
+      .then(result => {
+        if (active) oauthProviders.value = result.data.providers
+      })
       .catch(() => {})
+
+    return () => {
+      active = false
+    }
   })
 
   return (

@@ -2,6 +2,7 @@ import { computed, onMount, signal } from '../lib/vendor.js'
 import { Button, Card, CheckBox, DateTimePicker, FormField, Label, Select, TextField } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { clearOfflineDraft, readOfflineDraft, writeOfflineDraft } from '../lib/offline-drafts.js'
+import { mediaSrc } from '../lib/media.js'
 
 const maxPostLength = 280
 const maxLongPostLength = 20000
@@ -393,7 +394,7 @@ export function PostComposer({ onCreated, channelId = null }) {
         {imageBusy.value && <div role="status">Preparing image…</div>}
         {imageUrl.value && (
           <div class="post-image-preview">
-            <img src={imageUrl} alt={imageAltText.value || 'Selected image preview'} decoding="async" />
+            <img src={mediaSrc(imageUrl.value)} alt={imageAltText.value || 'Selected image preview'} decoding="async" />
             <div>
               <span>{imageName}</span>
               <TextField value={imageAltText} maxLength={120} placeholder="Describe the image" ariaLabel="Image description" />

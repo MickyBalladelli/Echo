@@ -1,5 +1,6 @@
 import { computed, signal } from '../lib/vendor.js'
 import { Button, Card, EmptyState, Label, Popup, Tooltip } from '../lib/vendor.js'
+import { mediaSrc } from '../lib/media.js'
 
 export function ChannelDiscoveryDialog({ channels, state, error, loadingMore, nextCursor, onLoadMore, router }) {
   const open = signal(false)
@@ -40,7 +41,7 @@ export function ChannelDiscoveryDialog({ channels, state, error, loadingMore, ne
             <Card key={channel.id} class="channel-card">
               <div class="channel-card-preview">
                 {channel.imageUrl
-                  ? <img class="channel-card-image" src={channel.imageUrl} alt="" loading="lazy" decoding="async" />
+                  ? <img class="channel-card-image" src={mediaSrc(channel.imageUrl)} alt="" loading="lazy" decoding="async" />
                   : <span class="channel-card-placeholder" aria-hidden="true">{channelInitial(channel)}</span>}
                 <div class="channel-card-copy">
                   <div class="channel-card-title-row">

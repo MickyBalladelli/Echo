@@ -8,6 +8,7 @@ import { PostCard } from './PostCard.jsx'
 import { UserList } from './UserList.jsx'
 import { ReportButton } from './ReportButton.jsx'
 import { formatMonthYear } from '../lib/dates.js'
+import { mediaSrc } from '../lib/media.js'
 import { KeyboardList } from './KeyboardList.jsx'
 import { VirtualList } from './VirtualList.jsx'
 import { UserAvatar } from './UserAvatar.jsx'
@@ -94,7 +95,7 @@ export function UserSocialContent({ username, router, currentUserId, showIdentit
         {showIdentity && (
           <Card class="public-profile-card">
             <div class="public-profile-media">
-              {user.value.profile.bannerUrl && <img class="profile-banner" src={user.value.profile.bannerUrl} alt="" loading="lazy" decoding="async" />}
+              {user.value.profile.bannerUrl && <img class="profile-banner" src={mediaSrc(user.value.profile.bannerUrl)} alt="" loading="lazy" decoding="async" />}
               {profileAvatar(user.value)}
             </div>
             <div class="profile-copy">

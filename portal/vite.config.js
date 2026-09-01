@@ -5,7 +5,7 @@ export default defineConfig(({ mode }) => {
   return {
     resolve: {
       alias: {
-        '@mickyballadelli/matrix': '/Users/micky/dev/Echo-Project/Echo/node_modules/@mickyballadelli/matrix/dist/src'
+        '@mickyballadelli/matrix': '/Users/micky/dev/Echo-Project/Matrix/src'
       },
       dedupe: ['@mickyballadelli/matrix']
     },
@@ -20,12 +20,16 @@ export default defineConfig(({ mode }) => {
       proxy: {
         '/api': {
           target: env.VITE_API_URL || 'http://localhost:3000',
-          changeOrigin: true
+          changeOrigin: true,
+          cookieDomainRewrite: { '*': '' },
+          cookiePathRewrite: { '*': '/' }
         },
         '/socket.io': {
           target: env.VITE_SOCKET_URL || 'http://localhost:3000',
           ws: true,
-          changeOrigin: true
+          changeOrigin: true,
+          cookieDomainRewrite: { '*': '' },
+          cookiePathRewrite: { '*': '/' }
         }
       }
     },

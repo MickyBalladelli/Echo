@@ -12,6 +12,7 @@ export {
   DateTimePicker,
   EmptyState,
   Alert,
+  FilePicker,
   Footer,
   FormField,
   Header,

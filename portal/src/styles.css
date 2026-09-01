@@ -2296,9 +2296,11 @@ textarea {
   gap: 12px;
 }
 
-.profile-image-fields input[type='file'] {
-  max-width: 100%;
-  color: var(--prism-color-text);
+.profile-image-field {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
 }
 
 .profile-editor-avatar-preview {
