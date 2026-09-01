@@ -332,8 +332,8 @@ textarea {
 
 .echo-status-tooltip {
   display: grid !important;
-  min-width: 15rem;
-  gap: 5px;
+  min-width: 14rem;
+  gap: 7px;
   color: var(--prism-color-text-strong);
   white-space: normal;
 }
@@ -342,8 +342,17 @@ textarea {
   display: block;
   padding-bottom: 3px;
   border-bottom: 1px solid color-mix(in srgb, var(--prism-color-border-strong) 55%, transparent);
-  color: var(--prism-color-accent-bright);
+  color: var(--prism-color-text-strong);
   font-size: 12px;
+}
+
+.echo-header-content .echo-status-tooltip-status {
+  display: grid;
+  gap: 3px;
+  padding: 5px 6px;
+  border: 1px solid color-mix(in srgb, var(--prism-color-border-strong) 38%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--prism-color-surface) 62%, transparent);
 }
 
 .echo-header-content .echo-status-tooltip-row {

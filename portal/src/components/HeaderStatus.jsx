@@ -42,16 +42,20 @@ export function HeaderStatus({ apiStatus, socketStatus }) {
   const connectionTooltip = computed(() => html`
     <span class="echo-status-tooltip">
       <strong class="echo-status-tooltip-title">Connection status</strong>
-      <span class="echo-status-tooltip-row">
-        <span class="echo-status-tooltip-service"><span class="echo-status-tooltip-led is-api is-${apiTone.value}" aria-hidden="true" />API</span>
-        <strong class="echo-status-tooltip-value is-api is-${apiTone.value}">${apiStateLabel(apiStatus.value)}</strong>
+      <span class="echo-status-tooltip-status">
+        <span class="echo-status-tooltip-row">
+          <span class="echo-status-tooltip-service"><span class="echo-status-tooltip-led is-api is-${apiTone.value}" aria-hidden="true" />API</span>
+          <strong class="echo-status-tooltip-value is-api is-${apiTone.value}">${apiStateLabel(apiStatus.value)}</strong>
+        </span>
+        <span class="echo-status-tooltip-description">Posts, profiles, and settings</span>
       </span>
-      <span class="echo-status-tooltip-description">Posts, profiles, and settings</span>
-      <span class="echo-status-tooltip-row">
-        <span class="echo-status-tooltip-service"><span class="echo-status-tooltip-led is-socket is-${socketTone.value}" aria-hidden="true" />Realtime</span>
-        <strong class="echo-status-tooltip-value is-socket is-${socketTone.value}">${socketStateLabel(socketStatus.value)}</strong>
+      <span class="echo-status-tooltip-status">
+        <span class="echo-status-tooltip-row">
+          <span class="echo-status-tooltip-service"><span class="echo-status-tooltip-led is-socket is-${socketTone.value}" aria-hidden="true" />Realtime</span>
+          <strong class="echo-status-tooltip-value is-socket is-${socketTone.value}">${socketStateLabel(socketStatus.value)}</strong>
+        </span>
+        <span class="echo-status-tooltip-description">Live messages and notifications</span>
       </span>
-      <span class="echo-status-tooltip-description">Live messages and notifications</span>
     </span>
   `)
 
