@@ -20,7 +20,7 @@ export function ChannelChatMessage({ message, currentUserId, currentUsername, co
   const reactionPickerOpen = signal(false)
   const selectedReaction = signal('')
   const own = message.sender.id === currentUserId
-  const mentioned = !own && mentionsUsername(message.body, currentUsername)
+  const mentioned = mentionsUsername(message.body, currentUsername)
   let copyTimer
 
   async function copyMessage() {

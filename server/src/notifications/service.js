@@ -182,7 +182,7 @@ export async function createNotification({
   dedupeKey,
   groupKey = null
 }, transaction) {
-  if (actorId && recipientId === actorId) return null
+  if (actorId && recipientId === actorId && type !== notificationTypes.mention) return null
 
   const preferenceRows = await sequelize.query(`
     SELECT enabled
@@ -362,7 +362,6 @@ export async function notifyChannelMentions({
     LEFT JOIN channel_members member ON member.channel_id = channel.id
       AND member.user_id = tagged_user.id AND member.left_at IS NULL
     WHERE channel.id = :channelId AND channel.deleted_at IS NULL
-      AND tagged_user.id <> :actorId
       AND ${access}
   `, {
     replacements: { channelId, actorId, usernames },
@@ -397,7 +396,6 @@ export async function notifyPostMentions({ authorId, body, postId, visibility = 
     FROM users tagged_user
     WHERE LOWER(tagged_user.username) IN (:usernames)
       AND tagged_user.deleted_at IS NULL AND tagged_user.status = 'active'
-      AND tagged_user.id <> :authorId
       AND ${visibilityAccess}
   `, {
     replacements: { authorId, usernames },

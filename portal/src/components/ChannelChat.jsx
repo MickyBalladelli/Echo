@@ -232,6 +232,12 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
   }
 
   function handleBodyKeyDown(event) {
+    if (event.key === 'Tab' && mentionSuggestions.value.length > 0) {
+      event.preventDefault()
+      insertMention(mentionSuggestions.value[0])
+      event.currentTarget.focus()
+      return
+    }
     if (event.key !== 'Enter' || event.shiftKey || event.isComposing) return
     event.preventDefault()
     event.currentTarget.form?.requestSubmit()
