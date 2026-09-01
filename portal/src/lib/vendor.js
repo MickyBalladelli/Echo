@@ -34,6 +34,7 @@ export {
   ClockIcon,
   CopyIcon,
   FileIcon,
+  GroupIcon,
   MapPinIcon,
   MoreHorizontalIcon,
   SparkIcon,

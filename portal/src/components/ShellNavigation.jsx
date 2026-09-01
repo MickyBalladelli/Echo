@@ -1,5 +1,5 @@
 import { computed, html, onMount, signal } from '../lib/vendor.js'
-import { Navigator, TreeView } from '../lib/vendor.js'
+import { GroupIcon, Navigator, TreeView } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 
 const navItems = Object.freeze([
@@ -9,7 +9,7 @@ const navItems = Object.freeze([
     mark: '⌁',
     children: [
       { path: '/', label: 'For you', mark: '⌂' },
-      { path: '/following', label: 'Following', mark: '◇' }
+      { path: '/following', label: 'Following', mark: GroupIcon({ size: 17 }) }
     ]
   },
   { path: '/explore', label: 'Explore', mark: '⌕' },
@@ -31,9 +31,13 @@ function isTimelinePath(path) {
 }
 
 function renderTreeItem(item) {
+  const markClass = item.path === '/following'
+    ? 'shell-tree-mark shell-tree-mark-following'
+    : 'shell-tree-mark'
+
   return html`
     <span class="shell-tree-item">
-      ${item.mark ? html`<span class="shell-tree-mark" aria-hidden="true">${item.mark}</span>` : null}
+      ${item.mark ? html`<span class="${markClass}" aria-hidden="true">${item.mark}</span>` : null}
       <span>${item.label}</span>
     </span>
   `
