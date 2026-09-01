@@ -3,6 +3,7 @@ import { sequelize, withTransaction } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
 import { encodeCursor } from '../http/pagination.js'
 import { inspectContent } from '../moderation/signals.js'
+import { notifyChannelMentions } from '../notifications/service.js'
 import { publishRealtimeEvent } from '../realtime/events.js'
 import { roomName } from '../realtime/rooms.js'
 
@@ -141,7 +142,15 @@ export async function sendChannelChatMessage(userId, channelId, body, attachment
       WHERE message.id = :messageId
       LIMIT 1
     `, { replacements: { messageId: rows[0].id }, type: QueryTypes.SELECT, transaction })
-    return mapMessage(result[0])
+    const message = mapMessage(result[0])
+    await notifyChannelMentions({
+      channelId,
+      actorId: userId,
+      body,
+      messageId: message.id,
+      membersOnly: true
+    }, transaction)
+    return message
   })
   publishRealtimeEvent(roomName('channel', channelId), 'channel:chat:message', message, `channel-chat:${message.id}`)
   return message

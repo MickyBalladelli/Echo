@@ -12,7 +12,7 @@ const maxAttachmentTotalBytes = 1024 * 1024
 const chatLoadTimeoutMs = 10000
 const paperclipIcon = html`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M18.4 12.2 10.7 19.9a4.5 4.5 0 0 1-6.4-6.4l9.2-9.2a3 3 0 0 1 4.2 4.2l-9.2 9.2a1.5 1.5 0 0 1-2.1-2.1l8.5-8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>`
 
-export function ChannelChat({ slug, channel, currentUserId }) {
+export function ChannelChat({ slug, channel, members, currentUserId, currentUsername }) {
   const readChannel = () => channel?.value ?? channel
   const messages = signal([])
   const body = signal('')
@@ -20,6 +20,7 @@ export function ChannelChat({ slug, channel, currentUserId }) {
   const state = signal('loading')
   const busy = signal(false)
   const error = signal('')
+  const mentionSuggestions = signal([])
 
   function messageViewport() {
     if (typeof document === 'undefined') return null
@@ -50,6 +51,32 @@ export function ChannelChat({ slug, channel, currentUserId }) {
       const timeDifference = new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
       return timeDifference || left.id.localeCompare(right.id)
     })
+  }
+
+  function readMembers() {
+    return members?.value ?? members ?? []
+  }
+
+  function updateMentionSuggestions() {
+    const match = body.value.match(/(?:^|\s)@([a-z0-9_]*)$/i)
+    if (!match) {
+      mentionSuggestions.value = []
+      return
+    }
+    const query = match[1].toLowerCase()
+    mentionSuggestions.value = readMembers()
+      .filter(member => member.username?.toLowerCase().startsWith(query))
+      .slice(0, 6)
+  }
+
+  function insertMention(user) {
+    const match = body.value.match(/(?:^|\s)@([a-z0-9_]*)$/i)
+    if (!match) return
+    const start = body.value.length - match[0].length
+    const prefix = body.value.slice(0, start)
+    const separator = match[0].startsWith(' ') ? ' ' : ''
+    body.value = `${prefix}${separator}@${user.username} `
+    mentionSuggestions.value = []
   }
 
   function addMessage(message) {
@@ -174,6 +201,7 @@ export function ChannelChat({ slug, channel, currentUserId }) {
       if (response.ok) {
         addMessage(response.message)
         body.value = ''
+        mentionSuggestions.value = []
         attachments.value = []
         scrollMessagesToBottom()
       } else if (response.error === 'SOCKET_DISCONNECTED') {
@@ -183,6 +211,7 @@ export function ChannelChat({ slug, channel, currentUserId }) {
           })
           addMessage(result.data.message)
           body.value = ''
+          mentionSuggestions.value = []
           attachments.value = []
           scrollMessagesToBottom()
         } catch (requestError) {
@@ -199,6 +228,7 @@ export function ChannelChat({ slug, channel, currentUserId }) {
   function replyTo(message) {
     const prefix = `@${message.sender.username} `
     body.value = body.value.trim() ? `${prefix}${body.value}` : prefix
+    updateMentionSuggestions()
   }
 
   function handleBodyKeyDown(event) {
@@ -208,12 +238,35 @@ export function ChannelChat({ slug, channel, currentUserId }) {
     event.currentTarget.focus()
   }
 
+  const mentionSuggestionsView = computed(() => mentionSuggestions.value.length > 0 && (
+    <div class="channel-chat-mention-suggestions" role="listbox" aria-label="Mention suggestions">
+      {mentionSuggestions.value.map(member => (
+        <Button
+          key={member.id}
+          type="button"
+          variant="tertiary"
+          size="small"
+          role="option"
+          onClick={() => insertMention(member)}
+        >
+          @{member.username} · {member.displayName}
+        </Button>
+      ))}
+    </div>
+  ))
+
   function renderMessage(message, index) {
     const previous = messages.value[index - 1]
     const compact = Boolean(previous && previous.sender.id === message.sender.id &&
       new Date(message.createdAt).getTime() - new Date(previous.createdAt).getTime() < 5 * 60 * 1000)
 
-    return <ChannelChatMessage message={message} currentUserId={currentUserId} compact={compact} onReply={replyTo} />
+    return <ChannelChatMessage
+      message={message}
+      currentUserId={currentUserId}
+      currentUsername={currentUsername}
+      compact={compact}
+      onReply={replyTo}
+    />
   }
 
   const content = computed(() => {
@@ -236,7 +289,16 @@ export function ChannelChat({ slug, channel, currentUserId }) {
           title="Add an attachment"
           onClick={openAttachmentPicker}
         />
-        <textarea use:bind={body} maxlength="4000" rows="1" placeholder={`Message #${readChannel().slug}`} aria-label="Channel chat message" onKeyDown={handleBodyKeyDown} />
+        <textarea
+          use:bind={body}
+          maxlength="4000"
+          rows="1"
+          placeholder={`Message #${readChannel().slug}`}
+          aria-label="Channel chat message"
+          onInput={updateMentionSuggestions}
+          onKeyDown={handleBodyKeyDown}
+        />
+        {mentionSuggestionsView}
         <Button type="submit" loading={busy}>Send message</Button>
         {attachments.value.length > 0 && (
           <div class="channel-chat-selected-attachments" aria-label="Selected attachments">

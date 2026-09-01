@@ -7,7 +7,7 @@ import { ReportButton } from '../components/ReportButton.jsx'
 import { LiveRegion } from '../components/LiveRegion.jsx'
 import { ChannelChat } from '../components/ChannelChat.jsx'
 
-export function ChannelDetailPage({ slug, router, currentUserId, onHeaderChange = () => {} }) {
+export function ChannelDetailPage({ slug, router, currentUserId, currentUsername, onHeaderChange = () => {} }) {
   const channel = signal(null)
   const members = signal([])
   const state = signal('loading')
@@ -275,7 +275,13 @@ export function ChannelDetailPage({ slug, router, currentUserId, onHeaderChange 
     return (
       <div class="channel-detail-stack">
         <section class="channel-message-section" aria-label="Channel messages">
-          <ChannelChat slug={slug} channel={channel} currentUserId={currentUserId} />
+          <ChannelChat
+            slug={slug}
+            channel={channel}
+            members={members}
+            currentUserId={currentUserId}
+            currentUsername={currentUsername}
+          />
         </section>
         <Popup
           open={detailsOpen}

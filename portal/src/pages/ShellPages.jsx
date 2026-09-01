@@ -29,7 +29,7 @@ export function NotificationsPage({ router, unreadCount, notificationVersion }) 
     <PageFrame
       eyebrow="INBOX / NOTIFICATIONS"
       title="Notifications"
-      description="Replies, likes, follows, and channel activity will land here."
+      description="Replies, likes, follows, channel activity, and tags will land here."
     >
       <NotificationCenter router={router} unreadCount={unreadCount} notificationVersion={notificationVersion} />
     </PageFrame>

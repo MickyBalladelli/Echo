@@ -11,7 +11,8 @@ export const notificationTypes = Object.freeze({
   channelInvite: 'channel_invite',
   channelJoin: 'channel_join',
   channelPost: 'channel_post',
-  chatMessage: 'chat_message'
+  chatMessage: 'chat_message',
+  mention: 'mention'
 })
 
 export const notificationPreferenceTypes = Object.freeze(Object.values(notificationTypes))
@@ -23,6 +24,7 @@ function notificationGroupKey({ type, recipientId, postId, channelId, conversati
   if (channelId && type === notificationTypes.channelPost) return `channel:${channelId}:posts`
   if (channelId && type === notificationTypes.channelInvite) return `channel:${channelId}:invites`
   if (channelId && type === notificationTypes.channelJoin) return `channel:${channelId}:joins`
+  if (channelId && type === notificationTypes.mention) return `channel:${channelId}:mentions`
   if (conversationId && type === notificationTypes.chatMessage) return `conversation:${conversationId}:messages`
   if (type === notificationTypes.follow) return `user:${recipientId}:follows`
   return `${type}:${postId || channelId || conversationId || recipientId}`
@@ -329,6 +331,95 @@ export function notifyChatMessage({ recipientId, actorId, conversationId, messag
     conversationId,
     payload: { messageId },
     dedupeKey: `message:${messageId}`
+  }, transaction)
+}
+
+export function extractMentionUsernames(body = '') {
+  return [...String(body).matchAll(/(^|[^a-z0-9_])@([a-z0-9_]{3,32})(?![a-z0-9_])/gi)]
+    .map(match => match[2].toLowerCase())
+    .filter((username, index, usernames) => usernames.indexOf(username) === index)
+}
+
+export async function notifyChannelMentions({
+  channelId,
+  actorId,
+  body,
+  postId = null,
+  messageId = null,
+  membersOnly = false
+}, transaction) {
+  const usernames = extractMentionUsernames(body)
+  if (!usernames.length) return
+
+  const access = membersOnly
+    ? 'member.user_id IS NOT NULL'
+    : `(channel.visibility = 'public' OR member.user_id IS NOT NULL)`
+  const recipients = await sequelize.query(`
+    SELECT tagged_user.id AS user_id
+    FROM channels channel
+    JOIN users tagged_user ON LOWER(tagged_user.username) IN (:usernames)
+      AND tagged_user.deleted_at IS NULL AND tagged_user.status = 'active'
+    LEFT JOIN channel_members member ON member.channel_id = channel.id
+      AND member.user_id = tagged_user.id AND member.left_at IS NULL
+    WHERE channel.id = :channelId AND channel.deleted_at IS NULL
+      AND tagged_user.id <> :actorId
+      AND ${access}
+  `, {
+    replacements: { channelId, actorId, usernames },
+    type: QueryTypes.SELECT,
+    ...(transaction ? { transaction } : {})
+  })
+
+  for (const recipient of recipients) {
+    await notifyMention({
+      recipientId: recipient.user_id,
+      actorId,
+      channelId,
+      postId,
+      messageId
+    }, transaction)
+  }
+}
+
+export async function notifyPostMentions({ authorId, body, postId, visibility = 'public' }, transaction) {
+  const usernames = extractMentionUsernames(body)
+  if (!usernames.length || visibility === 'private') return
+
+  const visibilityAccess = visibility === 'followers'
+    ? `EXISTS (
+        SELECT 1 FROM follows mention_follow
+        WHERE mention_follow.follower_id = tagged_user.id
+          AND mention_follow.following_id = :authorId
+      )`
+    : 'TRUE'
+  const recipients = await sequelize.query(`
+    SELECT tagged_user.id AS user_id
+    FROM users tagged_user
+    WHERE LOWER(tagged_user.username) IN (:usernames)
+      AND tagged_user.deleted_at IS NULL AND tagged_user.status = 'active'
+      AND tagged_user.id <> :authorId
+      AND ${visibilityAccess}
+  `, {
+    replacements: { authorId, usernames },
+    type: QueryTypes.SELECT,
+    ...(transaction ? { transaction } : {})
+  })
+
+  for (const recipient of recipients) {
+    await notifyMention({ recipientId: recipient.user_id, actorId: authorId, postId }, transaction)
+  }
+}
+
+export function notifyMention({ recipientId, actorId, channelId, postId = null, messageId = null }, transaction) {
+  const contentKey = postId ? `post:${postId}` : `message:${messageId}`
+  return createNotification({
+    recipientId,
+    actorId,
+    type: notificationTypes.mention,
+    postId,
+    channelId,
+    payload: { channelId, postId, messageId },
+    dedupeKey: contentKey
   }, transaction)
 }
 

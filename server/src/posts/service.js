@@ -2,7 +2,7 @@ import { QueryTypes } from 'sequelize'
 import { profiledQuery, sequelize, withTransaction } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
 import { encodeCursor } from '../http/pagination.js'
-import { notifyChannelPost, notifyLike, notifyReply } from '../notifications/service.js'
+import { notifyChannelMentions, notifyChannelPost, notifyLike, notifyPostMentions, notifyReply } from '../notifications/service.js'
 import { inspectContent } from '../moderation/signals.js'
 import { cacheGet, cacheKey, cacheSet } from '../cache/memory.js'
 
@@ -585,13 +585,28 @@ export async function createPost(authorId, input) {
     })
 
     await syncPostHashtags(rows[0].id, input.body, transaction)
-    if (input.channelId && channelModerationStatus === 'approved') {
-      await sequelize.query(`
-        UPDATE channels
-        SET discovery_score = discovery_score + 2, updated_at = CURRENT_TIMESTAMP
-        WHERE id = :channelId
-      `, { replacements: { channelId: input.channelId }, transaction })
-      await notifyChannelMembers(input.channelId, authorId, rows[0].id, transaction)
+    if (input.channelId) {
+      if (channelModerationStatus === 'approved') {
+        await sequelize.query(`
+          UPDATE channels
+          SET discovery_score = discovery_score + 2, updated_at = CURRENT_TIMESTAMP
+          WHERE id = :channelId
+        `, { replacements: { channelId: input.channelId }, transaction })
+        await notifyChannelMembers(input.channelId, authorId, rows[0].id, transaction)
+        await notifyChannelMentions({
+          channelId: input.channelId,
+          actorId: authorId,
+          body: input.body,
+          postId: rows[0].id
+        }, transaction)
+      }
+    } else {
+      await notifyPostMentions({
+        authorId,
+        body: input.body,
+        postId: rows[0].id,
+        visibility: input.visibility
+      }, transaction)
     }
 
     return rows[0].id
@@ -605,7 +620,7 @@ export async function createReply(authorId, parentPostId, input) {
     const contentSignal = await inspectContent({ userId: authorId, action: 'reply', body: input.body, transaction })
     const contentModerationStatus = contentSignal.flagged ? 'flagged' : 'active'
     const parentRows = await sequelize.query(`
-      SELECT p.id, p.author_id, p.channel_id
+      SELECT p.id, p.author_id, p.channel_id, p.visibility
       FROM posts p
       JOIN users u ON u.id = p.author_id AND u.deleted_at IS NULL AND u.status = 'active'
       WHERE p.id = :parentPostId
@@ -720,6 +735,18 @@ export async function createReply(authorId, parentPostId, input) {
           WHERE id = :channelId
         `, { replacements: { channelId: parent.channel_id }, transaction })
         await notifyChannelMembers(parent.channel_id, authorId, replyId, transaction)
+        await notifyChannelMentions({
+          channelId: parent.channel_id,
+          actorId: authorId,
+          body: input.body,
+          postId: replyId
+        }, transaction)
+      } else {
+        await notifyPostMentions({
+          authorId,
+          body: input.body,
+          postId: replyId
+        }, transaction)
       }
     }
 

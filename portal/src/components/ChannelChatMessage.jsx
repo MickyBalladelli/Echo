@@ -3,11 +3,24 @@ import { ChatIcon, CopyIcon, IconButton, SparkIcon } from '../lib/vendor.js'
 import { formatClockTime } from '../lib/dates.js'
 import { UserAvatar } from './UserAvatar.jsx'
 
-export function ChannelChatMessage({ message, currentUserId, compact = false, onReply }) {
+function mentionsUsername(body, username) {
+  if (!body || !username) return false
+  const escapedUsername = username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`(^|[^a-z0-9_])@${escapedUsername}(?![a-z0-9_])`, 'i').test(body)
+}
+
+function renderBody(body) {
+  return String(body).split(/(@[a-z0-9_]{3,32})/gi).map((part, index) => /^@[a-z0-9_]{3,32}$/i.test(part)
+    ? <span key={`${part}-${index}`} class="channel-chat-mention">{part}</span>
+    : part)
+}
+
+export function ChannelChatMessage({ message, currentUserId, currentUsername, compact = false, onReply }) {
   const copied = signal(false)
   const reactionPickerOpen = signal(false)
   const selectedReaction = signal('')
   const own = message.sender.id === currentUserId
+  const mentioned = !own && mentionsUsername(message.body, currentUsername)
   let copyTimer
 
   async function copyMessage() {
@@ -55,7 +68,7 @@ export function ChannelChatMessage({ message, currentUserId, compact = false, on
 
   return (
     <div
-      class={`channel-chat-message-row ${compact ? 'channel-chat-message-compact' : ''} ${own ? 'channel-chat-message-own' : ''}`}
+      class={`channel-chat-message-row ${compact ? 'channel-chat-message-compact' : ''} ${own ? 'channel-chat-message-own' : ''} ${mentioned ? 'channel-chat-message-mentioned' : ''}`}
       role="group"
       tabIndex={0}
       data-keyboard-item="true"
@@ -69,10 +82,11 @@ export function ChannelChatMessage({ message, currentUserId, compact = false, on
           <div class="channel-chat-message-meta">
             <strong>{message.sender.displayName}</strong>
             <span class="channel-chat-message-badge" aria-hidden="true">🎈</span>
+            {mentioned && <span class="channel-chat-mention-label">Mentioned you</span>}
             <time datetime={message.createdAt}>{formatClockTime(message.createdAt)}</time>
           </div>
         )}
-        {message.body && <p>{message.body}</p>}
+        {message.body && <p>{renderBody(message.body)}</p>}
         {message.attachments?.length > 0 && (
           <div class="channel-chat-message-attachments" aria-label="Message attachments">
             {message.attachments.map(attachment => (

@@ -2,7 +2,7 @@ import { QueryTypes } from 'sequelize'
 import { sequelize, withTransaction } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
 import { encodeCursor } from '../http/pagination.js'
-import { notifyChannelInvite, notifyChannelJoin, notifyChannelPost } from '../notifications/service.js'
+import { notifyChannelInvite, notifyChannelJoin, notifyChannelMentions, notifyChannelPost } from '../notifications/service.js'
 import { getPostById, listPosts } from '../posts/service.js'
 import { cacheGet, cacheKey, cacheSet } from '../cache/memory.js'
 
@@ -414,7 +414,7 @@ export async function moderateChannelPost(userId, slug, postId, status) {
     const channel = await getChannelRow(userId, slug, transaction, { requireMember: true })
     await requireChannelModerator(userId, channel.id, transaction)
     const rows = await sequelize.query(`
-      SELECT id, author_id, channel_moderation_status
+      SELECT id, author_id, body, channel_moderation_status
       FROM posts
       WHERE id = :postId AND channel_id = :channelId AND deleted_at IS NULL
       LIMIT 1
@@ -449,6 +449,12 @@ export async function moderateChannelPost(userId, slug, postId, status) {
           WHERE id = :channelId
         `, { replacements: { channelId: channel.id }, transaction })
         await notifyChannelMembers(channel.id, post.author_id, post.id, transaction)
+        await notifyChannelMentions({
+          channelId: channel.id,
+          actorId: post.author_id,
+          body: post.body,
+          postId: post.id
+        }, transaction)
       }
       if (status !== 'approved' && post.channel_moderation_status !== 'approved') {
         await sequelize.query(`

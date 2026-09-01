@@ -74,6 +74,7 @@ export function AppShell({
           slug,
           router,
           currentUserId: userState.value.id,
+          currentUsername: userState.value.username,
           onHeaderChange: value => channelHeader.value = value
         })
       }

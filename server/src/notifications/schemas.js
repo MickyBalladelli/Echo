@@ -7,14 +7,15 @@ const notificationType = z.enum([
   'channel_invite',
   'channel_join',
   'channel_post',
-  'chat_message'
+  'chat_message',
+  'mention'
 ])
 
 export const notificationPreferencesSchema = z.object({
   preferences: z.array(z.object({
     type: notificationType,
     enabled: z.boolean()
-  })).min(1).max(7).superRefine((preferences, context) => {
+  })).min(1).max(8).superRefine((preferences, context) => {
     const types = preferences.map(preference => preference.type)
     if (new Set(types).size !== types.length) {
       context.addIssue({ code: 'custom', message: 'Each notification type can appear only once' })

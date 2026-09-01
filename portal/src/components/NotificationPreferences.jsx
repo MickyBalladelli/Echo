@@ -9,7 +9,8 @@ const preferenceOptions = Object.freeze([
   { type: 'channel_invite', label: 'Channel invites' },
   { type: 'channel_join', label: 'People joining your channels' },
   { type: 'channel_post', label: 'Activity in your channels' },
-  { type: 'chat_message', label: 'Chat messages' }
+  { type: 'chat_message', label: 'Chat messages' },
+  { type: 'mention', label: 'When someone tags you' }
 ])
 
 function browserPermission() {

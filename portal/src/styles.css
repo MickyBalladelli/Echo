@@ -2791,6 +2791,16 @@ img {
   outline-offset: -2px;
 }
 
+.channel-chat-message-mentioned {
+  border-left: 3px solid #a98bff;
+  background: color-mix(in srgb, #a98bff 10%, transparent);
+}
+
+.channel-chat-message-mentioned:hover,
+.channel-chat-message-mentioned:focus-within {
+  background: color-mix(in srgb, #a98bff 16%, #232429);
+}
+
 .channel-chat-message-compact {
   padding-top: 3px;
   padding-bottom: 3px;
@@ -2839,6 +2849,22 @@ img {
   margin-left: -3px;
   font-size: 20px;
   line-height: 1;
+}
+
+.channel-chat-mention-label {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #a98bff 18%, transparent);
+  color: #d7caff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.channel-chat-mention {
+  color: #cbbcff;
+  font-weight: 700;
 }
 
 .channel-chat-message-body p {
@@ -3140,6 +3166,31 @@ img {
 
 .channel-chat-compose textarea::placeholder {
   color: #9b9ca5;
+}
+
+.channel-chat-mention-suggestions {
+  display: flex;
+  position: absolute;
+  right: 12px;
+  bottom: calc(100% - 1px);
+  left: 12px;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 8px;
+  border: 1px solid #3b3c45;
+  border-radius: 10px;
+  background: #222329;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 28%);
+}
+
+.channel-chat-mention-suggestions .prism-button {
+  min-height: 30px;
+  padding: 4px 9px;
+  border: 1px solid #3b3c45;
+  border-radius: 999px;
+  background: #2a2b30;
+  color: #d7caff;
+  font-size: 12px;
 }
 
 .channel-chat-compose .prism-button:not(.channel-chat-attach) {
