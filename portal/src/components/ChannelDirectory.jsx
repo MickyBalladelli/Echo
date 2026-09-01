@@ -27,6 +27,24 @@ function channelMemberLabel(channel) {
   return `${channel.memberCount} member${channel.memberCount === 1 ? '' : 's'}`
 }
 
+function openChannel(router, slug) {
+  return event => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return
+    }
+
+    event.preventDefault()
+    router.navigate(`/channels/${slug}`)
+  }
+}
+
 export function ChannelDirectory({ router }) {
   const channels = signal([])
   const nextCursor = signal(null)
@@ -57,6 +75,7 @@ export function ChannelDirectory({ router }) {
   }
 
   const renderChannelCard = channel => {
+    const channelClick = openChannel(router, channel.slug)
     const card = (
       <Card class="channel-card">
         <div class="channel-card-preview">
@@ -65,13 +84,13 @@ export function ChannelDirectory({ router }) {
             : <span class="channel-card-placeholder" aria-hidden="true">{channelInitial(channel)}</span>}
           <div class="channel-card-copy">
             <div class="channel-card-title-row">
-              <a class="channel-card-title-link" href={`/channels/${channel.slug}`} onClick={router.link(`/channels/${channel.slug}`)}><Label size="large">{channel.name}</Label></a>
+              <a class="channel-card-title-link" href={`/channels/${channel.slug}`} onClick={channelClick}><Label size="large">{channel.name}</Label></a>
               <Tooltip class="channel-card-description-tooltip" content={channel.description || 'No description yet.'} placement="top">
                 <p>{channel.description || 'No description yet.'}</p>
               </Tooltip>
             </div>
             <div class="channel-card-description-row">
-              <a class="channel-card-slug-link channel-slug" href={`/channels/${channel.slug}`} onClick={router.link(`/channels/${channel.slug}`)}>/{channel.slug}</a>
+              <a class="channel-card-slug-link channel-slug" href={`/channels/${channel.slug}`} onClick={channelClick}>/{channel.slug}</a>
               <span class="channel-card-counts">{channelMemberLabel(channel)}</span>
               <span class="channel-card-access">{channelAccessLabel(channel)}</span>
             </div>

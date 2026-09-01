@@ -30,6 +30,24 @@ function isTimelinePath(path) {
   return path === '/' || path === '/following'
 }
 
+function openChannel(router, slug) {
+  return event => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return
+    }
+
+    event.preventDefault()
+    router.navigate(`/channels/${slug}`)
+  }
+}
+
 function renderTreeItem(item) {
   const markClass = item.path === '/following'
     ? 'shell-tree-mark shell-tree-mark-following'
@@ -106,7 +124,7 @@ export function ShellNavigation({ router, user, unreadNotifications, notificatio
         meta: channel.unreadNotificationCount > 0
           ? channel.unreadNotificationCount
           : channel.isOwner ? 'owner' : 'joined',
-        onClick: router.link(`/channels/${channel.slug}`)
+        onClick: openChannel(router, channel.slug)
       }))
       : [{
         id: 'channels-empty',

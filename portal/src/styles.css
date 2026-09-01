@@ -1900,10 +1900,26 @@ textarea {
 
 .post-card-footer .prism-button {
   margin-left: 0;
+  --prism-button-current-text: var(--prism-color-text-muted);
+  --prism-button-current-border: transparent;
+  --prism-button-current-background: transparent;
+  --prism-button-current-background-hover: color-mix(in srgb, var(--prism-color-action-hover) 12%, transparent);
+  --prism-button-current-background-active: color-mix(in srgb, var(--prism-color-action-hover) 18%, transparent);
+  --prism-button-current-shadow: none;
+  --prism-button-current-shadow-hover: none;
+  --prism-button-current-shadow-active: none;
+  border-radius: 9px;
+  transition: color .15s ease, background .15s ease, opacity .15s ease;
 }
 
 .post-card-footer .post-like-button {
   margin-left: 0;
+}
+
+.post-card-footer .prism-button:hover:not(:disabled),
+.post-card-footer .prism-button:active:not(:disabled),
+.post-card-footer .prism-button-pressed {
+  color: var(--prism-color-text);
 }
 
 .post-action-with-count {
@@ -1913,17 +1929,36 @@ textarea {
 }
 
 .post-action-count {
+  min-width: 0;
+  min-height: 0;
+  padding: 0 2px;
+  border: 0;
+  border-radius: 0;
+  color: var(--prism-color-text-muted);
+  background: transparent;
   font-variant-numeric: tabular-nums;
 }
 
 .post-card-footer .prism-button-icon-only {
-  min-width: 36px;
-  min-height: 36px;
-  padding: 7px;
+  width: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 6px;
 }
 
 .post-card-footer .prism-button-icon-only .prism-button-icon {
-  font-size: 18px;
+  font-size: 16px;
+}
+
+.post-card-footer .post-like-button-active {
+  color: var(--prism-color-accent);
+  background: color-mix(in srgb, var(--prism-color-accent) 12%, transparent);
+}
+
+.post-card-footer .post-like-button-active:hover:not(:disabled),
+.post-card-footer .post-like-button-active.prism-button-pressed {
+  color: var(--prism-color-accent);
+  background: color-mix(in srgb, var(--prism-color-accent) 18%, transparent);
 }
 
 .post-action-menu {
@@ -2761,6 +2796,11 @@ img {
   .post-card-action,
   .chat-compose .prism-button {
     min-height: 44px;
+  }
+
+  .post-card-footer .prism-button-icon-only {
+    width: 44px;
+    min-width: 44px;
   }
 
   .post-card-meta {
