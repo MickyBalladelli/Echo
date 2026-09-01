@@ -420,7 +420,7 @@ textarea {
   font-family: 'Zen Dots', Montserrat, Avenir Next, Arial, sans-serif;
   font-weight: 400;
   letter-spacing: .08em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .echo-header-icon {

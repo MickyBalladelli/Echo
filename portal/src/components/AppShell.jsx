@@ -132,7 +132,7 @@ export function AppShell({
         <div class="echo-header-content">
           <div class="echo-header-brand">
             <img class="echo-header-icon" src={echoIconUrl} alt="" aria-hidden="true" />
-            <div class="echo-header-copy"><div class="echo-header-title-row"><Label size="large">ECHO</Label><HeaderStatus apiStatus={apiStatus} socketStatus={socketStatus} /></div><span>Small signals. Real people.</span></div>
+            <div class="echo-header-copy"><div class="echo-header-title-row"><Label size="large">Echo</Label><HeaderStatus apiStatus={apiStatus} socketStatus={socketStatus} /></div><span>Small signals. Real people.</span></div>
           </div>
         </div>
       )
@@ -142,7 +142,7 @@ export function AppShell({
       <div class="echo-header-content echo-channel-header-content">
         <div class="echo-header-brand">
           <img class="echo-header-icon" src={echoIconUrl} alt="" aria-hidden="true" />
-          <div class="echo-header-copy"><div class="echo-header-title-row"><Label size="large">ECHO</Label><HeaderStatus apiStatus={apiStatus} socketStatus={socketStatus} /></div><span>Small signals. Real people.</span></div>
+          <div class="echo-header-copy"><div class="echo-header-title-row"><Label size="large">Echo</Label><HeaderStatus apiStatus={apiStatus} socketStatus={socketStatus} /></div><span>Small signals. Real people.</span></div>
         </div>
         <div class="echo-channel-header-details">
           <div class="echo-channel-primary">
