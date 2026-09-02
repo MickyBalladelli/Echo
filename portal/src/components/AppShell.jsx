@@ -1,6 +1,6 @@
 import { computed, createRouter, onMount, routerView, signal } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
-import echoIconUrl from '../assets/icons/echo.png'
+import echoIconUrl from '../assets/icons/echo-favicon.png'
 import { ArrowLeftIcon, Header, IconButton, Label, Layout } from '../lib/vendor.js'
 import { AccountMenu } from './AccountMenu.jsx'
 import { ContextRail } from './ContextRail.jsx'
