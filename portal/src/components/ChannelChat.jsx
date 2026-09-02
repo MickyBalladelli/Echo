@@ -19,6 +19,8 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
   const attachments = signal([])
   const state = signal('loading')
   const busy = signal(false)
+  const loadingOlder = signal(false)
+  const nextCursor = signal(null)
   const error = signal('')
   const mentionSuggestions = signal([])
 
@@ -33,6 +35,17 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
       requestAnimationFrame(() => {
         const viewport = messageViewport()
         if (viewport) viewport.scrollTop = viewport.scrollHeight
+      })
+    })
+  }
+
+  function restoreMessageScroll(previousHeight, previousTop) {
+    if (typeof requestAnimationFrame !== 'function') return
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const viewport = messageViewport()
+        if (!viewport) return
+        viewport.scrollTop = viewport.scrollHeight - previousHeight + previousTop
       })
     })
   }
@@ -157,6 +170,7 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
 
   async function load() {
     if (!readChannel().membershipRole) {
+      nextCursor.value = null
       state.value = 'ready'
       return
     }
@@ -176,6 +190,7 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
         ...nextMessages,
         ...messages.value.filter(message => !loadedIds.has(message.id))
       ])
+      nextCursor.value = result.meta?.nextCursor || null
       const latest = messages.value.at(-1)
       if (latest && latest.sender.id !== currentUserId) markRead(latest.id)
       scrollMessagesToBottom()
@@ -187,6 +202,38 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
     } finally {
       clearTimeout(timeout)
     }
+  }
+
+  async function loadOlder() {
+    if (loadingOlder.value || !nextCursor.value) return
+
+    const viewport = messageViewport()
+    const previousHeight = viewport?.scrollHeight || 0
+    const previousTop = viewport?.scrollTop || 0
+    const cursor = nextCursor.value
+    loadingOlder.value = true
+
+    try {
+      const result = await apiRequest(`/api/channels/${encodeURIComponent(slug)}/chat?limit=50&cursor=${encodeURIComponent(cursor)}`)
+      const received = Array.isArray(result.data)
+        ? result.data.filter(message => message?.id && message?.sender?.id)
+        : []
+      const loadedIds = new Set(messages.value.map(message => message.id))
+      messages.value = sortMessages([
+        ...received.filter(message => !loadedIds.has(message.id)),
+        ...messages.value
+      ])
+      nextCursor.value = result.meta?.nextCursor || null
+      restoreMessageScroll(previousHeight, previousTop)
+    } catch (requestError) {
+      error.value = requestError.message || 'Could not load older messages'
+    } finally {
+      loadingOlder.value = false
+    }
+  }
+
+  function handleMessageScroll(event) {
+    if (event.currentTarget.scrollTop <= 80) loadOlder()
   }
 
   async function send(event) {
@@ -280,6 +327,7 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
     estimateSize={72}
     threshold={100}
     label="Channel chat history"
+    onScroll={handleMessageScroll}
     renderItem={renderMessage}
   />
   const messageListView = computed(() => messages.value.length

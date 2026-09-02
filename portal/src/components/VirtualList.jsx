@@ -8,7 +8,8 @@ export function VirtualList({
   itemKey = item => item.id,
   estimateSize = 320,
   threshold = 30,
-  label = 'List'
+  label = 'List',
+  onScroll
 }) {
   const scrollTop = signal(0)
   const viewportHeight = signal(defaultViewportHeight)
@@ -18,6 +19,11 @@ export function VirtualList({
     const element = event.currentTarget
     scrollTop.value = element.scrollTop
     viewportHeight.value = element.clientHeight || defaultViewportHeight
+  }
+
+  function handleScroll(event) {
+    updateScroll(event)
+    onScroll?.(event)
   }
 
   const range = computed(() => {
@@ -62,7 +68,7 @@ export function VirtualList({
   })
 
   return (
-    <div class="virtual-list" role="region" aria-label={label} onScroll={updateScroll}>
+    <div class="virtual-list" role="region" aria-label={label} onScroll={handleScroll}>
       {renderedItems}
     </div>
   )
