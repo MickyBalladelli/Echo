@@ -2,7 +2,7 @@ import { computed, signal } from '../lib/vendor.js'
 import { Button } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 
-export function ProfileRelationshipControls({ user, onChanged }) {
+export function ProfileRelationshipControls({ user, onChanged, compact = false }) {
   const state = signal({
     mutedByViewer: Boolean(user.mutedByViewer),
     restrictedByViewer: Boolean(user.restrictedByViewer),
@@ -37,6 +37,10 @@ export function ProfileRelationshipControls({ user, onChanged }) {
       <Button
         variant="tertiary"
         size="small"
+        showLabel={!compact}
+        icon={compact ? '◌' : undefined}
+        title={computed(() => state.value.mutedByViewer ? 'Unmute' : 'Mute')}
+        ariaLabel={computed(() => state.value.mutedByViewer ? 'Unmute this user' : 'Mute this user')}
         loading={computed(() => busy.value === 'mute')}
         pressed={computed(() => state.value.mutedByViewer)}
         onClick={() => toggle('mute', state.value.mutedByViewer)}
@@ -46,6 +50,10 @@ export function ProfileRelationshipControls({ user, onChanged }) {
       <Button
         variant="tertiary"
         size="small"
+        showLabel={!compact}
+        icon={compact ? '↗' : undefined}
+        title={computed(() => state.value.restrictedByViewer ? 'Unrestrict' : 'Restrict')}
+        ariaLabel={computed(() => state.value.restrictedByViewer ? 'Unrestrict this user' : 'Restrict this user')}
         loading={computed(() => busy.value === 'restrict')}
         pressed={computed(() => state.value.restrictedByViewer)}
         onClick={() => toggle('restrict', state.value.restrictedByViewer)}
@@ -55,6 +63,10 @@ export function ProfileRelationshipControls({ user, onChanged }) {
       <Button
         variant="tertiary"
         size="small"
+        showLabel={!compact}
+        icon={compact ? '⊘' : undefined}
+        title={computed(() => state.value.blockedByViewer ? 'Unblock' : 'Block')}
+        ariaLabel={computed(() => state.value.blockedByViewer ? 'Unblock this user' : 'Block this user')}
         loading={computed(() => busy.value === 'block')}
         pressed={computed(() => state.value.blockedByViewer)}
         onClick={() => toggle('block', state.value.blockedByViewer)}

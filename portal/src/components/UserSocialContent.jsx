@@ -7,15 +7,9 @@ import { UserBadges } from './UserBadges.jsx'
 import { PostCard } from './PostCard.jsx'
 import { UserList } from './UserList.jsx'
 import { ReportButton } from './ReportButton.jsx'
-import { formatMonthYear } from '../lib/dates.js'
-import { mediaSrc } from '../lib/media.js'
 import { KeyboardList } from './KeyboardList.jsx'
 import { VirtualList } from './VirtualList.jsx'
-import { UserAvatar } from './UserAvatar.jsx'
-
-function profileAvatar(user) {
-  return <UserAvatar user={user} size="large" className="profile-avatar" />
-}
+import { ProfileHero } from './ProfileHero.jsx'
 
 export function UserSocialContent({ username, router, currentUserId, showIdentity = true }) {
   const user = signal(null)
@@ -93,57 +87,52 @@ export function UserSocialContent({ username, router, currentUserId, showIdentit
     return (
       <div class="user-social-stack">
         {showIdentity && (
-          <Card class="public-profile-card">
-            <div class="public-profile-media">
-              {user.value.profile.bannerUrl && <img class="profile-banner" src={mediaSrc(user.value.profile.bannerUrl)} alt="" loading="lazy" decoding="async" />}
-              {profileAvatar(user.value)}
-            </div>
-            <div class="profile-copy">
-              <Label size="large">{user.value.profile.displayName}</Label>
-              <UserBadges badges={user.value.badges} />
-              <span class="profile-handle">@{user.value.username}</span>
-              <p>{user.value.profile.bio || 'No bio yet.'}</p>
-              <span class="profile-joined">Joined {formatMonthYear(user.value.createdAt)}</span>
-            </div>
-            {!user.value.isSelf && <div class="public-profile-actions">
-              <FollowButton
-                userId={user.value.id}
-                following={user.value.followedByViewer}
-                followerCount={user.value.followerCount}
-                onChanged={follow => {
-                  user.value = {
-                    ...user.value,
-                    followedByViewer: follow.following,
-                    followerCount: follow.followerCount ?? user.value.followerCount,
-                    isPrivate: user.value.profile.profileVisibility === 'followers' && !follow.following
-                  }
-                  if (!follow.optimistic) loadAll()
-                }}
-              />
-              <ProfileRelationshipControls
-                user={user.value}
-                onChanged={relationship => {
-                  const isBlocked = relationship.blockedByViewer || relationship.blockedViewer
-                  user.value = {
-                    ...user.value,
-                    ...relationship,
-                    isBlocked,
-                    isPrivate: isBlocked || (user.value.profile.profileVisibility === 'followers' && !user.value.followedByViewer)
-                  }
-                }}
-              />
-              <ReportButton targetType="user" targetId={user.value.id} label="Report profile" />
-            </div>}
-          </Card>
+          <ProfileHero
+            user={user.value}
+            actions={!user.value.isSelf && (
+              <>
+                <FollowButton
+                  userId={user.value.id}
+                  following={user.value.followedByViewer}
+                  followerCount={user.value.followerCount}
+                  onChanged={follow => {
+                    user.value = {
+                      ...user.value,
+                      followedByViewer: follow.following,
+                      followerCount: follow.followerCount ?? user.value.followerCount,
+                      isPrivate: user.value.profile.profileVisibility === 'followers' && !follow.following
+                    }
+                    if (!follow.optimistic) loadAll()
+                  }}
+                />
+                <ProfileRelationshipControls
+                  user={user.value}
+                  compact
+                  onChanged={relationship => {
+                    const isBlocked = relationship.blockedByViewer || relationship.blockedViewer
+                    user.value = {
+                      ...user.value,
+                      ...relationship,
+                      isBlocked,
+                      isPrivate: isBlocked || (user.value.profile.profileVisibility === 'followers' && !user.value.followedByViewer)
+                    }
+                  }}
+                />
+                <ReportButton targetType="user" targetId={user.value.id} label="Report profile" />
+              </>
+            )}
+          />
         )}
         {user.value.isPrivate
           ? <Card class="private-profile-card"><Label size="large">{user.value.isBlocked ? 'This person is blocked' : 'This profile is private'}</Label><p>{user.value.isBlocked ? 'Unblock this person to see their posts and connections.' : 'Follow this person to see their posts and connections.'}</p></Card>
           : <>
-            <div class="social-counts" aria-label="Follow counts">
-              <span><strong>{user.value.followerCount}</strong> followers</span>
-              <span><strong>{user.value.followingCount}</strong> following</span>
-              {user.value.mutualFollowerCount > 0 && <span><strong>{user.value.mutualFollowerCount}</strong> mutual follows</span>}
-            </div>
+            {!showIdentity && (
+              <div class="social-counts" aria-label="Follow counts">
+                <span><strong>{user.value.followerCount}</strong> followers</span>
+                <span><strong>{user.value.followingCount}</strong> following</span>
+                {user.value.mutualFollowerCount > 0 && <span><strong>{user.value.mutualFollowerCount}</strong> mutual follows</span>}
+              </div>
+            )}
         {user.value.pinnedPost && (
           <div class="profile-pinned-post">
             <div class="post-replies-heading"><Label size="small" tone="accent">PINNED POST</Label></div>
