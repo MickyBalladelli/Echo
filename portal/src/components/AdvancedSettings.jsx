@@ -2,6 +2,7 @@ import { computed, onMount, signal } from '../lib/vendor.js'
 import { Button, Card, FormField, Label, Select, TextField } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { setAppLocale } from '../lib/i18n.js'
+import { PasswordField } from './PasswordField.jsx'
 
 function shortDevice(userAgent) {
   if (!userAgent) return 'Unknown device'
@@ -228,7 +229,7 @@ export function AdvancedSettings({ user, onDeleted }) {
         </form>
         {resetToken.value && <form class="advanced-inline-form" onSubmit={event => run(() => confirmReset(event))}>
           <FormField id="password-reset-token" label="Reset token"><TextField id="password-reset-token" value={resetToken} required /></FormField>
-          <FormField id="password-reset-password" label="New password"><TextField id="password-reset-password" type="password" value={resetPassword} minLength={8} required /></FormField>
+          <FormField id="password-reset-password" label="New password"><PasswordField id="password-reset-password" value={resetPassword} minLength={8} required /></FormField>
           <Button type="submit" loading={busy}>Change password</Button>
         </form>}
       </Card>

@@ -12,6 +12,8 @@ export {
   DateTimePicker,
   EmptyState,
   Alert,
+  EyeIcon,
+  EyeOffIcon,
   FilePicker,
   Footer,
   FormField,

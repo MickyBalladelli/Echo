@@ -1,6 +1,7 @@
 import { computed, onMount, signal } from '../lib/vendor.js'
 import { Alert, Button, Card, FormField, Label, Stack, Tabs, TextField } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
+import { PasswordField } from './PasswordField.jsx'
 
 export function AuthPanel({ onAuthenticated }) {
   const mode = signal('login')
@@ -171,15 +172,14 @@ export function AuthPanel({ onAuthenticated }) {
             />
           </FormField>
           <FormField id="auth-login-password" label="Password" required hint="Use your Echo password.">
-              <TextField
+              <PasswordField
                 id="auth-login-password"
                 name="password"
                 value={password}
-              type="password"
-              placeholder="Your password"
-              autocomplete="current-password"
-              required
-            />
+                placeholder="Your password"
+                autocomplete="current-password"
+                required
+              />
           </FormField>
           <Button type="submit" fullWidth loading={busy}>Log in</Button>
           <Button type="button" variant="tertiary" onClick={() => recoveryOpen.value = !recoveryOpen.value}>Forgot password?</Button>
@@ -244,11 +244,10 @@ export function AuthPanel({ onAuthenticated }) {
             hint="At least 8 characters."
             error={computed(() => fieldErrors.value.password?.[0])}
           >
-            <TextField
+            <PasswordField
               id="auth-register-password"
               name="password"
               value={password}
-              type="password"
               placeholder="Create a password"
               autocomplete="new-password"
               minLength={8}
@@ -297,7 +296,7 @@ export function AuthPanel({ onAuthenticated }) {
         {!recoveryToken.value && <Button type="submit" loading={busy}>Request reset</Button>}
         {recoveryToken.value && <>
           <FormField id="auth-recovery-token" label="Reset token" required><TextField id="auth-recovery-token" value={recoveryToken} required /></FormField>
-          <FormField id="auth-recovery-new-password" label="New password" required><TextField id="auth-recovery-new-password" type="password" value={recoveryPassword} minLength={8} required /></FormField>
+          <FormField id="auth-recovery-new-password" label="New password" required><PasswordField id="auth-recovery-new-password" value={recoveryPassword} minLength={8} required /></FormField>
           <Button type="submit" loading={busy}>Change password</Button>
         </>}
         {recoveryNotice.value && <p role="status">{recoveryNotice}</p>}

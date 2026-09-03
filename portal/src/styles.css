@@ -1106,6 +1106,29 @@ textarea {
   align-items: end;
 }
 
+.password-field {
+  display: grid;
+  align-items: center;
+  width: 100%;
+}
+
+.password-field-input {
+  grid-area: 1 / 1;
+  padding-right: 3.4rem;
+}
+
+.password-field-toggle {
+  grid-area: 1 / 1;
+  z-index: 1;
+  justify-self: end;
+  align-self: center;
+  margin-right: .35rem;
+}
+
+.password-field-toggle:focus-visible {
+  z-index: 1;
+}
+
 .social-graph-stack {
   display: grid;
   gap: 18px;
