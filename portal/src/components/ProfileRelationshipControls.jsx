@@ -1,5 +1,5 @@
 import { computed, signal } from '../lib/vendor.js'
-import { Button } from '../lib/vendor.js'
+import { Button, CloseIcon, EyeOffIcon, IconButton, LockIcon } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 
 export function ProfileRelationshipControls({ user, onChanged, compact = false }) {
@@ -32,47 +32,44 @@ export function ProfileRelationshipControls({ user, onChanged, compact = false }
     }
   }
 
+  function renderControl({ kind, label, active, icon }) {
+    const currentLabel = computed(() => active.value ? `Un${label.toLowerCase()}` : label)
+    const props = {
+      size: 'small',
+      title: currentLabel,
+      ariaLabel: computed(() => `${currentLabel.value} this user`),
+      loading: computed(() => busy.value === kind),
+      pressed: active,
+      onClick: () => toggle(kind, active.value)
+    }
+
+    if (compact) {
+      return <IconButton {...props} class={`profile-relationship-icon profile-relationship-icon-${kind}`} icon={icon} />
+    }
+
+    return <Button {...props} variant="tertiary">{currentLabel}</Button>
+  }
+
   return (
     <div class="profile-relationship-controls">
-      <Button
-        variant="tertiary"
-        size="small"
-        showLabel={!compact}
-        icon={compact ? '◌' : undefined}
-        title={computed(() => state.value.mutedByViewer ? 'Unmute' : 'Mute')}
-        ariaLabel={computed(() => state.value.mutedByViewer ? 'Unmute this user' : 'Mute this user')}
-        loading={computed(() => busy.value === 'mute')}
-        pressed={computed(() => state.value.mutedByViewer)}
-        onClick={() => toggle('mute', state.value.mutedByViewer)}
-      >
-        {computed(() => state.value.mutedByViewer ? 'Unmute' : 'Mute')}
-      </Button>
-      <Button
-        variant="tertiary"
-        size="small"
-        showLabel={!compact}
-        icon={compact ? '↗' : undefined}
-        title={computed(() => state.value.restrictedByViewer ? 'Unrestrict' : 'Restrict')}
-        ariaLabel={computed(() => state.value.restrictedByViewer ? 'Unrestrict this user' : 'Restrict this user')}
-        loading={computed(() => busy.value === 'restrict')}
-        pressed={computed(() => state.value.restrictedByViewer)}
-        onClick={() => toggle('restrict', state.value.restrictedByViewer)}
-      >
-        {computed(() => state.value.restrictedByViewer ? 'Unrestrict' : 'Restrict')}
-      </Button>
-      <Button
-        variant="tertiary"
-        size="small"
-        showLabel={!compact}
-        icon={compact ? '⊘' : undefined}
-        title={computed(() => state.value.blockedByViewer ? 'Unblock' : 'Block')}
-        ariaLabel={computed(() => state.value.blockedByViewer ? 'Unblock this user' : 'Block this user')}
-        loading={computed(() => busy.value === 'block')}
-        pressed={computed(() => state.value.blockedByViewer)}
-        onClick={() => toggle('block', state.value.blockedByViewer)}
-      >
-        {computed(() => state.value.blockedByViewer ? 'Unblock' : 'Block')}
-      </Button>
+      {renderControl({
+        kind: 'mute',
+        label: 'Mute',
+        active: computed(() => state.value.mutedByViewer),
+        icon: EyeOffIcon({ size: '1.1em' })
+      })}
+      {renderControl({
+        kind: 'restrict',
+        label: 'Restrict',
+        active: computed(() => state.value.restrictedByViewer),
+        icon: LockIcon({ size: '1.1em' })
+      })}
+      {renderControl({
+        kind: 'block',
+        label: 'Block',
+        active: computed(() => state.value.blockedByViewer),
+        icon: CloseIcon({ size: '1.1em' })
+      })}
       <span class="profile-relationship-error" role="alert">{error}</span>
     </div>
   )

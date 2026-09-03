@@ -1,5 +1,5 @@
 import { computed, signal } from '../lib/vendor.js'
-import { Button } from '../lib/vendor.js'
+import { CheckIcon, IconButton, UserPlusIcon } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { LiveRegion } from './LiveRegion.jsx'
 
@@ -9,6 +9,7 @@ export function FollowButton({ userId, following, followerCount, onChanged }) {
   const error = signal('')
   const announcement = signal('')
   const label = computed(() => active.value ? 'Following' : 'Follow')
+  const icon = computed(() => active.value ? CheckIcon({ size: '1.2em' }) : UserPlusIcon({ size: '1.2em' }))
 
   async function toggleFollow() {
     if (busy.value) return
@@ -43,16 +44,16 @@ export function FollowButton({ userId, following, followerCount, onChanged }) {
 
   return (
     <div class="follow-control">
-      <Button
-        variant={computed(() => active.value ? 'secondary' : 'primary')}
+      <IconButton
+        class="profile-follow-icon"
+        icon={icon}
         size="small"
         pressed={active}
         loading={busy}
+        title={label}
         ariaLabel={computed(() => active.value ? 'Unfollow this user' : 'Follow this user')}
         onClick={toggleFollow}
-      >
-        {label}
-      </Button>
+      />
       <span class="follow-control-error" role="alert">{error}</span>
       <LiveRegion message={announcement} />
     </div>

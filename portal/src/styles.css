@@ -1129,6 +1129,13 @@ textarea {
   z-index: 1;
 }
 
+.password-field-toggle .prism-button-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+  flex-basis: 1.2rem;
+  font-size: 1.2rem;
+}
+
 .social-graph-stack {
   display: grid;
   gap: 18px;
@@ -2520,7 +2527,33 @@ textarea {
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  padding-bottom: 4px;
+  padding-bottom: 0;
+}
+
+.profile-hero-actions > .follow-control,
+.profile-hero-actions > .profile-relationship-controls,
+.profile-hero-actions > .moderation-action {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+}
+
+.profile-hero-actions > .follow-control,
+.profile-hero-actions > .profile-relationship-controls {
+  position: relative;
+}
+
+.profile-hero-actions > .follow-control .follow-control-error,
+.profile-hero-actions > .profile-relationship-controls .profile-relationship-error {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  width: max-content;
+  max-width: 260px;
+}
+
+.profile-hero-actions > .profile-relationship-controls {
+  flex-wrap: nowrap;
 }
 
 .profile-hero-actions .prism-button {
@@ -2540,6 +2573,68 @@ textarea {
   min-height: 38px;
   padding: 0;
   border-radius: 50%;
+}
+
+.profile-hero-actions .follow-control > .profile-follow-icon {
+  width: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  border-radius: 10px;
+}
+
+.profile-hero-actions .profile-follow-icon .prism-button-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex-basis: 1.35rem;
+  font-size: 1.35rem;
+}
+
+.profile-hero-actions .profile-relationship-controls .profile-relationship-icon,
+.profile-hero-actions .moderation-action > .profile-report-icon {
+  width: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  border: 1px solid var(--prism-color-border);
+  border-radius: 10px;
+  color: var(--prism-color-text);
+  background: color-mix(in srgb, var(--prism-color-surface-tint) 78%, transparent);
+  box-shadow: none;
+}
+
+.profile-hero-actions .profile-relationship-controls .profile-relationship-icon:hover:not(:disabled),
+.profile-hero-actions .profile-relationship-controls .profile-relationship-icon:focus-visible,
+.profile-hero-actions .moderation-action > .profile-report-icon:hover:not(:disabled),
+.profile-hero-actions .moderation-action > .profile-report-icon:focus-visible {
+  border-color: var(--prism-color-border-strong);
+  color: var(--prism-color-ink);
+  background: var(--prism-color-surface-hover);
+  box-shadow: none;
+}
+
+.profile-hero-actions .profile-relationship-controls .profile-relationship-icon.prism-button-pressed {
+  border-color: color-mix(in srgb, var(--prism-color-accent) 60%, var(--prism-color-border));
+  color: var(--prism-color-accent-bright);
+  background: color-mix(in srgb, var(--prism-color-accent) 12%, var(--prism-color-surface));
+}
+
+.profile-hero-actions .profile-relationship-controls .profile-relationship-icon .prism-button-icon,
+.profile-hero-actions .moderation-action > .profile-report-icon .prism-button-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex-basis: 1.35rem;
+  font-size: 1.35rem;
+}
+
+.profile-hero-actions .profile-relationship-controls .profile-relationship-icon-block:hover:not(:disabled),
+.profile-hero-actions .profile-relationship-controls .profile-relationship-icon-block:focus-visible,
+.profile-hero-actions .profile-relationship-controls .profile-relationship-icon-block.prism-button-pressed,
+.profile-hero-actions .moderation-action > .profile-report-icon:hover:not(:disabled),
+.profile-hero-actions .moderation-action > .profile-report-icon:focus-visible {
+  border-color: color-mix(in srgb, var(--prism-color-error) 60%, var(--prism-color-border));
+  color: var(--prism-color-error);
+  background: color-mix(in srgb, var(--prism-color-error) 10%, var(--prism-color-surface));
 }
 
 .profile-hero-copy {

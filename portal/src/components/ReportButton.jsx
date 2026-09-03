@@ -1,5 +1,5 @@
-import { signal } from '../lib/vendor.js'
-import { Button, IconButton } from '../lib/vendor.js'
+import { computed, signal } from '../lib/vendor.js'
+import { AlertIcon, Button, CloseIcon, IconButton } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 
 export function ReportButton({ targetType, targetId, label = 'Report' }) {
@@ -8,6 +8,7 @@ export function ReportButton({ targetType, targetId, label = 'Report' }) {
   const busy = signal(false)
   const result = signal('')
   const error = signal('')
+  const reportIcon = computed(() => open.value ? CloseIcon({ size: '1.1em' }) : AlertIcon({ size: '1.1em' }))
 
   async function submit(event) {
     event.preventDefault()
@@ -38,7 +39,7 @@ export function ReportButton({ targetType, targetId, label = 'Report' }) {
 
   return (
     <span class="moderation-action">
-      {!result.value && <IconButton icon={open.value ? '×' : '⚑'} ariaLabel={open.value ? 'Cancel report' : label} title={open.value ? 'Cancel report' : label} onClick={() => open.value = !open.value} />}
+      {!result.value && <IconButton class="profile-report-icon" icon={reportIcon} ariaLabel={open.value ? 'Cancel report' : label} title={open.value ? 'Cancel report' : label} onClick={() => open.value = !open.value} />}
       {result.value && <span class="moderation-action-result">{result.value}</span>}
       {open.value && (
         <form class="moderation-action-form" role="dialog" aria-label={`Report ${targetType}`} onSubmit={submit} onKeyDown={closeOnEscape}>
