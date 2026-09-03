@@ -13,6 +13,7 @@ const navItems = Object.freeze([
     ]
   },
   { path: '/explore', label: 'Explore', mark: '⌕' },
+  { path: '/social-graph', label: 'Social Graph', mark: '⇄' },
   { path: '/notifications', label: 'Notifications', mark: '●' },
   { path: '/bookmarks', label: 'Bookmarks', mark: '▱' },
   { path: '/notes', label: 'Notes', mark: '▤' },
@@ -131,12 +132,17 @@ export function ShellNavigation({ router, user, unreadNotifications, notificatio
         label: channelState.value === 'loading' ? 'Loading channels…' : channelState.value === 'error' ? 'Channels unavailable' : 'No channels yet'
       }]
 
+    const isActivePath = path => {
+      const [pathname, hash] = path.split('#')
+      return router.path.value === pathname && (!hash || router.hash.value === `#${hash}`)
+    }
+
     const renderLeaf = item => ({
       ...item,
-      id: item.path,
+      id: item.id ?? item.path,
       href: item.path,
-      active: router.path.value === item.path,
-      onClick: router.link(item.path),
+      active: item.active ?? isActivePath(item.path),
+      onClick: item.onClick ?? router.link(item.path),
       meta: item.path === '/notifications' && unreadNotifications.value > 0
         ? unreadNotifications.value
         : undefined

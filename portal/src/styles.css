@@ -1106,6 +1106,266 @@ textarea {
   align-items: end;
 }
 
+.social-graph-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.social-graph-toolbar,
+.social-graph-heading,
+.social-graph-legend {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.social-graph-toolbar {
+  color: var(--prism-color-text);
+  font-size: 14px;
+}
+
+.social-graph-card {
+  display: grid;
+  gap: 14px;
+  overflow: hidden;
+}
+
+.social-graph-heading h2 {
+  margin: 8px 0 0;
+  font-size: clamp(24px, 4vw, 34px);
+}
+
+.social-graph-depth,
+.social-graph-legend,
+.social-graph-note {
+  color: var(--prism-color-text);
+  font-size: 13px;
+}
+
+.social-graph-legend {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+}
+
+.social-graph-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.social-graph-legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.social-graph-legend-incoming {
+  background: var(--prism-color-accent);
+}
+
+.social-graph-legend-outgoing {
+  background: var(--prism-color-success);
+}
+
+.social-graph-stage {
+  position: relative;
+  min-height: 740px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--prism-color-border-strong) 50%, transparent);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--prism-color-accent) 12%, transparent), transparent 25%),
+    linear-gradient(145deg, color-mix(in srgb, var(--prism-color-surface) 92%, transparent), color-mix(in srgb, var(--prism-color-page) 86%, transparent));
+}
+
+.social-graph-edges {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.social-graph-edge {
+  fill: none;
+  stroke-width: 1.1;
+  vector-effect: non-scaling-stroke;
+}
+
+.social-graph-edge-incoming {
+  stroke: var(--prism-color-accent);
+}
+
+.social-graph-edge-outgoing {
+  stroke: var(--prism-color-success);
+}
+
+.social-graph-edges #social-graph-arrow-incoming path {
+  fill: var(--prism-color-accent);
+}
+
+.social-graph-edges #social-graph-arrow-outgoing path {
+  fill: var(--prism-color-success);
+}
+
+.social-graph-column-title,
+.social-graph-person,
+.social-graph-aggregate,
+.social-graph-root {
+  position: absolute;
+  z-index: 1;
+  transform: translate(-50%, -50%);
+}
+
+.social-graph-column-title {
+  top: 22px;
+  transform: translateX(-50%);
+  color: var(--prism-color-text);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.social-graph-column-title span {
+  margin-left: 5px;
+  color: var(--prism-color-accent-bright);
+}
+
+.social-graph-column-title-followers,
+.social-graph-person-followers,
+.social-graph-aggregate-followers {
+  left: 18%;
+}
+
+.social-graph-column-title-following,
+.social-graph-person-following,
+.social-graph-aggregate-following {
+  left: 82%;
+}
+
+.social-graph-person,
+.social-graph-root {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: min(210px, 25%);
+  padding: 9px;
+  border: 1px solid color-mix(in srgb, var(--prism-color-border-strong) 62%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--prism-color-surface) 96%, transparent);
+  box-shadow: 0 10px 26px rgb(0 0 0 / 18%);
+  text-decoration: none;
+  transition: border-color .16s ease, transform .16s ease;
+}
+
+.social-graph-person:hover,
+.social-graph-person:focus-visible,
+.social-graph-root:hover,
+.social-graph-root:focus-visible {
+  border-color: var(--prism-color-accent);
+  transform: translate(-50%, -50%) translateY(-2px);
+}
+
+.social-graph-person-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.social-graph-person-copy strong,
+.social-graph-person-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.social-graph-person-copy small,
+.social-graph-root span,
+.social-graph-root small {
+  color: var(--prism-color-text);
+  font-size: 11px;
+}
+
+.social-graph-aggregate {
+  display: grid;
+  width: 100px;
+  min-height: 62px;
+  place-content: center;
+  border: 1px dashed var(--prism-color-border-strong);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--prism-color-page) 90%, transparent);
+  color: var(--prism-color-text-strong);
+  text-align: center;
+}
+
+.social-graph-aggregate strong {
+  color: var(--prism-color-accent-bright);
+  font-size: 16px;
+}
+
+.social-graph-aggregate small {
+  font-size: 10px;
+}
+
+.social-graph-root {
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 180px;
+  justify-items: center;
+  gap: 3px;
+  padding: 16px 12px;
+  border-color: var(--prism-color-accent);
+  border-radius: 18px;
+  color: var(--prism-color-text-strong);
+  text-align: center;
+}
+
+.social-graph-root-avatar {
+  margin-bottom: 4px;
+}
+
+.social-graph-root small {
+  color: var(--prism-color-accent-bright);
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.social-graph-note {
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .social-graph-toolbar,
+  .social-graph-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .social-graph-stage {
+    min-height: 740px;
+  }
+
+  .social-graph-person {
+    width: 30%;
+    padding: 7px;
+  }
+
+  .social-graph-person-copy strong {
+    font-size: 11px;
+  }
+
+  .social-graph-root {
+    width: 112px;
+  }
+}
+
 .search-type-buttons {
   display: flex;
   flex-wrap: wrap;

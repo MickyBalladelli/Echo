@@ -1,6 +1,5 @@
 import { ProfileCard } from '../components/ProfileCard.jsx'
 import { UserSocialContent } from '../components/UserSocialContent.jsx'
-import { ExploreContent } from '../components/ExploreContent.jsx'
 import { NotificationCenter } from '../components/NotificationCenter.jsx'
 import { NotificationPreferences } from '../components/NotificationPreferences.jsx'
 import { ChannelDirectory } from '../components/ChannelDirectory.jsx'
@@ -11,18 +10,6 @@ import { AdvancedSettings } from '../components/AdvancedSettings.jsx'
 import { Card, EmptyState, Button } from '../lib/vendor.js'
 import { ComingSoon, PageFrame } from './PageFrame.jsx'
 import { FeedPage, PostDetailPage } from './FeedPage.jsx'
-
-export function ExplorePage({ router, currentUserId }) {
-  return (
-    <PageFrame
-      eyebrow="DISCOVER / EXPLORE"
-      title="Explore"
-      description="Find people, topics, and public posts for your timeline."
-    >
-      <ExploreContent router={router} currentUserId={currentUserId} />
-    </PageFrame>
-  )
-}
 
 export function NotificationsPage({ router, unreadCount, notificationVersion }) {
   return (
@@ -123,4 +110,5 @@ export function NotFoundPage({ router }) {
   )
 }
 
+export { ExplorePage } from './ExplorePages.jsx'
 export { FeedPage as HomePage, PostDetailPage }

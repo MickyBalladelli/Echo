@@ -11,6 +11,7 @@ import { ChannelDetailPage } from '../pages/ChannelDetailPage.jsx'
 import { BookmarksPage } from '../pages/BookmarksPage.jsx'
 import { HashtagPage } from '../pages/HashtagPage.jsx'
 import { ModerationPage } from '../pages/ModerationPage.jsx'
+import { SocialGraphPage } from '../pages/SocialGraphPage.jsx'
 import {
   ChannelsPage,
   ChatPage,
@@ -45,6 +46,11 @@ export function AppShell({
       path: '/explore',
       title: 'Explore',
       view: () => ExplorePage({ router, currentUserId: userState.value.id })
+    },
+    {
+      path: '/social-graph',
+      title: 'Social Graph',
+      view: () => SocialGraphPage({ router, username: userState.value.username })
     },
     {
       path: '/notifications',
