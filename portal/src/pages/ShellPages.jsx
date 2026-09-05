@@ -17,6 +17,7 @@ export function NotificationsPage({ router, unreadCount, notificationVersion }) 
       eyebrow="INBOX / NOTIFICATIONS"
       title="Notifications"
       description="Replies, likes, follows, channel activity, and tags will land here."
+      hideHeader
     >
       <NotificationCenter router={router} unreadCount={unreadCount} notificationVersion={notificationVersion} />
     </PageFrame>
@@ -29,6 +30,7 @@ export function PreferencesPage({ user, onDeleted }) {
       eyebrow="YOU / PREFERENCES"
       title="Preferences"
       description="Choose which signals reach your inbox, browser, and future email digest."
+      hideHeader
     >
       <NotificationPreferences />
       <AdvancedSettings user={user} onDeleted={onDeleted} />
@@ -42,6 +44,7 @@ export function NotesPage({ router, noteId = null }) {
       eyebrow="PRIVATE / NOTES"
       title="Notes"
       description="Keep private thoughts close, then turn the good ones into posts."
+      hideHeader={!noteId}
     >
       <NotesWorkspace router={router} noteId={noteId} />
     </PageFrame>
@@ -55,6 +58,7 @@ export function ChannelsPage({ router }) {
       title="Channels"
       description="Chat rooms for focused conversations."
       headerActions={<ChannelCreateDialog router={router} />}
+      hideHeader
     >
       <ChannelDirectory router={router} />
     </PageFrame>
@@ -67,20 +71,22 @@ export function ChatPage({ router, conversationId = null, currentUserId }) {
       eyebrow="DIRECT / CHAT"
       title="Chat"
       description="Private conversations and real-time messages will live here."
+      hideHeader={!conversationId}
     >
       <ChatWorkspace router={router} conversationId={conversationId} currentUserId={currentUserId} />
     </PageFrame>
   )
 }
 
-export function ProfilePage({ userState, onLogout, onUpdated, router }) {
+export function ProfilePage({ userState, onUpdated, router }) {
   return (
     <PageFrame
       eyebrow="YOU / PROFILE"
       title="Profile"
       description="Your public identity, bio, and account details."
+      hideHeader
     >
-      <ProfileCard user={userState.value} onLogout={onLogout} onUpdated={onUpdated} />
+      <ProfileCard user={userState.value} onUpdated={onUpdated} />
       <UserSocialContent
         username={userState.value.username}
         router={router}

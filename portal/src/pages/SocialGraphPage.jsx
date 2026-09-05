@@ -5,6 +5,7 @@ import { PageFrame } from './PageFrame.jsx'
 import { UserAvatar } from '../components/UserAvatar.jsx'
 
 const graphLimit = 12
+const svgNamespace = 'http://www.w3.org/2000/svg'
 
 function displayName(user) {
   return user?.profile?.displayName || user?.username || 'User'
@@ -19,6 +20,22 @@ function compactCount(value) {
 
 function nodeY(index, count) {
   return count <= 1 ? 50 : 10 + (index * 80) / (count - 1)
+}
+
+function edgePath(side, y) {
+  return side === 'followers'
+    ? `M 18 ${y} C 29 ${y}, 39 50, 50 50`
+    : `M 50 50 C 61 50, 71 ${y}, 82 ${y}`
+}
+
+function createSvgElement(tagName, attributes = {}) {
+  const element = document.createElementNS(svgNamespace, tagName)
+
+  for (const [name, value] of Object.entries(attributes)) {
+    element.setAttribute(name, String(value))
+  }
+
+  return element
 }
 
 function GraphPersonNode({ user, side, index, count, router }) {
@@ -83,40 +100,49 @@ function GraphNodeList({ users, extraCount, side, router }) {
 function GraphEdges({ followerNodeCount, followingNodeCount }) {
   const followerTotal = followerNodeCount > 0 ? followerNodeCount : 1
   const followingTotal = followingNodeCount > 0 ? followingNodeCount : 1
-  return (
-    <svg class="social-graph-edges" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-      {Array.from({ length: followerNodeCount }, (_, index) => (
-        <line
-          key={`follower-edge-${index}`}
-          x1="18"
-          y1={nodeY(index, followerTotal)}
-          x2="50"
-          y2="50"
-          class="social-graph-edge social-graph-edge-incoming"
-          marker-end="url(#social-graph-arrow-incoming)"
-        />
-      ))}
-      {Array.from({ length: followingNodeCount }, (_, index) => (
-        <line
-          key={`following-edge-${index}`}
-          x1="50"
-          y1="50"
-          x2="82"
-          y2={nodeY(index, followingTotal)}
-          class="social-graph-edge social-graph-edge-outgoing"
-          marker-end="url(#social-graph-arrow-outgoing)"
-        />
-      ))}
-      <defs>
-        <marker id="social-graph-arrow-incoming" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
-          <path d="M0 0L5 2.5L0 5Z" />
-        </marker>
-        <marker id="social-graph-arrow-outgoing" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
-          <path d="M0 0L5 2.5L0 5Z" />
-        </marker>
-      </defs>
-    </svg>
-  )
+  const svg = createSvgElement('svg', {
+    class: 'social-graph-edges',
+    viewBox: '0 0 100 100',
+    preserveAspectRatio: 'none',
+    'aria-hidden': 'true'
+  })
+  const defs = createSvgElement('defs')
+
+  for (const [id, className] of [
+    ['social-graph-arrow-incoming', 'social-graph-edge-incoming'],
+    ['social-graph-arrow-outgoing', 'social-graph-edge-outgoing']
+  ]) {
+    const marker = createSvgElement('marker', {
+      id,
+      markerWidth: '5',
+      markerHeight: '5',
+      refX: '4',
+      refY: '2.5',
+      orient: 'auto'
+    })
+    marker.append(createSvgElement('path', { d: 'M0 0L5 2.5L0 5Z', class: className }))
+    defs.append(marker)
+  }
+
+  svg.append(defs)
+
+  for (let index = 0; index < followerNodeCount; index += 1) {
+    svg.append(createSvgElement('path', {
+      d: edgePath('followers', nodeY(index, followerTotal)),
+      class: 'social-graph-edge social-graph-edge-incoming',
+      'marker-end': 'url(#social-graph-arrow-incoming)'
+    }))
+  }
+
+  for (let index = 0; index < followingNodeCount; index += 1) {
+    svg.append(createSvgElement('path', {
+      d: edgePath('following', nodeY(index, followingTotal)),
+      class: 'social-graph-edge social-graph-edge-outgoing',
+      'marker-end': 'url(#social-graph-arrow-outgoing)'
+    }))
+  }
+
+  return svg
 }
 
 function GraphStage({ profile, followers, following, extraFollowers, extraFollowing, router }) {
@@ -210,11 +236,7 @@ export function SocialGraphPage({ router, username }) {
   })
 
   return (
-    <PageFrame
-      eyebrow="PEOPLE / SOCIAL GRAPH"
-      title="Social Graph"
-      description="See the direct connections around you without flooding the screen with names."
-    >
+    <PageFrame hideHeader>
       <div class="social-graph-stack">
         <div class="social-graph-toolbar">
           <span>Showing a small, readable slice of your network.</span>

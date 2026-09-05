@@ -130,6 +130,7 @@ export function FeedPage({ router, currentUserId, feed = 'home' }) {
         ? 'A timeline of posts from you and people you follow.'
         : 'A timeline of posts from people and topics you may care about. Channels are for chat.'}
       headerActions={<PostComposerDialog onCreated={addPost} />}
+      hideHeader
     >
       {feedContent}
     </PageFrame>

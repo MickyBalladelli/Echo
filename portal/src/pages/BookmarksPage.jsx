@@ -67,5 +67,5 @@ export function BookmarksPage({ router, currentUserId }) {
 
   onMount(load)
 
-  return <PageFrame eyebrow="KEEP / BOOKMARKS" title="Bookmarks" description="Saved posts, ready when you are.">{content}</PageFrame>
+  return <PageFrame eyebrow="KEEP / BOOKMARKS" title="Bookmarks" description="Saved posts, ready when you are." hideHeader>{content}</PageFrame>
 }

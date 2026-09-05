@@ -10,6 +10,7 @@ export function ModerationPage({ user }) {
       eyebrow="STAFF / MODERATION"
       title="Moderation"
       description="Review safety reports, content removal, and appeals."
+      hideHeader
     >
       {staff
         ? <ModerationQueue />

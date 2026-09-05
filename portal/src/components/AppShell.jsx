@@ -25,6 +25,21 @@ import {
   ProfilePage
 } from '../pages/ShellPages.jsx'
 
+const topLevelPageHeaders = Object.freeze({
+  '/': { eyebrow: 'TIMELINE / FOR YOU', title: 'Timeline' },
+  '/following': { eyebrow: 'TIMELINE / FOLLOWING', title: 'Following' },
+  '/explore': { eyebrow: 'EXPLORE', title: 'Explore' },
+  '/social-graph': { eyebrow: 'PEOPLE / SOCIAL GRAPH', title: 'Social Graph' },
+  '/notifications': { eyebrow: 'INBOX / NOTIFICATIONS', title: 'Notifications' },
+  '/bookmarks': { eyebrow: 'KEEP / BOOKMARKS', title: 'Bookmarks' },
+  '/notes': { eyebrow: 'PRIVATE / NOTES', title: 'Notes' },
+  '/channels': { eyebrow: 'COMMUNITIES / CHANNELS', title: 'Channels' },
+  '/chat': { eyebrow: 'DIRECT / CHAT', title: 'Chat' },
+  '/profile': { eyebrow: 'YOU / PROFILE', title: 'Profile' },
+  '/preferences': { eyebrow: 'YOU / PREFERENCES', title: 'Preferences' },
+  '/moderation': { eyebrow: 'STAFF / MODERATION', title: 'Moderation' }
+})
+
 export function AppShell({
   userState,
   apiStatus,
@@ -96,7 +111,7 @@ export function AppShell({
     {
       path: '/profile',
       title: 'Profile',
-      view: () => ProfilePage({ userState, onLogout, onUpdated, router })
+      view: () => ProfilePage({ userState, onUpdated, router })
     },
     { path: '/preferences', title: 'Preferences', view: () => PreferencesPage({ user: userState.value, onDeleted: onLogout }) },
     { path: '/moderation', title: 'Moderation', view: () => ModerationPage({ user: userState.value }) },
@@ -130,9 +145,30 @@ export function AppShell({
     }
   })
   const activeView = routerView(router, () => NotFoundPage({ router }))
-  const layoutClass = computed(() => router.path.value.startsWith('/channels/') ? 'echo-layout echo-layout-channel' : 'echo-layout')
+  const layoutClass = computed(() => {
+    if (router.path.value.startsWith('/channels/')) return 'echo-layout echo-layout-channel'
+    if (topLevelPageHeaders[router.path.value]) return 'echo-layout echo-layout-top-level'
+    return 'echo-layout'
+  })
   const globalHeader = computed(() => {
     const channel = channelHeader.value
+    const pageHeader = topLevelPageHeaders[router.path.value]
+
+    if (pageHeader) {
+      return (
+        <div class="echo-header-content echo-channel-header-content">
+          <div class="echo-header-brand">
+            <img class="echo-header-icon" src={echoIconUrl} alt="" aria-hidden="true" />
+            <div class="echo-header-copy"><div class="echo-header-title-row"><Label size="large">Echo</Label><HeaderStatus apiStatus={apiStatus} socketStatus={socketStatus} /></div><span>Small signals. Real people.</span></div>
+          </div>
+          <div class="echo-channel-header-details">
+            <Label size="small" tone="accent">{pageHeader.eyebrow}</Label>
+            <h1>{pageHeader.title}</h1>
+          </div>
+        </div>
+      )
+    }
+
     if (!channel || !router.path.value.startsWith('/channels/')) {
       return (
         <div class="echo-header-content">

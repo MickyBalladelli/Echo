@@ -3,7 +3,7 @@ import { Button, Card } from '../lib/vendor.js'
 import { ProfileEditor } from './ProfileEditor.jsx'
 import { ProfileHero } from './ProfileHero.jsx'
 
-export function ProfileCard({ user, onLogout, onUpdated }) {
+export function ProfileCard({ user, onUpdated }) {
   const profileUser = signal(user)
   const editing = signal(false)
 
@@ -32,7 +32,6 @@ export function ProfileCard({ user, onLogout, onUpdated }) {
         actions={
           <>
             <Button variant="tertiary" size="small" onClick={() => editing.value = true}>Edit profile</Button>
-            <Button variant="tertiary" size="small" onClick={onLogout}>Log out</Button>
           </>
         }
       />

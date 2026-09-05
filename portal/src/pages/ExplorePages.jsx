@@ -7,6 +7,7 @@ export function ExplorePage({ router, currentUserId }) {
       eyebrow="EXPLORE"
       title="Explore"
       description="Find people, words in posts, channels, and hashtags."
+      hideHeader
     >
       <ExploreContent router={router} currentUserId={currentUserId} />
     </PageFrame>

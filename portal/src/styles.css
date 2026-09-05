@@ -174,7 +174,12 @@ textarea {
   --echo-header-height: 3.7rem;
 }
 
-.echo-layout-channel .prism-layout-header .prism-header-bar {
+.echo-layout-top-level {
+  --echo-header-height: 3.7rem;
+}
+
+.echo-layout-channel .prism-layout-header .prism-header-bar,
+.echo-layout-top-level .prism-layout-header .prism-header-bar {
   align-items: center;
   height: var(--echo-header-height);
   min-height: var(--echo-header-height);
@@ -791,6 +796,10 @@ textarea {
   gap: 8px;
 }
 
+.route-page-actions-standalone {
+  margin-bottom: 18px;
+}
+
 .route-page h1 {
   margin: 12px 0 0;
   font-size: clamp(42px, 7vw, 72px);
@@ -1222,7 +1231,8 @@ textarea {
 
 .social-graph-edge {
   fill: none;
-  stroke-width: 1.1;
+  stroke-width: 1.8;
+  stroke-linecap: round;
   vector-effect: non-scaling-stroke;
 }
 
@@ -1283,7 +1293,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 9px;
-  width: min(210px, 25%);
+  width: min(170px, 20%);
   padding: 9px;
   border: 1px solid color-mix(in srgb, var(--prism-color-border-strong) 62%, transparent);
   border-radius: 12px;
@@ -1346,7 +1356,7 @@ textarea {
   top: 50%;
   left: 50%;
   display: grid;
-  width: 180px;
+  width: 150px;
   justify-items: center;
   gap: 3px;
   padding: 16px 12px;
@@ -1358,6 +1368,15 @@ textarea {
 
 .social-graph-root-avatar {
   margin-bottom: 4px;
+}
+
+.social-graph-root strong,
+.social-graph-root span {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .social-graph-root small {
@@ -1383,7 +1402,7 @@ textarea {
   }
 
   .social-graph-person {
-    width: 30%;
+    width: 27%;
     padding: 7px;
   }
 
@@ -1392,7 +1411,7 @@ textarea {
   }
 
   .social-graph-root {
-    width: 112px;
+    width: 96px;
   }
 }
 
@@ -3127,7 +3146,8 @@ textarea {
     grid-template-columns: 1fr;
   }
 
-  .echo-layout-channel {
+  .echo-layout-channel,
+  .echo-layout-top-level {
     --echo-header-height: 6.5rem;
   }
 
@@ -3165,7 +3185,8 @@ textarea {
 }
 
 @media (max-width: 560px) {
-  .echo-layout-channel {
+  .echo-layout-channel,
+  .echo-layout-top-level {
     --echo-header-height: 8rem;
   }
 

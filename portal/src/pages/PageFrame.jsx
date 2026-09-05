@@ -2,7 +2,7 @@ import { Button, Card, EmptyState, Label } from '../lib/vendor.js'
 
 export function PageFrame({ eyebrow, title, description, headerActions, hideHeader = false, children }) {
   return (
-    <section class="route-page" aria-labelledby="route-title">
+    <section class="route-page" aria-labelledby={hideHeader ? undefined : 'route-title'}>
       {!hideHeader && (
         <header class="route-page-header">
           <div>
@@ -13,6 +13,7 @@ export function PageFrame({ eyebrow, title, description, headerActions, hideHead
           {headerActions && <div class="route-page-actions">{headerActions}</div>}
         </header>
       )}
+      {hideHeader && headerActions && <div class="route-page-actions route-page-actions-standalone">{headerActions}</div>}
       {children}
     </section>
   )
