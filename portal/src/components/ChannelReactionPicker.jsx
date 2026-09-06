@@ -54,7 +54,7 @@ export function ChannelReactionPicker({
 }) {
   const activeTab = signal('emoji')
   const search = signal('')
-  const gifs = signal(gifOptions)
+  const gifs = signal([])
   const gifLoading = signal(false)
   const gifProviderConfigured = signal(false)
   const gifNextOffset = signal(null)
@@ -66,6 +66,7 @@ export function ChannelReactionPicker({
     const query = search.value.trim()
     const offset = append ? gifNextOffset.value : 0
     const requestId = ++gifRequestId
+    if (!append) gifs.value = []
     gifLoading.value = true
     try {
       const result = await apiRequest(`/api/gifs/search?q=${encodeURIComponent(query)}&limit=24&offset=${offset}`)
@@ -95,6 +96,8 @@ export function ChannelReactionPicker({
     search.value
     if (activeTab.value !== 'gif' || !open?.value) return
     clearTimeout(gifSearchTimer)
+    gifs.value = []
+    gifLoading.value = true
     gifSearchTimer = setTimeout(() => loadGifs(), 300)
   })
 
