@@ -1,7 +1,7 @@
 import { computed, createRouter, onMount, routerView, signal } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import echoIconUrl from '../assets/icons/echo-favicon.png'
-import { ArrowLeftIcon, Button, Header, IconButton, Label, Layout } from '../lib/vendor.js'
+import { ArrowLeftIcon, Header, IconButton, Label, Layout, SettingsIcon } from '../lib/vendor.js'
 import { AccountMenu } from './AccountMenu.jsx'
 import { ContextRail } from './ContextRail.jsx'
 import { HeaderStatus } from './HeaderStatus.jsx'
@@ -152,10 +152,17 @@ export function AppShell({
   })
   const headerTrailing = computed(() => {
     const channel = channelHeader.value
+    const onChannelPage = router.path.value.startsWith('/channels/')
     return (
       <>
-        {channel?.isOwner && channel.onManage && (
-          <Button variant="tertiary" onClick={channel.onManage}>Manage channel</Button>
+        {onChannelPage && channel?.isOwner && channel.onManage && (
+          <IconButton
+            class="echo-header-channel-settings"
+            icon={SettingsIcon()}
+            ariaLabel="Manage channel"
+            title="Manage channel"
+            onClick={channel.onManage}
+          />
         )}
         <AccountMenu user={userState.value} router={router} onLogout={onLogout} />
       </>

@@ -257,6 +257,19 @@ textarea {
   color: var(--prism-color-text);
 }
 
+.echo-header-channel-settings.prism-button {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  padding: 0;
+}
+
+.echo-header-channel-settings .prism-button-icon {
+  width: 1.45rem;
+  height: 1.45rem;
+  flex-basis: 1.45rem;
+}
+
 .echo-channel-header-details h1,
 .echo-channel-header-details h2,
 .echo-channel-header-details p {

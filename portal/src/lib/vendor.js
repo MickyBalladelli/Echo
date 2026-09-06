@@ -44,6 +44,7 @@ export {
   MapPinIcon,
   MoreHorizontalIcon,
   PlusIcon,
+  SettingsIcon,
   SparkIcon,
   UserPlusIcon,
 } from '@mickyballadelli/prism'
