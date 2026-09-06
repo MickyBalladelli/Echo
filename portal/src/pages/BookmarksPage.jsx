@@ -5,6 +5,7 @@ import { PostCard } from '../components/PostCard.jsx'
 import { KeyboardList } from '../components/KeyboardList.jsx'
 import { VirtualList } from '../components/VirtualList.jsx'
 import { PageFrame } from './PageFrame.jsx'
+import { sortByCreatedAt } from '../lib/dates.js'
 
 export function BookmarksPage({ router, currentUserId }) {
   const posts = signal([])
@@ -26,7 +27,7 @@ export function BookmarksPage({ router, currentUserId }) {
       const query = new URLSearchParams({ limit: '30' })
       if (append && nextCursor.value) query.set('cursor', nextCursor.value)
       const result = await apiRequest(`/api/me/bookmarks?${query.toString()}`)
-      posts.value = append ? [...posts.value, ...result.data] : result.data
+      posts.value = append ? sortByCreatedAt([...posts.value, ...(result.data || [])]) : sortByCreatedAt(result.data || [])
       nextCursor.value = result.meta?.nextCursor || null
       state.value = 'ready'
     } catch (requestError) {
@@ -56,7 +57,7 @@ export function BookmarksPage({ router, currentUserId }) {
             items={posts}
             estimateSize={360}
             label="Bookmarked posts"
-            renderItem={post => <PostCard post={post} router={router} currentUserId={currentUserId} onDeleted={removePost} onUpdated={updatePost} onReposted={newPost => posts.value = [newPost, ...posts.value]} onBookmarkChanged={bookmark => !bookmark.bookmarked && removePost(post.id)} />}
+            renderItem={post => <PostCard post={post} router={router} currentUserId={currentUserId} onDeleted={removePost} onUpdated={updatePost} onReposted={newPost => posts.value = sortByCreatedAt([newPost, ...posts.value])} onBookmarkChanged={bookmark => !bookmark.bookmarked && removePost(post.id)} />}
           />
         </KeyboardList>
         {nextCursor.value && <div class="feed-load-more"><Button variant="secondary" loading={loadingMore} onClick={() => load({ append: true })}>Load more</Button></div>}

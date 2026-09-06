@@ -7,6 +7,19 @@ function parseDate(value) {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
+export function sortByCreatedAt(items, direction = 'desc') {
+  const descending = direction === 'desc'
+  return [...items].sort((left, right) => {
+    const leftTime = parseDate(left?.createdAt)?.getTime() || 0
+    const rightTime = parseDate(right?.createdAt)?.getTime() || 0
+    const timeDifference = descending ? rightTime - leftTime : leftTime - rightTime
+    if (timeDifference) return timeDifference
+
+    const idDifference = String(left?.id || '').localeCompare(String(right?.id || ''))
+    return descending ? -idDifference : idDifference
+  })
+}
+
 export function formatDateTime(value) {
   const date = parseDate(value)
   return date ? new Intl.DateTimeFormat(getAppLocale(), { dateStyle: 'medium', timeStyle: 'short', timeZone: userTimeZone }).format(date) : 'recently'

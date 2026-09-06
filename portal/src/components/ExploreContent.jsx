@@ -6,6 +6,7 @@ import { UserBadges } from './UserBadges.jsx'
 import { UserAvatar } from './UserAvatar.jsx'
 import { KeyboardList } from './KeyboardList.jsx'
 import { VirtualList } from './VirtualList.jsx'
+import { sortByCreatedAt } from '../lib/dates.js'
 
 const searchTypes = Object.freeze([
   { id: 'users', label: 'People' },
@@ -48,7 +49,8 @@ export function ExploreContent({ router, currentUserId }) {
       if (append && nextCursor.value) parameters.set('cursor', nextCursor.value)
       const response = await apiRequest(`/api/search?${parameters.toString()}`)
       if (requestId !== searchRequestId) return
-      results.value = append ? [...results.value, ...response.data] : response.data
+      const received = type === 'posts' ? sortByCreatedAt(response.data || []) : response.data || []
+      results.value = append && type === 'posts' ? sortByCreatedAt([...results.value, ...received]) : received
       nextCursor.value = response.meta?.nextCursor || null
       searchState.value = 'ready'
     } catch (requestError) {

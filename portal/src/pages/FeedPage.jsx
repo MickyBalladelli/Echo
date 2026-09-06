@@ -8,6 +8,7 @@ import { PageFrame } from './PageFrame.jsx'
 import { joinRealtimeRoom } from '../lib/realtime.js'
 import { KeyboardList } from '../components/KeyboardList.jsx'
 import { VirtualList } from '../components/VirtualList.jsx'
+import { sortByCreatedAt } from '../lib/dates.js'
 
 function getRequestMessage(error) {
   return error?.message || 'Could not load posts'
@@ -33,8 +34,8 @@ export function FeedPage({ router, currentUserId, feed = 'home' }) {
       const query = new URLSearchParams({ limit: '20', feed })
       if (append && nextCursor.value) query.set('cursor', nextCursor.value)
       const result = await apiRequest(`/api/posts?${query.toString()}`)
-      const received = result.data || []
-      posts.value = append ? [...posts.value, ...received] : received
+      const received = sortByCreatedAt(result.data || [])
+      posts.value = append ? sortByCreatedAt([...posts.value, ...received]) : received
       nextCursor.value = result.meta?.nextCursor || null
       state.value = 'ready'
     } catch (requestError) {
@@ -50,7 +51,7 @@ export function FeedPage({ router, currentUserId, feed = 'home' }) {
   }
 
   function addPost(post) {
-    posts.value = [post, ...posts.value.filter(existing => existing.id !== post.id)]
+    posts.value = sortByCreatedAt([post, ...posts.value.filter(existing => existing.id !== post.id)])
     state.value = 'ready'
   }
 
@@ -163,10 +164,7 @@ export function PostDetailPage({ id, router, currentUserId }) {
   }
 
   function sortReplies(replies) {
-    return [...replies].sort((left, right) => {
-      const timeDifference = new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime()
-      return timeDifference || left.id.localeCompare(right.id)
-    })
+    return sortByCreatedAt(replies, 'asc')
   }
 
   function selectReplyTarget(target) {

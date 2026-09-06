@@ -10,6 +10,7 @@ import { ReportButton } from './ReportButton.jsx'
 import { KeyboardList } from './KeyboardList.jsx'
 import { VirtualList } from './VirtualList.jsx'
 import { ProfileHero } from './ProfileHero.jsx'
+import { sortByCreatedAt } from '../lib/dates.js'
 
 export function UserSocialContent({ username, router, currentUserId, showIdentity = true }) {
   const user = signal(null)
@@ -34,7 +35,7 @@ export function UserSocialContent({ username, router, currentUserId, showIdentit
       user.value = profileResult.data.user
       followers.value = followersResult.data
       following.value = followingResult.data
-      posts.value = postsResult.data
+      posts.value = sortByCreatedAt(postsResult.data || [])
       state.value = 'ready'
     } catch (requestError) {
       error.value = requestError.message || 'Could not load profile'
@@ -175,7 +176,7 @@ export function UserSocialContent({ username, router, currentUserId, showIdentit
                   currentUserId={currentUserId}
                   onDeleted={removePost}
                   onUpdated={updatePost}
-                  onReposted={newPost => posts.value = [newPost, ...posts.value.filter(item => item.id !== newPost.id)]}
+                  onReposted={newPost => posts.value = sortByCreatedAt([newPost, ...posts.value.filter(item => item.id !== newPost.id)])}
                 />
               )}
             />

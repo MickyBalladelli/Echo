@@ -1,6 +1,7 @@
 import { computed, onMount, signal } from '../lib/vendor.js'
 import { Button, Card, EmptyState } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
+import { sortByCreatedAt } from '../lib/dates.js'
 import { PostCard } from '../components/PostCard.jsx'
 import { PageFrame } from './PageFrame.jsx'
 
@@ -16,7 +17,7 @@ export function HashtagPage({ tag, router, currentUserId }) {
     try {
       const query = new URLSearchParams({ hashtag: cleanTag, limit: '50' })
       const result = await apiRequest(`/api/posts?${query.toString()}`)
-      posts.value = result.data
+      posts.value = sortByCreatedAt(result.data || [])
       state.value = 'ready'
     } catch (requestError) {
       error.value = requestError.message || 'Could not load hashtag'
@@ -36,7 +37,7 @@ export function HashtagPage({ tag, router, currentUserId }) {
     if (state.value === 'loading') return <Card><div role="status">Loading #{cleanTag}…</div></Card>
     if (state.value === 'error') return <Card><EmptyState status="error" title="Hashtag unavailable" description={error.value} action={Button({ children: 'Try again', onClick: load })} /></Card>
     if (!posts.value.length) return <Card><EmptyState title={`No posts for #${cleanTag}`} description="Use this hashtag in a post to start the topic." /></Card>
-    return <div class="post-feed">{posts.value.map(post => <PostCard key={post.id} post={post} router={router} currentUserId={currentUserId} onDeleted={removePost} onUpdated={updatePost} onReposted={newPost => posts.value = [newPost, ...posts.value]} />)}</div>
+    return <div class="post-feed">{posts.value.map(post => <PostCard key={post.id} post={post} router={router} currentUserId={currentUserId} onDeleted={removePost} onUpdated={updatePost} onReposted={newPost => posts.value = sortByCreatedAt([newPost, ...posts.value])} />)}</div>
   })
 
   onMount(load)
