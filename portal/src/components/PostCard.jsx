@@ -275,6 +275,76 @@ export function PostCard({
       </div>
     ))
 
+  const mainContent = computed(() => editing.value ? (
+    <form class="post-edit-form" onSubmit={saveEdit}>
+      <textarea class="post-composer-input" use:bind={body} maxlength="280" rows="4" aria-label="Edit post text" />
+      <div class="post-edit-options">
+        <FormField id={`post-edit-visibility-${post.id}`} label="Visibility">
+          <Select
+            id={`post-edit-visibility-${post.id}`}
+            value={visibility}
+            ariaLabel="Post visibility"
+            options={[
+              { value: 'public', label: 'Public' },
+              { value: 'followers', label: 'Followers' },
+              { value: 'private', label: 'Only me' }
+            ]}
+          />
+        </FormField>
+        <FormField id={`post-edit-warning-${post.id}`} label="Content warning">
+          <TextField
+            id={`post-edit-warning-${post.id}`}
+            value={contentWarning}
+            maxLength={120}
+            placeholder="Optional"
+            ariaLabel="Content warning"
+          />
+        </FormField>
+      </div>
+      <div class="post-card-footer">
+        <Button type="submit">Save edit</Button>
+        <Button type="button" variant="tertiary" onClick={() => editing.value = false}>Cancel</Button>
+      </div>
+    </form>
+  ) : content.value)
+
+  const quotePanel = computed(() => quoting.value ? (
+    <form class="post-quote-form" onSubmit={submitQuote}>
+      <textarea use:bind={quoteBody} maxlength="280" rows="3" placeholder="Add your take (optional)" aria-label="Quote post text" />
+      <Button type="submit" loading={reposting}>Quote post</Button>
+    </form>
+  ) : null)
+
+  const historyPanel = computed(() => {
+    if (!showHistory.value) return null
+    if (historyLoading.value) {
+      return (
+        <div class="post-edit-history">
+          <Label size="small" tone="accent">EDIT HISTORY</Label>
+          <span role="status">Loading history…</span>
+        </div>
+      )
+    }
+    if (!editHistory.value.length) {
+      return (
+        <div class="post-edit-history">
+          <Label size="small" tone="accent">EDIT HISTORY</Label>
+          <span>No earlier versions.</span>
+        </div>
+      )
+    }
+    return (
+      <div class="post-edit-history">
+        <Label size="small" tone="accent">EDIT HISTORY</Label>
+        {editHistory.value.map(edit => <div key={edit.id}><time datetime={edit.createdAt}>{formatDateTime(edit.createdAt)}</time><p>{edit.body || 'Repost'}</p></div>)}
+      </div>
+    )
+  })
+
+  const historyButton = computed(() => isOwnPost && isEdited.value
+    ? <IconButton icon={ClockIcon()} ariaLabel="View edit history" title="History" loading={historyLoading} onClick={loadHistory} />
+    : null)
+
   return (
     <div class="post-card-keyboard-item" role="group" tabIndex={0} data-keyboard-item="true" aria-label={`Post by ${post.author.displayName}`}>
       <Card class="post-card">
@@ -291,7 +361,7 @@ export function PostCard({
         </a>
         <div class="post-card-meta">
           <time datetime={post.createdAt} title={formatDateTime(post.createdAt)}>{formatRelativeTime(post.createdAt)}</time>
-          {isEdited && <span title="This post has been edited">edited</span>}
+          {computed(() => isEdited.value ? <span title="This post has been edited">edited</span> : null)}
           {post.visibility !== 'public' && <Badge tone="accent">{post.visibility}</Badge>}
           {post.moderationStatus === 'pending' && <Badge tone="accent">Pending approval</Badge>}
           {post.moderationStatus === 'rejected' && <Badge tone="error">Rejected</Badge>}
@@ -303,40 +373,7 @@ export function PostCard({
           {post.following && <Badge tone="success">Following</Badge>}
         </div>
       </div>
-      {editing.value
-        ? (
-          <form class="post-edit-form" onSubmit={saveEdit}>
-            <textarea class="post-composer-input" use:bind={body} maxlength="280" rows="4" aria-label="Edit post text" />
-            <div class="post-edit-options">
-              <FormField id={`post-edit-visibility-${post.id}`} label="Visibility">
-                <Select
-                  id={`post-edit-visibility-${post.id}`}
-                  value={visibility}
-                  ariaLabel="Post visibility"
-                  options={[
-                    { value: 'public', label: 'Public' },
-                    { value: 'followers', label: 'Followers' },
-                    { value: 'private', label: 'Only me' }
-                  ]}
-                />
-              </FormField>
-              <FormField id={`post-edit-warning-${post.id}`} label="Content warning">
-                <TextField
-                  id={`post-edit-warning-${post.id}`}
-                  value={contentWarning}
-                  maxLength={120}
-                  placeholder="Optional"
-                  ariaLabel="Content warning"
-                />
-              </FormField>
-            </div>
-            <div class="post-card-footer">
-              <Button type="submit">Save edit</Button>
-              <Button type="button" variant="tertiary" onClick={() => editing.value = false}>Cancel</Button>
-            </div>
-          </form>
-        )
-        : content}
+      {mainContent}
       <div class="post-card-footer">
         <IconButton
           class="post-card-action-button"
@@ -380,27 +417,13 @@ export function PostCard({
         {onReply && <IconButton icon={ChatIcon()} ariaLabel="Reply to this post" title="Reply" onClick={() => onReply(post)} />}
         {onTogglePinned && <IconButton icon={MapPinIcon()} ariaLabel={pinned ? 'Unpin this post' : 'Pin this post'} title={pinned ? 'Unpin' : 'Pin'} loading={pinning} pressed={pinned} onClick={togglePinned} />}
         {canEdit && <IconButton icon="✎" ariaLabel="Edit this post" title="Edit" onClick={() => editing.value = true} />}
-        {isOwnPost && isEdited && <IconButton icon={ClockIcon()} ariaLabel="View edit history" title="History" loading={historyLoading} onClick={loadHistory} />}
+        {historyButton}
         {isOwnPost && <IconButton icon="×" ariaLabel="Delete this post" title="Delete" loading={deleting} onClick={deleteOwnPost} />}
         {!isOwnPost && <ReportButton targetType="post" targetId={post.id} />}
         {canAppeal && <AppealButton targetType="post" targetId={post.id} />}
       </div>
-      {quoting.value && (
-        <form class="post-quote-form" onSubmit={submitQuote}>
-          <textarea use:bind={quoteBody} maxlength="280" rows="3" placeholder="Add your take (optional)" aria-label="Quote post text" />
-          <Button type="submit" loading={reposting}>Quote post</Button>
-        </form>
-      )}
-      {showHistory.value && (
-        <div class="post-edit-history">
-          <Label size="small" tone="accent">EDIT HISTORY</Label>
-          {historyLoading.value
-            ? <span role="status">Loading history…</span>
-            : editHistory.value.length
-              ? editHistory.value.map(edit => <div key={edit.id}><time datetime={edit.createdAt}>{formatDateTime(edit.createdAt)}</time><p>{edit.body || 'Repost'}</p></div>)
-              : <span>No earlier versions.</span>}
-        </div>
-      )}
+      {quotePanel}
+      {historyPanel}
       <div class="post-card-error" role="alert" aria-live="polite">{error}</div>
         <LiveRegion message={announcement} />
       </Card>
