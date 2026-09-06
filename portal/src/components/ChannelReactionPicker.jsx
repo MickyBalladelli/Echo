@@ -1,4 +1,5 @@
 import { computed, onMount, signal } from '../lib/vendor.js'
+import { apiRequest } from '../lib/api.js'
 
 const emojiCategories = Object.freeze([
   { label: 'Smileys', emojis: ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😋', '😛', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤯', '🤠', '😈', '👿', '👹', '👺', '🤡', '💩', '👻', '💀', '☠️', '👽', '🤖', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾'] },
@@ -14,7 +15,16 @@ const gifOptions = Object.freeze([
   { label: 'Excited', url: 'https://media.giphy.com/media/5GoVLqeAOo6PK/giphy.gif' },
   { label: 'Applause', url: 'https://media.giphy.com/media/26BRuo6sLetdllPAQ/giphy.gif' },
   { label: 'High five', url: 'https://media.giphy.com/media/3o7TKSjRrfIPjeiVyM/giphy.gif' },
-  { label: 'Dance', url: 'https://media.giphy.com/media/3o6Zt6D8W8k2Q8w8k8/giphy.gif' }
+  { label: 'Dance', url: 'https://media.giphy.com/media/3o6Zt6D8W8k2Q8w8k8/giphy.gif' },
+  { label: 'Enthusiastic thumbs up', url: 'https://media2.giphy.com/media/3o6YfWVyo3JkdrNO92/giphy.gif' },
+  { label: 'Cool thumbs up', url: 'https://media1.tenor.com/m/sHGKHnikkM0AAAAC/thumbsup-cool.gif' },
+  { label: 'Simon Cowell approval', url: 'https://c.tenor.com/XTsLyyT2KRgAAAAC/thumbs-up-simon-cowell.gif' },
+  { label: 'Excellent', url: 'https://gifdb.com/images/high/excellent-emma-the-wiggles-qa7by6rs542650jz.gif' },
+  { label: 'Impressive applause', url: 'https://gifdb.com/images/file/applause-clapping-impressive-yes-o9o6qz2x1gl3bzng.gif' },
+  { label: 'Wow celebration', url: 'https://media1.tenor.com/m/cKsK-Nu-wuAAAAAC/celebration-gif-celebrations.gif' },
+  { label: 'Wow applause', url: 'https://media1.tenor.com/m/cOlmQ_vFDVAAAAAC/woah-amazed.gif' },
+  { label: 'Happy laugh', url: 'https://media1.tenor.com/m/x4-37ZYaeagAAAAC/black-guy-happy.gif' },
+  { label: 'Big laugh', url: 'https://media1.giphy.com/media/Bh7J3aA2ffe5ujSFVi/giphy.gif' }
 ])
 
 const stickerOptions = Object.freeze([
@@ -26,9 +36,65 @@ const stickerOptions = Object.freeze([
   { label: 'No words', value: '😶💬' }
 ])
 
+function filterBuiltInGifs(query) {
+  return query
+    ? gifOptions.filter(gif => gif.label.toLowerCase().includes(query))
+    : gifOptions
+}
+
 export function ChannelReactionPicker({ open, position, onSelect, onClose, canUseRichReactions = false }) {
   const activeTab = signal('emoji')
   const search = signal('')
+  const gifs = signal(gifOptions)
+  const gifLoading = signal(false)
+  const gifProviderChecked = signal(false)
+  const gifProviderConfigured = signal(false)
+  const gifNextOffset = signal(null)
+  let gifSearchTimer = null
+  let gifRequestId = 0
+
+  async function loadGifs({ append = false } = {}) {
+    if (!canUseRichReactions || (append && gifNextOffset.value === null)) return
+    const query = search.value.trim()
+    const offset = append ? gifNextOffset.value : 0
+    const requestId = ++gifRequestId
+    gifLoading.value = true
+    try {
+      const result = await apiRequest(`/api/gifs/search?q=${encodeURIComponent(query)}&limit=24&offset=${offset}`)
+      if (requestId !== gifRequestId) return
+      const data = result.data || {}
+      const received = Array.isArray(data.gifs) ? data.gifs : []
+      gifProviderConfigured.value = Boolean(data.configured)
+      gifs.value = append
+        ? [...gifs.value, ...received]
+        : data.configured ? received : filterBuiltInGifs(query)
+      gifNextOffset.value = data.configured ? data.nextOffset ?? null : null
+      gifProviderChecked.value = true
+    } catch {
+      if (requestId !== gifRequestId) return
+      gifProviderConfigured.value = false
+      gifs.value = filterBuiltInGifs(query)
+      gifNextOffset.value = null
+      gifProviderChecked.value = true
+    } finally {
+      if (requestId === gifRequestId) gifLoading.value = false
+    }
+  }
+
+  function scheduleGifSearch() {
+    clearTimeout(gifSearchTimer)
+    gifSearchTimer = setTimeout(() => loadGifs(), 300)
+  }
+
+  function selectTab(tabId) {
+    activeTab.value = tabId
+    if (tabId === 'gif' && !gifProviderChecked.value) loadGifs()
+  }
+
+  function handleSearchInput(event) {
+    search.value = event.currentTarget.value
+    if (activeTab.value === 'gif') scheduleGifSearch()
+  }
 
   function handleKeyDown(event) {
     if (event.key === 'Escape') onClose?.()
@@ -39,7 +105,10 @@ export function ChannelReactionPicker({ open, position, onSelect, onClose, canUs
       if (event.key === 'Escape' && open?.value) onClose?.()
     }
     document.addEventListener('keydown', handleDocumentKeyDown)
-    return () => document.removeEventListener('keydown', handleDocumentKeyDown)
+    return () => {
+      document.removeEventListener('keydown', handleDocumentKeyDown)
+      clearTimeout(gifSearchTimer)
+    }
   })
 
   function choose(type, value, label) {
@@ -51,6 +120,7 @@ export function ChannelReactionPicker({ open, position, onSelect, onClose, canUs
 
     const query = search.value.trim().toLowerCase()
     const pickerPosition = position?.value || { top: 12, left: 12 }
+    const stickers = query ? stickerOptions.filter(sticker => sticker.label.toLowerCase().includes(query)) : stickerOptions
     const tabs = [
       { id: 'emoji', label: 'Emoji' },
       ...(canUseRichReactions
@@ -81,7 +151,7 @@ export function ChannelReactionPicker({ open, position, onSelect, onClose, canUs
               role="tab"
               aria-selected={activeTab.value === tab.id}
               class={activeTab.value === tab.id ? 'is-active' : ''}
-              onClick={() => activeTab.value = tab.id}
+              onClick={() => selectTab(tab.id)}
             >
               {tab.label}
             </button>
@@ -92,6 +162,7 @@ export function ChannelReactionPicker({ open, position, onSelect, onClose, canUs
           type="search"
           placeholder={activeTab.value === 'emoji' ? 'Search emoji' : `Search ${activeTab.value === 'gif' ? 'GIFs' : 'stickers'}`}
           aria-label={`Search ${activeTab.value}`}
+          onInput={handleSearchInput}
           use:bind={search}
         />
         {activeTab.value === 'emoji' && (
@@ -114,21 +185,28 @@ export function ChannelReactionPicker({ open, position, onSelect, onClose, canUs
         )}
         {canUseRichReactions && activeTab.value === 'gif' && (
           <div class="channel-chat-gif-grid">
-            {gifOptions.map(gif => (
-              <button key={gif.url} class="channel-chat-gif-option" type="button" aria-label={`Use ${gif.label} GIF`} onClick={() => choose('gif', gif.url, gif.label)}>
-                <img src={gif.url} alt={gif.label} loading="lazy" />
+            {gifs.value.map(gif => (
+              <button key={gif.id || gif.url} class="channel-chat-gif-option" type="button" aria-label={`Use ${gif.title || gif.label} GIF`} onClick={() => choose('gif', gif.url, gif.title || gif.label)}>
+                <img src={gif.previewUrl || gif.url} alt={gif.title || gif.label} loading="lazy" />
               </button>
             ))}
+            {gifLoading.value && <p class="channel-chat-reaction-empty">Loading GIFs…</p>}
+            {!gifLoading.value && !gifs.value.length && <p class="channel-chat-reaction-empty">No GIFs found</p>}
+            {!gifLoading.value && !gifProviderConfigured.value && <p class="channel-chat-reaction-empty">Add GIPHY_API_KEY for live search</p>}
+            {!gifLoading.value && gifNextOffset.value !== null && (
+              <button class="channel-chat-gif-load-more" type="button" onClick={() => loadGifs({ append: true })}>Load more GIFs</button>
+            )}
           </div>
         )}
         {canUseRichReactions && activeTab.value === 'sticker' && (
           <div class="channel-chat-sticker-grid">
-            {stickerOptions.map(sticker => (
+            {stickers.map(sticker => (
               <button key={sticker.label} class="channel-chat-sticker-option" type="button" aria-label={`Use ${sticker.label} sticker`} onClick={() => choose('sticker', sticker.value, sticker.label)}>
                 <span aria-hidden="true">{sticker.value}</span>
                 <small>{sticker.label}</small>
               </button>
             ))}
+            {!stickers.length && <p class="channel-chat-reaction-empty">No stickers found</p>}
           </div>
         )}
       </div>

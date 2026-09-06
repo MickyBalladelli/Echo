@@ -20,6 +20,7 @@ import { channelsRouter } from './routes/channels.js'
 import { notesRouter } from './routes/notes.js'
 import { chatRouter } from './routes/chat.js'
 import { moderationRouter } from './routes/moderation.js'
+import { gifsRouter } from './routes/gifs.js'
 
 export function createApp() {
   const app = express()
@@ -67,6 +68,7 @@ export function createApp() {
   app.use('/api/users', requireAuth, usersRouter)
   app.use('/api/search', requireAuth, searchRouter)
   app.use('/api/notifications', requireAuth, notificationsRouter)
+  app.use('/api/gifs', requireAuth, gifsRouter)
   app.use('/api/channels', requireAuth, channelsRouter)
   app.use('/api/notes', requireAuth, notesRouter)
   app.use('/api/chat', requireAuth, chatRouter)

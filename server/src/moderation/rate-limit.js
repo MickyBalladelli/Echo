@@ -7,7 +7,8 @@ const limits = Object.freeze({
   like: { windowMs: 60 * 1000, max: 120 },
   follow: { windowMs: 60 * 1000, max: 30 },
   message: { windowMs: 60 * 1000, max: 60 },
-  report: { windowMs: 60 * 60 * 1000, max: 20 }
+  report: { windowMs: 60 * 60 * 1000, max: 20 },
+  'gif-search': { windowMs: 60 * 1000, max: 60 }
 })
 
 export function abuseRateLimit(action) {

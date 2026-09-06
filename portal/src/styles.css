@@ -4150,6 +4150,34 @@ img {
   font-size: 11px;
 }
 
+.channel-chat-reaction-empty {
+  grid-column: 1 / -1;
+  margin: 8px 0;
+  color: #a4a5b0;
+  font-size: 12px;
+  text-align: center;
+}
+
+.channel-chat-gif-load-more {
+  grid-column: 1 / -1;
+  min-height: 32px;
+  border: 1px solid #41424c;
+  border-radius: 8px;
+  background: #1b1c20;
+  color: #8bc2ff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.channel-chat-gif-load-more:hover,
+.channel-chat-gif-load-more:focus-visible {
+  border-color: #58a6ff;
+  outline: 0;
+  box-shadow: 0 0 0 2px rgb(88 166 255 / 20%);
+}
+
 .channel-chat-reaction-option {
   width: 30px;
   height: 30px;
