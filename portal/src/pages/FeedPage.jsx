@@ -1,8 +1,7 @@
-import { computed, onMount, signal } from '../lib/vendor.js'
+import { computed, effect, onMount, signal } from '../lib/vendor.js'
 import { Button, Card, EmptyState, Label } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { PostCard } from '../components/PostCard.jsx'
-import { PostComposerDialog } from '../components/PostComposerDialog.jsx'
 import { ReplyComposer } from '../components/ReplyComposer.jsx'
 import { PostHierarchy } from '../components/PostHierarchy.jsx'
 import { PageFrame } from './PageFrame.jsx'
@@ -13,12 +12,13 @@ function getRequestMessage(error) {
   return error?.message || 'Could not load posts'
 }
 
-export function FeedPage({ router, currentUserId, feed = 'home' }) {
+export function FeedPage({ router, currentUserId, feed = 'home', createdPost }) {
   const posts = signal([])
   const nextCursor = signal(null)
   const state = signal('loading')
   const error = signal('')
   const loadingMore = signal(false)
+  let lastCreatedPostId = ''
 
   async function loadFeed({ append = false } = {}) {
     if (append) {
@@ -112,7 +112,19 @@ export function FeedPage({ router, currentUserId, feed = 'home' }) {
     )
   })
 
-  onMount(() => loadFeed())
+  onMount(() => {
+    const stopCreatedPostEffect = createdPost
+      ? effect(() => {
+        const post = createdPost.value
+        if (!post || post.id === lastCreatedPostId) return
+        lastCreatedPostId = post.id
+        addPost(post)
+      })
+      : null
+
+    loadFeed()
+    return () => stopCreatedPostEffect?.()
+  })
 
   return (
     <PageFrame
@@ -121,7 +133,6 @@ export function FeedPage({ router, currentUserId, feed = 'home' }) {
       description={feed === 'following'
         ? 'A timeline of posts from you and people you follow.'
         : 'A timeline of posts from people and topics you may care about. Channels are for chat.'}
-      headerActions={<PostComposerDialog onCreated={addPost} />}
       hideHeader
     >
       {feedContent}

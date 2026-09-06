@@ -5,6 +5,7 @@ import { ArrowLeftIcon, CloseIcon, Header, IconButton, InfoIcon, Label, Layout, 
 import { AccountMenu } from './AccountMenu.jsx'
 import { ContextRail } from './ContextRail.jsx'
 import { HeaderStatus } from './HeaderStatus.jsx'
+import { PostComposerDialog } from './PostComposerDialog.jsx'
 import { ShellNavigation } from './ShellNavigation.jsx'
 import { UserProfilePage } from '../pages/UserProfilePage.jsx'
 import { ChannelDetailPage } from '../pages/ChannelDetailPage.jsx'
@@ -55,18 +56,23 @@ export function AppShell({
   onUpdated
 }) {
   const channelHeader = signal(null)
+  const latestTimelinePost = signal(null)
   const postMapVersion = signal(0)
   const postMapSelection = signal(null)
   const refreshPostMap = reply => {
     postMapSelection.value = reply?.id || null
     postMapVersion.value += 1
   }
+  const handleTimelinePostCreated = post => {
+    latestTimelinePost.value = post
+    refreshPostMap(post)
+  }
   const router = createRouter([
-    { path: '/', title: 'Timeline', view: () => HomePage({ router, currentUserId: userState.value.id }) },
+    { path: '/', title: 'Timeline', view: () => HomePage({ router, currentUserId: userState.value.id, createdPost: latestTimelinePost }) },
     {
       path: '/following',
       title: 'Following',
-      view: () => HomePage({ router, currentUserId: userState.value.id, feed: 'following' })
+      view: () => HomePage({ router, currentUserId: userState.value.id, feed: 'following', createdPost: latestTimelinePost })
     },
     {
       path: '/explore',
@@ -169,6 +175,7 @@ export function AppShell({
   const headerTrailing = computed(() => {
     const channel = channelHeader.value
     const onChannelPage = router.path.value.startsWith('/channels/')
+    const onTimeline = router.path.value === '/' || router.path.value === '/following'
     return (
       <>
         {onChannelPage && channel?.isOwner && channel.onManage && (
@@ -199,6 +206,7 @@ export function AppShell({
             onClick={channel.onDetails}
           />
         )}
+        {onTimeline && <PostComposerDialog onCreated={handleTimelinePostCreated} />}
         <AccountMenu user={userState.value} router={router} onLogout={onLogout} />
       </>
     )
