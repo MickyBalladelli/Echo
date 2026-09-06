@@ -2475,6 +2475,96 @@ textarea {
   line-height: 1.5;
 }
 
+.post-overview-card {
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  height: 100%;
+  gap: 12px;
+  padding: 16px 14px;
+  overflow: hidden;
+}
+
+.post-overview-heading {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.post-overview-heading h2,
+.post-overview-heading p {
+  margin: 0;
+}
+
+.post-overview-heading h2 {
+  font-size: 24px;
+  line-height: 1.05;
+}
+
+.post-overview-heading p,
+.post-overview-error {
+  color: var(--prism-color-text);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.post-overview-error {
+  color: var(--prism-color-error);
+}
+
+.post-overview-tree {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.post-overview-tree .prism-tree-view {
+  min-width: 0;
+}
+
+.post-overview-tree .prism-tree-controls {
+  gap: 6px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+}
+
+.post-overview-tree .prism-tree-list {
+  gap: 2px;
+}
+
+.post-overview-tree .prism-tree-list-nested {
+  margin: 2px 0 0 8px;
+  padding-left: 8px;
+  border-left-style: dashed;
+}
+
+.post-overview-tree .prism-tree-summary,
+.post-overview-tree .prism-tree-link {
+  min-height: 32px;
+  padding: 5px 6px;
+  border-radius: 8px;
+}
+
+.post-overview-tree .prism-tree-entry-copy {
+  gap: 6px;
+}
+
+.post-overview-tree .prism-tree-label {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.post-overview-tree .prism-tree-meta {
+  flex: 0 0 auto;
+  font-size: 11px;
+}
+
+.post-overview-tree .prism-tree-count {
+  font-size: 11px;
+}
+
 .context-user {
   display: flex;
   align-items: center;
@@ -3353,6 +3443,10 @@ textarea {
     overscroll-behavior: auto;
     background: transparent;
     grid-template-columns: 1fr;
+  }
+
+  .post-overview-card {
+    height: min(460px, 62vh);
   }
 
   .app-content-grid {

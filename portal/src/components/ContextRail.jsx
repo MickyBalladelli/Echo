@@ -1,13 +1,9 @@
-import { Card, Label } from '../lib/vendor.js'
+import { PostOverview } from './PostOverview.jsx'
 
-export function ContextRail() {
+export function ContextRail({ router }) {
   return (
     <aside class="context-rail" aria-label="Echo context panel">
-      <Card class="context-card">
-        <Label size="small" tone="accent">WHAT IS NEXT</Label>
-        <h2>Make some noise.</h2>
-        <p>Post, reply, follow, and find a channel when those tools land.</p>
-      </Card>
+      <PostOverview router={router} />
     </aside>
   )
 }
