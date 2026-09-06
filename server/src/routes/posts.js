@@ -55,7 +55,8 @@ postsRouter.get('/', async (request, response, next) => {
       cursor: decodeCursor(page.cursor),
       limit: page.limit,
       feed: page.feed,
-      hashtag: page.hashtag
+      hashtag: page.hashtag,
+      rootOnly: page.rootOnly
     })
     response.json(ok(result.posts, cursorMeta(result.nextCursor)))
   } catch (error) {

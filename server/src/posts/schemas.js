@@ -58,7 +58,8 @@ export const postBodySchema = z.object({
 
 export const postFeedSchema = paginationSchema.extend({
   feed: z.enum(['home', 'following']).default('home'),
-  hashtag: hashtag.optional()
+  hashtag: hashtag.optional(),
+  rootOnly: z.coerce.boolean().default(false)
 })
 
 export const draftQuerySchema = z.object({

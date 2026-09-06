@@ -4,10 +4,9 @@ import { apiRequest } from '../lib/api.js'
 import { PostCard } from '../components/PostCard.jsx'
 import { PostComposerDialog } from '../components/PostComposerDialog.jsx'
 import { ReplyComposer } from '../components/ReplyComposer.jsx'
+import { PostHierarchy } from '../components/PostHierarchy.jsx'
 import { PageFrame } from './PageFrame.jsx'
 import { joinRealtimeRoom } from '../lib/realtime.js'
-import { KeyboardList } from '../components/KeyboardList.jsx'
-import { VirtualList } from '../components/VirtualList.jsx'
 import { sortByCreatedAt } from '../lib/dates.js'
 
 function getRequestMessage(error) {
@@ -94,23 +93,15 @@ export function FeedPage({ router, currentUserId, feed = 'home' }) {
 
     return (
       <div class="post-feed">
-        <KeyboardList label="Post feed" className="post-feed-keyboard">
-          <VirtualList
-            items={posts}
-            estimateSize={360}
-            label="Post feed"
-            renderItem={post => (
-              <PostCard
-                post={post}
-                router={router}
-                currentUserId={currentUserId}
-                onDeleted={removePost}
-                onReposted={addPost}
-                onUpdated={updatePost}
-              />
-            )}
-          />
-        </KeyboardList>
+        <PostHierarchy
+          posts={posts.value}
+          router={router}
+          currentUserId={currentUserId}
+          onDeleted={removePost}
+          onReposted={addPost}
+          onUpdated={updatePost}
+          sortDirection="desc"
+        />
         {nextCursor.value && (
           <div class="feed-load-more">
             <Button variant="secondary" loading={loadingMore} onClick={() => loadFeed({ append: true })}>Load more</Button>
@@ -225,26 +216,20 @@ export function PostDetailPage({ id, router, currentUserId }) {
           <span>{post.value.replies.length ? `${post.value.replies.length} in this thread` : 'No replies yet'}</span>
         </div>
         {post.value.replies.length > 0 && (
-          <KeyboardList label="Post replies" className="post-feed-keyboard post-feed">
-            {post.value.replies.map(reply => (
-              <div key={reply.id} class={`post-reply post-reply-depth-${Math.min(reply.depth || 1, 3)}`}>
-                <PostCard
-                  post={reply}
-                  router={router}
-                  currentUserId={currentUserId}
-                  onDeleted={loadPost}
-                  onReply={selectReplyTarget}
-                  onReposted={newPost => router.navigate(`/posts/${newPost.id}`)}
-                  onUpdated={updatedPost => {
-                    post.value = {
-                      ...post.value,
-                      replies: post.value.replies.map(item => item.id === updatedPost.id ? { ...item, ...updatedPost } : item)
-                    }
-                  }}
-                />
-              </div>
-            ))}
-          </KeyboardList>
+          <PostHierarchy
+            posts={post.value.replies}
+            router={router}
+            currentUserId={currentUserId}
+            onDeleted={loadPost}
+            onReply={selectReplyTarget}
+            onReposted={newPost => router.navigate(`/posts/${newPost.id}`)}
+            onUpdated={updatedPost => {
+              post.value = {
+                ...post.value,
+                replies: post.value.replies.map(item => item.id === updatedPost.id ? { ...item, ...updatedPost } : item)
+              }
+            }}
+          />
         )}
         <ReplyComposer replyTarget={replyTarget} onCreated={addReply} onCancel={resetReplyTarget} />
       </div>

@@ -1111,6 +1111,101 @@ textarea {
   gap: 12px;
 }
 
+.post-tree {
+  display: grid;
+  gap: 12px;
+}
+
+.post-tree-node {
+  min-width: 0;
+}
+
+.post-tree-card-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.post-tree-toggle,
+.post-tree-toggle-spacer {
+  width: 28px;
+  height: 28px;
+}
+
+.post-tree-toggle {
+  display: inline-grid;
+  position: relative;
+  z-index: 1;
+  place-items: center;
+  margin-top: 8px;
+  padding: 0;
+  border: 1px solid var(--prism-color-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--prism-color-surface) 75%, transparent);
+  color: var(--prism-color-action-hover);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.post-tree-toggle:hover {
+  border-color: var(--prism-color-action-hover);
+  background: color-mix(in srgb, var(--prism-color-action-hover) 12%, var(--prism-color-surface));
+}
+
+.post-tree-node-has-children > .post-tree-card-row::after {
+  position: absolute;
+  top: 22px;
+  bottom: -34px;
+  left: 22px;
+  border-left: 2px dashed color-mix(in srgb, var(--prism-color-action-hover) 50%, transparent);
+  content: '';
+}
+
+.post-tree-node-collapsed > .post-tree-card-row::after {
+  display: none;
+}
+
+.post-tree-children {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 0 22px;
+  padding-left: 20px;
+}
+
+.post-tree-children > .post-tree-node {
+  position: relative;
+}
+
+.post-tree-children > .post-tree-node::before {
+  position: absolute;
+  top: 22px;
+  left: -20px;
+  width: 20px;
+  border-top: 2px dashed color-mix(in srgb, var(--prism-color-action-hover) 50%, transparent);
+  content: '';
+}
+
+.post-tree-children > .post-tree-node:not(:last-child)::after {
+  position: absolute;
+  top: 22px;
+  bottom: -34px;
+  left: -20px;
+  border-left: 2px dashed color-mix(in srgb, var(--prism-color-action-hover) 50%, transparent);
+  content: '';
+}
+
+.post-tree-children > .post-tree-node:not(.post-tree-node-has-children)::before {
+  width: 56px;
+}
+
+.post-tree-node-level-2 .post-card,
+.post-tree-node-level-3 .post-card {
+  border-color: color-mix(in srgb, var(--prism-color-action-hover) 45%, var(--prism-color-border));
+}
+
 .post-reply {
   min-width: 0;
 }

@@ -331,7 +331,8 @@ export async function listPosts(viewerId, {
   channelId = null,
   searchQuery = null,
   hashtag = null,
-  bookmarkedOnly = false
+  bookmarkedOnly = false,
+  rootOnly = false
 }) {
   const where = [
     "p.deleted_at IS NULL",
@@ -341,6 +342,9 @@ export async function listPosts(viewerId, {
 
   if (!channelId) {
     where.push('p.channel_id IS NULL')
+  }
+  if (rootOnly) {
+    where.push('p.parent_post_id IS NULL')
   }
   const replacements = {}
 
