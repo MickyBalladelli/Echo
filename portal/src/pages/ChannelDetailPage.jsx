@@ -30,7 +30,11 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
       slug: channel.value.slug,
       visibility: channel.value.visibility,
       isOwner: channel.value.isOwner,
-      onManage: () => detailsOpen.value = true
+      membershipRole: channel.value.membershipRole,
+      membershipBusy: busy,
+      onManage: () => detailsOpen.value = true,
+      onMembership: toggleMembership,
+      onDetails: () => detailsOpen.value = true
     })
   }
 
@@ -73,16 +77,19 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
       muted: joining ? false : previous.muted,
       notificationsEnabled: joining ? true : previous.notificationsEnabled
     }
+    updateHeader()
     announcement.value = joining ? 'Joining channel' : 'Leaving channel'
     try {
       const result = await apiRequest(`/api/channels/${encodeURIComponent(slug)}/membership`, {
         method: joining ? 'PUT' : 'DELETE'
       })
       if (result.data.channel) channel.value = result.data.channel
+      updateHeader()
       window.dispatchEvent(new CustomEvent('echo:channels-changed'))
       announcement.value = joining ? 'Joined channel' : 'Left channel'
     } catch (requestError) {
       channel.value = previous
+      updateHeader()
       announcement.value = 'Channel change failed. Previous state restored.'
       error.value = requestError.message || 'Could not update membership'
     } finally {
@@ -169,29 +176,6 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
       busy.value = false
     }
   }
-
-  const headerActions = computed(() => {
-    if (state.value !== 'ready' || !channel.value) return null
-    if (channel.value.isOwner) return null
-
-    return (
-      <div class="channel-header-actions">
-        {!channel.value.isOwner && (
-          <Button
-            loading={busy}
-            variant={channel.value.membershipRole ? 'secondary' : 'primary'}
-            ariaLabel={computed(() => channel.value.membershipRole ? 'Leave this channel' : 'Join this channel')}
-            onClick={toggleMembership}
-          >
-            {channel.value.membershipRole ? 'Leave' : channel.value.invited ? 'Accept invite' : 'Join channel'}
-          </Button>
-        )}
-        <Button variant="tertiary" onClick={() => detailsOpen.value = true}>
-          {channel.value.isOwner ? 'Manage channel' : 'Channel details'}
-        </Button>
-      </div>
-    )
-  })
 
   const content = computed(() => {
     if (state.value === 'loading') return <Card><div role="status">Loading channel…</div></Card>
@@ -295,6 +279,7 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
             members={members}
             currentUserId={currentUserId}
             currentUsername={currentUsername}
+            router={router}
             onJoin={toggleMembership}
             joinBusy={busy}
             joinLabel={channel.value?.membershipRole ? 'Leave' : channel.value?.invited ? 'Accept invite' : 'Join channel'}
@@ -334,7 +319,6 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
       eyebrow="COMMUNITIES / CHANNEL"
       title={computed(() => channel.value?.name || slug)}
       description={computed(() => channel.value?.visibility === 'private' ? 'Private chat room · invite only.' : 'Public chat room · anyone can join.')}
-      headerActions={headerActions}
       hideHeader
     >
       {content}

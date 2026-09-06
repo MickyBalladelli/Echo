@@ -12,7 +12,7 @@ const maxAttachmentTotalBytes = 1024 * 1024
 const chatLoadTimeoutMs = 10000
 const paperclipIcon = html`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M18.4 12.2 10.7 19.9a4.5 4.5 0 0 1-6.4-6.4l9.2-9.2a3 3 0 0 1 4.2 4.2l-9.2 9.2a1.5 1.5 0 0 1-2.1-2.1l8.5-8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>`
 
-export function ChannelChat({ slug, channel, members, currentUserId, currentUsername, onJoin, joinBusy, joinLabel = 'Join channel' }) {
+export function ChannelChat({ slug, channel, members, currentUserId, currentUsername, router, onJoin, joinBusy, joinLabel = 'Join channel' }) {
   const readChannel = () => channel?.value ?? channel
   const messages = signal([])
   const body = signal('')
@@ -349,6 +349,8 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
       compact={compact}
       onReply={replyTo}
       channelRole={member?.role}
+      members={readMembers()}
+      router={router}
     />
   }
 

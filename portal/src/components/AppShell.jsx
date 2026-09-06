@@ -1,7 +1,7 @@
 import { computed, createRouter, onMount, routerView, signal } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import echoIconUrl from '../assets/icons/echo-favicon.png'
-import { ArrowLeftIcon, Header, IconButton, Label, Layout, SettingsIcon } from '../lib/vendor.js'
+import { ArrowLeftIcon, CloseIcon, Header, IconButton, InfoIcon, Label, Layout, SettingsIcon, UserPlusIcon } from '../lib/vendor.js'
 import { AccountMenu } from './AccountMenu.jsx'
 import { ContextRail } from './ContextRail.jsx'
 import { HeaderStatus } from './HeaderStatus.jsx'
@@ -162,6 +162,25 @@ export function AppShell({
             ariaLabel="Manage channel"
             title="Manage channel"
             onClick={channel.onManage}
+          />
+        )}
+        {onChannelPage && !channel?.isOwner && channel?.onMembership && (
+          <IconButton
+            class="echo-header-channel-action echo-header-channel-membership"
+            icon={channel.membershipRole ? CloseIcon() : UserPlusIcon()}
+            ariaLabel={channel.membershipRole ? 'Leave channel' : 'Join channel'}
+            title={channel.membershipRole ? 'Leave channel' : 'Join channel'}
+            loading={channel.membershipBusy}
+            onClick={channel.onMembership}
+          />
+        )}
+        {onChannelPage && !channel?.isOwner && channel?.onDetails && (
+          <IconButton
+            class="echo-header-channel-action"
+            icon={InfoIcon()}
+            ariaLabel="Channel details"
+            title="Channel details"
+            onClick={channel.onDetails}
           />
         )}
         <AccountMenu user={userState.value} router={router} onLogout={onLogout} />

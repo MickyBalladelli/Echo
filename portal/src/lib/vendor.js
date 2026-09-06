@@ -41,6 +41,7 @@ export {
   CopyIcon,
   FileIcon,
   GroupIcon,
+  InfoIcon,
   MapPinIcon,
   MoreHorizontalIcon,
   PlusIcon,

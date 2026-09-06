@@ -2,6 +2,7 @@ import { signal } from '../lib/vendor.js'
 import { Badge, ChatIcon, CopyIcon, IconButton, SparkIcon } from '../lib/vendor.js'
 import { formatClockTime } from '../lib/dates.js'
 import { UserAvatar } from './UserAvatar.jsx'
+import { MentionProfilePopover } from './MentionProfilePopover.jsx'
 
 function mentionsUsername(body, username) {
   if (!body || !username) return false
@@ -9,13 +10,18 @@ function mentionsUsername(body, username) {
   return new RegExp(`(^|[^a-z0-9_])@${escapedUsername}(?![a-z0-9_])`, 'i').test(body)
 }
 
-function renderBody(body) {
+function renderBody(body, router, members) {
   return String(body).split(/(@[a-z0-9_]{3,32})/gi).map((part, index) => /^@[a-z0-9_]{3,32}$/i.test(part)
-    ? <span key={`${part}-${index}`} class="channel-chat-mention">{part}</span>
+    ? <MentionProfilePopover
+      key={`${part}-${index}`}
+      username={part.slice(1).toLowerCase()}
+      previewUser={members.find(member => member.username?.toLowerCase() === part.slice(1).toLowerCase())}
+      router={router}
+    >{part}</MentionProfilePopover>
     : part)
 }
 
-export function ChannelChatMessage({ message, currentUserId, currentUsername, compact = false, onReply, channelRole }) {
+export function ChannelChatMessage({ message, currentUserId, currentUsername, compact = false, onReply, channelRole, members = [], router }) {
   const copied = signal(false)
   const reactionPickerOpen = signal(false)
   const selectedReaction = signal('')
@@ -88,7 +94,7 @@ export function ChannelChatMessage({ message, currentUserId, currentUsername, co
             <time datetime={message.createdAt}>{formatClockTime(message.createdAt)}</time>
           </div>
         )}
-        {message.body && <p>{renderBody(message.body)}</p>}
+        {message.body && <p>{renderBody(message.body, router, members)}</p>}
         {message.attachments?.length > 0 && (
           <div class="channel-chat-message-attachments" aria-label="Message attachments">
             {message.attachments.map(attachment => (
