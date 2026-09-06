@@ -98,6 +98,14 @@ export function PostCard({
   const visibleBody = computed(() => removeAttachedGifUrl(body.value, imageUrl.value))
   const hasAttachedGifBody = computed(() => isGifMedia(imageUrl.value) && body.value.includes(imageUrl.value))
 
+  function openReply() {
+    if (onReply) {
+      onReply(post)
+      return
+    }
+    router.navigate(`/posts/${post.id}?reply=1`)
+  }
+
   async function toggleLike() {
     if (updatingLike.value) return
     const previousLiked = liked.value
@@ -381,9 +389,9 @@ export function PostCard({
         <IconButton
           class="post-card-action-button"
           icon={ChatIcon()}
-          ariaLabel={`Open replies. ${post.replyCount} ${post.replyCount === 1 ? 'reply' : 'replies'}`}
-          title={`Replies (${post.replyCount})`}
-          onClick={() => router.navigate(`/posts/${post.id}`)}
+          ariaLabel={`Reply to this post. ${post.replyCount} ${post.replyCount === 1 ? 'reply' : 'replies'}`}
+          title="Reply"
+          onClick={openReply}
         />
         <span class="post-action-with-count">
           <IconButton
@@ -417,7 +425,6 @@ export function PostCard({
             { id: 'bookmark', label: computed(() => bookmarked.value ? 'Remove bookmark' : 'Bookmark'), icon: '🔖', onSelect: toggleBookmark }
           ]
         })}
-        {onReply && <IconButton icon={ChatIcon()} ariaLabel="Reply to this post" title="Reply" onClick={() => onReply(post)} />}
         {onTogglePinned && <IconButton icon={MapPinIcon()} ariaLabel={pinned ? 'Unpin this post' : 'Pin this post'} title={pinned ? 'Unpin' : 'Pin'} loading={pinning} pressed={pinned} onClick={togglePinned} />}
         {canEdit && <IconButton icon="✎" ariaLabel="Edit this post" title="Edit" onClick={() => editing.value = true} />}
         {historyButton}

@@ -144,6 +144,7 @@ export function PostDetailPage({ id, router, currentUserId }) {
       post.value = result.data.post
       replyTarget.value = post.value
       state.value = 'ready'
+      if (new URLSearchParams(router.search.value).get('reply') === '1') focusReplyComposer()
     } catch (requestError) {
       error.value = getRequestMessage(requestError)
       state.value = 'error'
@@ -160,6 +161,17 @@ export function PostDetailPage({ id, router, currentUserId }) {
 
   function selectReplyTarget(target) {
     replyTarget.value = target
+    requestAnimationFrame(() => {
+      document.querySelector('.reply-composer textarea')?.focus()
+    })
+  }
+
+  function focusReplyComposer() {
+    requestAnimationFrame(() => {
+      const composer = document.querySelector('.reply-composer')
+      composer?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+      composer?.querySelector('textarea')?.focus()
+    })
   }
 
   function resetReplyTarget() {
