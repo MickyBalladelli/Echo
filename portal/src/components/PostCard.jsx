@@ -20,7 +20,7 @@ import { ReportButton } from './ReportButton.jsx'
 import { AppealButton } from './AppealButton.jsx'
 import { LiveRegion } from './LiveRegion.jsx'
 import { formatDateTime, formatRelativeTime } from '../lib/dates.js'
-import { mediaSrc } from '../lib/media.js'
+import { isGifMedia, mediaSrc, removeAttachedGifUrl } from '../lib/media.js'
 import { Poll } from './Poll.jsx'
 import { UserAvatar } from './UserAvatar.jsx'
 
@@ -49,7 +49,7 @@ function renderRepostSource(source, router) {
         </a>
       </div>
       <p>{renderBody(source.body || 'Repost', router)}</p>
-      {source.imageUrl && <img class="post-media post-media-compact" src={mediaSrc(source.imageUrl)} alt={source.imageAltText || ''} loading="lazy" decoding="async" />}
+      {source.imageUrl && <img class={isGifMedia(source.imageUrl) ? 'post-media post-media-compact post-media-gif' : 'post-media post-media-compact'} src={mediaSrc(source.imageUrl)} alt={source.imageAltText || ''} loading="lazy" decoding="async" />}
     </div>
   )
 }
@@ -95,6 +95,8 @@ export function PostCard({
   const canEdit = isOwnPost && Date.now() - new Date(post.createdAt).getTime() <= 24 * 60 * 60 * 1000
   const likeLabel = computed(() => `${likeCount.value} ${likeCount.value === 1 ? 'like' : 'likes'}`)
   const isEdited = computed(() => edited.value)
+  const visibleBody = computed(() => removeAttachedGifUrl(body.value, imageUrl.value))
+  const hasAttachedGifBody = computed(() => isGifMedia(imageUrl.value) && body.value.includes(imageUrl.value))
 
   async function toggleLike() {
     if (updatingLike.value) return
@@ -189,7 +191,8 @@ export function PostCard({
 
   async function saveEdit(event) {
     event.preventDefault()
-    if (!body.value.trim() && !post.repostOf) {
+    const nextBody = removeAttachedGifUrl(body.value, imageUrl.value)
+    if (!nextBody && !post.repostOf && !imageUrl.value) {
       error.value = 'Post text cannot be empty.'
       return
     }
@@ -199,7 +202,7 @@ export function PostCard({
       const result = await apiRequest(`/api/posts/${encodeURIComponent(post.id)}`, {
         method: 'PATCH',
         body: JSON.stringify({
-          body: body.value.trim(),
+          body: nextBody,
           visibility: visibility.value,
           imageUrl: imageUrl.value.trim() || null,
           imageAltText: imageAltText.value.trim() || null,
@@ -252,12 +255,12 @@ export function PostCard({
   const content = computed(() => showContent.value
     ? (
       <>
-        {body.value && <p class="post-card-body">{renderBody(body.value, router)}</p>}
+        {visibleBody.value && <p class="post-card-body">{renderBody(visibleBody.value, router)}</p>}
         {post.repostOf
           ? renderRepostSource(post.repostOf, router)
           : post.repostOfPostId && <div class="post-repost-source"><span>Original post unavailable.</span></div>}
-        {imageUrl.value && <img class="post-media" src={mediaSrc(imageUrl.value)} alt={imageAltText.value || 'Image attached to post'} loading="lazy" decoding="async" />}
-        {linkPreview.value && (
+        {imageUrl.value && <img class={isGifMedia(imageUrl.value) ? 'post-media post-media-gif' : 'post-media'} src={mediaSrc(imageUrl.value)} alt={imageAltText.value || 'Image attached to post'} loading="lazy" decoding="async" />}
+        {linkPreview.value && !hasAttachedGifBody.value && (
           <a class="post-link-preview" href={linkPreview.value.url} target="_blank" rel="noreferrer">
             <span>LINK PREVIEW</span>
             <strong>{linkPreview.value.label || linkPreview.value.hostname}</strong>

@@ -2,7 +2,7 @@ import { computed, onMount, signal } from '../lib/vendor.js'
 import { Button, Card, CheckBox, DateTimePicker, FormField, IconButton, Label, Select, TextField } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { clearOfflineDraft, readOfflineDraft, writeOfflineDraft } from '../lib/offline-drafts.js'
-import { mediaSrc } from '../lib/media.js'
+import { mediaSrc, removeAttachedGifUrl } from '../lib/media.js'
 import { ChannelReactionPicker } from './ChannelReactionPicker.jsx'
 
 const maxPostLength = 280
@@ -152,9 +152,26 @@ export function PostComposer({ onCreated, channelId = null }) {
     }
   }
 
+  function replaceRichText(value, previousValue) {
+    const currentBody = body.value
+    const previousStart = previousValue ? currentBody.indexOf(previousValue) : -1
+    if (previousStart < 0) {
+      insertRichText(value)
+      return
+    }
+    body.value = `${currentBody.slice(0, previousStart)}${value}${currentBody.slice(previousStart + previousValue.length)}`
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => {
+        bodyInput?.focus()
+        const cursor = previousStart + value.length
+        bodyInput?.setSelectionRange(cursor, cursor)
+      })
+    }
+  }
+
   function selectRichContent({ type, value, label }) {
     if (type === 'gif') {
-      insertRichText(value)
+      replaceRichText(value, imageUrl.value)
       imageUrl.value = value
       imageName.value = `GIF · ${label}`
       imageAltText.value = label
@@ -240,7 +257,7 @@ export function PostComposer({ onCreated, channelId = null }) {
 
   async function submit(event) {
     event.preventDefault()
-    const trimmedBody = body.value.trim()
+    const trimmedBody = removeAttachedGifUrl(body.value, imageUrl.value)
 
     if (!trimmedBody && !imageUrl.value) {
       error.value = 'Write something or add a GIF first.'

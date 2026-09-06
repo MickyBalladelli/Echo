@@ -1,7 +1,7 @@
 import { computed, signal } from '../lib/vendor.js'
 import { Button, Card, IconButton, Label, TextField } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
-import { mediaSrc } from '../lib/media.js'
+import { mediaSrc, removeAttachedGifUrl } from '../lib/media.js'
 import { ChannelReactionPicker } from './ChannelReactionPicker.jsx'
 
 export function ReplyComposer({ replyTarget, onCreated, onCancel }) {
@@ -58,9 +58,26 @@ export function ReplyComposer({ replyTarget, onCreated, onCancel }) {
     }
   }
 
+  function replaceRichText(value, previousValue) {
+    const currentBody = body.value
+    const previousStart = previousValue ? currentBody.indexOf(previousValue) : -1
+    if (previousStart < 0) {
+      insertRichText(value)
+      return
+    }
+    body.value = `${currentBody.slice(0, previousStart)}${value}${currentBody.slice(previousStart + previousValue.length)}`
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => {
+        bodyInput?.focus()
+        const cursor = previousStart + value.length
+        bodyInput?.setSelectionRange(cursor, cursor)
+      })
+    }
+  }
+
   function selectRichContent({ type, value, label }) {
     if (type === 'gif') {
-      insertRichText(value)
+      replaceRichText(value, imageUrl.value)
       imageUrl.value = value
       imageName.value = `GIF · ${label}`
       imageAltText.value = label
@@ -72,7 +89,7 @@ export function ReplyComposer({ replyTarget, onCreated, onCancel }) {
   async function submit(event) {
     event.preventDefault()
     const target = replyTarget.value
-    const trimmedBody = body.value.trim()
+    const trimmedBody = removeAttachedGifUrl(body.value, imageUrl.value)
 
     if (!target) {
       error.value = 'Choose a post to reply to.'

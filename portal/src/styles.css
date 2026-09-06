@@ -2105,6 +2105,12 @@ textarea {
   max-height: 260px;
 }
 
+.post-media-gif {
+  width: min(100%, 420px);
+  max-height: 360px;
+  object-fit: contain;
+}
+
 .post-repost-source {
   display: grid;
   gap: 8px;

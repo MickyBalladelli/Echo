@@ -1,5 +1,21 @@
 const blobUrls = new Map()
 
+export function isGifMedia(url) {
+  if (!url || typeof url !== 'string') return false
+  try {
+    const parsed = new URL(url)
+    return /\.gif$/i.test(parsed.pathname) || /(?:giphy|tenor|gifdb)\./i.test(parsed.hostname)
+  } catch {
+    return /\.gif(?:$|[?#])/i.test(url)
+  }
+}
+
+export function removeAttachedGifUrl(body, mediaUrl) {
+  const text = typeof body === 'string' ? body.trim() : ''
+  if (!text || !isGifMedia(mediaUrl)) return text
+  return text.split(mediaUrl).join('').replace(/[ \t]+/g, ' ').trim()
+}
+
 export function mediaSrc(url) {
   if (!url || typeof url !== 'string') return undefined
   if (!url.startsWith('data:image/')) return url
