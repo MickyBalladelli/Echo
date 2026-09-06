@@ -263,8 +263,8 @@ export function PostDetailPage({ id, router, currentUserId }) {
       eyebrow="THREAD / POST"
       title="Post"
       description="Read the full signal and follow its replies."
+      hideHeader
     >
-      <a class="back-link" href="/" onClick={router.link('/')}>← Back to home</a>
       {detailContent}
     </PageFrame>
   )

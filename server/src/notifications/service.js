@@ -464,14 +464,14 @@ export async function listNotifications(recipientId, { cursor, limit }) {
 
   // SQLite has no DISTINCT ON or BOOL_AND, so grouping uses a
   // ROW_NUMBER() window plus a SUM(CASE) read check instead.
-  const groupReadSql = isSqlite
+  const groupReadSql = isSqlite()
     ? `SUM(CASE WHEN n.read_at IS NULL THEN 1 ELSE 0 END) OVER (
          PARTITION BY COALESCE(n.group_key, n.id::TEXT)
        ) = 0 AS group_read`
     : `BOOL_AND(n.read_at IS NOT NULL) OVER (
          PARTITION BY COALESCE(n.group_key, n.id::TEXT)
        ) AS group_read`
-  const latestSql = isSqlite
+  const latestSql = isSqlite()
     ? `latest_notifications AS (
       SELECT * FROM (
         SELECT visible_notifications.*,

@@ -426,7 +426,7 @@ export async function listPopularPosts(viewerId, limit) {
 async function listThreadReplies(viewerId, postId, transaction) {
   // SQLite has no ARRAY path values, so cycle detection uses a
   // comma-delimited id path with instr() instead of `= ANY(path)`.
-  const withClause = isSqlite ? `
+  const withClause = isSqlite() ? `
       WITH RECURSIVE reply_tree AS (
         SELECT
           p.id,
@@ -673,7 +673,7 @@ export async function createReply(authorId, parentPostId, input) {
       throw new HttpError(404, 'PARENT_POST_NOT_FOUND', 'Parent post not found')
     }
 
-    const depthRows = await sequelize.query(isSqlite ? `
+    const depthRows = await sequelize.query(isSqlite() ? `
       WITH RECURSIVE ancestors AS (
         SELECT
           p.id,

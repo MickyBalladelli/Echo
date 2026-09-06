@@ -196,10 +196,13 @@ export function AppShell({
     const channel = channelHeader.value
     const pageHeader = topLevelPageHeaders[router.path.value]
     const onProfilePage = router.path.value.startsWith('/users/')
+    const onPostPage = router.path.value.startsWith('/posts/')
 
-    if (onProfilePage) {
-      const returnPath = getProfileReturnPath(router.search.value)
-      const backLabel = returnPath.startsWith('/channels/') ? 'Back to channel' : 'Back to home'
+    if (onProfilePage || onPostPage) {
+      const returnPath = onProfilePage ? getProfileReturnPath(router.search.value) : '/'
+      const backLabel = onProfilePage && returnPath.startsWith('/channels/') ? 'Back to channel' : 'Back to home'
+      const headerTitle = onProfilePage ? 'Profile' : 'Post'
+      const headerEyebrow = onPostPage ? 'THREAD / POST' : null
 
       return (
         <div class="echo-header-content echo-channel-header-content">
@@ -217,7 +220,10 @@ export function AppShell({
                 title={backLabel}
                 onClick={event => router.link(returnPath)(event)}
               />
-              <div class="echo-channel-identity"><h1>Profile</h1></div>
+              <div class="echo-channel-identity">
+                {headerEyebrow && <Label size="small" tone="accent">{headerEyebrow}</Label>}
+                <h1>{headerTitle}</h1>
+              </div>
             </div>
           </div>
         </div>
