@@ -2,7 +2,7 @@ import { computed } from '../lib/vendor.js'
 import { NotificationPeek } from './NotificationPeek.jsx'
 import { PostOverview } from './PostOverview.jsx'
 
-export function ContextRail({ router, unreadCount, notificationVersion }) {
+export function ContextRail({ router, unreadCount, notificationVersion, postMapVersion, postMapSelection }) {
   const isTimeline = computed(() => router?.path?.value === '/' || router?.path?.value === '/following')
 
   return (
@@ -10,7 +10,11 @@ export function ContextRail({ router, unreadCount, notificationVersion }) {
       {computed(() => isTimeline.value
         ? <NotificationPeek router={router} unreadCount={unreadCount} notificationVersion={notificationVersion} />
         : null)}
-      <PostOverview router={router} />
+      <PostOverview
+        router={router}
+        refreshVersion={postMapVersion}
+        selectedPostId={postMapSelection}
+      />
     </aside>
   )
 }

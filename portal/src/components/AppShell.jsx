@@ -55,6 +55,12 @@ export function AppShell({
   onUpdated
 }) {
   const channelHeader = signal(null)
+  const postMapVersion = signal(0)
+  const postMapSelection = signal(null)
+  const refreshPostMap = reply => {
+    postMapSelection.value = reply?.id || null
+    postMapVersion.value += 1
+  }
   const router = createRouter([
     { path: '/', title: 'Timeline', view: () => HomePage({ router, currentUserId: userState.value.id }) },
     {
@@ -128,7 +134,12 @@ export function AppShell({
     {
       path: '/posts/:id',
       title: 'Post',
-      view: ({ id }) => PostDetailPage({ id, router, currentUserId: userState.value.id })
+      view: ({ id }) => PostDetailPage({
+        id,
+        router,
+        currentUserId: userState.value.id,
+        onPostCreated: refreshPostMap
+      })
     },
     {
       path: '/hashtags/:tag',
@@ -304,7 +315,16 @@ export function AppShell({
           <main id="main-content" class="app-main" tabindex="-1">
             {activeView}
           </main>
-          <ContextRail router={router} unreadCount={unreadNotifications} notificationVersion={notificationVersion} user={user} apiStatus={apiStatus} socketStatus={socketStatus} />
+          <ContextRail
+            router={router}
+            unreadCount={unreadNotifications}
+            notificationVersion={notificationVersion}
+            postMapVersion={postMapVersion}
+            postMapSelection={postMapSelection}
+            user={user}
+            apiStatus={apiStatus}
+            socketStatus={socketStatus}
+          />
         </div>
       </Layout>
     </div>

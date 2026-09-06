@@ -13,7 +13,7 @@ function getPostSnippet(post) {
   return 'Post'
 }
 
-function buildOverviewItems(posts, router) {
+function buildOverviewItems(posts, router, selectedPostId) {
   const nodes = posts.map(post => ({ post, children: [] }))
   const byId = new Map(nodes.map(node => [node.post.id, node]))
   const roots = []
@@ -33,17 +33,27 @@ function buildOverviewItems(posts, router) {
   const toItem = node => {
     const post = node.post
     const username = post.author?.username || post.author?.displayName || 'unknown'
+    const routePostId = router.path.value.startsWith('/posts/')
+      ? router.path.value.slice('/posts/'.length)
+      : ''
+    const activePostId = selectedPostId?.value || routePostId
     const item = {
       id: post.id,
       label: `@${username} · ${getPostSnippet(post)}`,
       meta: formatRelativeTime(post.createdAt),
       expanded: true,
-      active: router.path.value === `/posts/${post.id}`,
+      active: activePostId === post.id,
       onClick: node.children.length > 0
         ? event => {
-          if (event.target?.closest?.('.prism-tree-label')) router.navigate(`/posts/${post.id}`)
+          if (event.target?.closest?.('.prism-tree-label')) {
+            if (selectedPostId) selectedPostId.value = post.id
+            router.navigate(`/posts/${post.id}`)
+          }
         }
-        : () => router.navigate(`/posts/${post.id}`)
+        : () => {
+          if (selectedPostId) selectedPostId.value = post.id
+          router.navigate(`/posts/${post.id}`)
+        }
     }
 
     if (node.children.length > 0) {
@@ -58,12 +68,13 @@ function buildOverviewItems(posts, router) {
   return roots.sort(compareNodes).map(toItem)
 }
 
-export function PostOverview({ router }) {
+export function PostOverview({ router, refreshVersion, selectedPostId }) {
   const posts = signal([])
   const state = signal('loading')
   const error = signal('')
   let activeFeed = 'home'
   let loadedFeed = ''
+  let lastRefreshVersion = refreshVersion?.value ?? 0
   let requestId = 0
   let active = true
 
@@ -89,7 +100,7 @@ export function PostOverview({ router }) {
     if (state.value === 'loading') return [{ id: 'post-map-loading', label: 'Loading posts…' }]
     if (state.value === 'error') return [{ id: 'post-map-error', label: 'Try again', onClick: () => load() }]
     if (!posts.value.length) return [{ id: 'post-map-empty', label: 'No posts yet' }]
-    return buildOverviewItems(posts.value, router)
+    return buildOverviewItems(posts.value, router, selectedPostId)
   })
 
   const tree = TreeView({
@@ -106,17 +117,34 @@ export function PostOverview({ router }) {
   onMount(() => {
     const syncFeed = () => {
       const nextFeed = router?.path?.value === '/following' ? 'following' : 'home'
-      if (nextFeed === loadedFeed) return
-      activeFeed = nextFeed
-      loadedFeed = nextFeed
-      load(nextFeed)
+      const nextRefreshVersion = refreshVersion?.value ?? 0
+
+      if (nextFeed !== loadedFeed) {
+        activeFeed = nextFeed
+        loadedFeed = nextFeed
+        lastRefreshVersion = nextRefreshVersion
+        load(nextFeed)
+        return
+      }
+
+      if (nextRefreshVersion !== lastRefreshVersion) {
+        lastRefreshVersion = nextRefreshVersion
+        load(nextFeed)
+      }
     }
 
     const stopFeedEffect = effect(syncFeed)
+    const stopSelectionEffect = selectedPostId
+      ? effect(() => {
+        router?.path?.value
+        selectedPostId.value = null
+      })
+      : null
     return () => {
       active = false
       requestId += 1
       stopFeedEffect?.()
+      stopSelectionEffect?.()
     }
   })
 

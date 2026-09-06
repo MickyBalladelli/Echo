@@ -129,7 +129,7 @@ export function FeedPage({ router, currentUserId, feed = 'home' }) {
   )
 }
 
-export function PostDetailPage({ id, router, currentUserId }) {
+export function PostDetailPage({ id, router, currentUserId, onPostCreated }) {
   const post = signal(null)
   const replyTarget = signal(null)
   const state = signal('loading')
@@ -192,6 +192,7 @@ export function PostDetailPage({ id, router, currentUserId }) {
 
     post.value = nextPost
     replyTarget.value = nextPost
+    onPostCreated?.(nextReply)
   }
 
   const detailContent = computed(() => {

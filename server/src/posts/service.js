@@ -7,7 +7,6 @@ import { notifyChannelMentions, notifyChannelPost, notifyLike, notifyPostMention
 import { inspectContent } from '../moderation/signals.js'
 import { cacheGet, cacheKey, cacheSet } from '../cache/memory.js'
 
-export const MAX_REPLY_DEPTH = 3
 const MAX_THREAD_REPLIES = 500
 export const POST_EDIT_WINDOW_MS = 24 * 60 * 60 * 1000
 const channelAccess = alias => `(
@@ -457,7 +456,6 @@ async function listThreadReplies(viewerId, postId, transaction) {
         JOIN reply_tree ON reply_tree.id = child.parent_post_id
         WHERE child.deleted_at IS NULL
           AND ${postVisibilityAccess('child')}
-          AND reply_tree.depth < :maxReplyDepth
           AND instr(reply_tree.path, ',' || child.id || ',') = 0
       )
     ` : `
@@ -487,7 +485,6 @@ async function listThreadReplies(viewerId, postId, transaction) {
         JOIN reply_tree ON reply_tree.id = child.parent_post_id
         WHERE child.deleted_at IS NULL
           AND ${postVisibilityAccess('child')}
-          AND reply_tree.depth < :maxReplyDepth
           AND NOT child.id = ANY(reply_tree.path)
       )
     `
@@ -499,8 +496,7 @@ async function listThreadReplies(viewerId, postId, transaction) {
     extraGroupBy: 'reply_tree.depth',
     where: `p.deleted_at IS NULL AND ${postVisibilityAccess('p')} AND ${channelAccess('p')}`,
     replacements: {
-      rootPostId: postId,
-      maxReplyDepth: MAX_REPLY_DEPTH
+      rootPostId: postId
     },
     limit: MAX_THREAD_REPLIES,
     profileName: 'post_replies',
@@ -698,7 +694,6 @@ export async function createReply(authorId, parentPostId, input) {
         FROM posts parent
         JOIN ancestors ON ancestors.parent_post_id = parent.id
         WHERE parent.deleted_at IS NULL
-          AND ancestors.depth < :maxReplyDepth
           AND instr(ancestors.path, ',' || parent.id || ',') = 0
       )
       SELECT COALESCE(MAX(depth), 0) AS depth
@@ -724,24 +719,18 @@ export async function createReply(authorId, parentPostId, input) {
         FROM posts parent
         JOIN ancestors ON ancestors.parent_post_id = parent.id
         WHERE parent.deleted_at IS NULL
-          AND ancestors.depth < :maxReplyDepth
           AND NOT parent.id = ANY(ancestors.path)
       )
       SELECT COALESCE(MAX(depth), 0)::INTEGER AS depth
       FROM ancestors
     `, {
       replacements: {
-        parentPostId,
-        maxReplyDepth: MAX_REPLY_DEPTH
+        parentPostId
       },
       type: QueryTypes.SELECT,
       transaction
     })
     const parentDepth = Number(depthRows[0]?.depth || 0)
-
-    if (parentDepth >= MAX_REPLY_DEPTH) {
-      throw new HttpError(400, 'REPLY_DEPTH_LIMIT', `Replies can be nested only ${MAX_REPLY_DEPTH} levels deep`)
-    }
 
     let channelModerationStatus = 'approved'
     if (parent.channel_id) {
