@@ -222,7 +222,6 @@ export function PostDetailPage({ id, router, currentUserId }) {
           onReposted={newPost => router.navigate(`/posts/${newPost.id}`)}
           onUpdated={updatedPost => post.value = { ...post.value, ...updatedPost }}
         />
-        <ReplyComposer replyTarget={replyTarget} onCreated={addReply} onCancel={resetReplyTarget} />
         <div class="post-replies-heading">
           <Label size="small" tone="accent">REPLIES</Label>
           <span>{post.value.replies.length ? `${post.value.replies.length} in this thread` : 'No replies yet'}</span>
@@ -249,6 +248,7 @@ export function PostDetailPage({ id, router, currentUserId }) {
             ))}
           </KeyboardList>
         )}
+        <ReplyComposer replyTarget={replyTarget} onCreated={addReply} onCancel={resetReplyTarget} />
       </div>
     )
   })
