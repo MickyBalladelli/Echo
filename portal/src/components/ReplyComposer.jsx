@@ -63,6 +63,7 @@ export function ReplyComposer({ replyTarget, onCreated, onCancel }) {
       imageUrl.value = value
       imageName.value = `GIF · ${label}`
       imageAltText.value = label
+      closeRichPicker()
     } else {
       insertRichText(value)
     }

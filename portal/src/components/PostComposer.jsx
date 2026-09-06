@@ -157,6 +157,7 @@ export function PostComposer({ onCreated, channelId = null }) {
       imageUrl.value = value
       imageName.value = `GIF · ${label}`
       imageAltText.value = label
+      closeRichPicker()
       scheduleDraft()
     } else {
       insertRichText(value)

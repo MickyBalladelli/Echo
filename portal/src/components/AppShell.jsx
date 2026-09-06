@@ -304,7 +304,7 @@ export function AppShell({
           <main id="main-content" class="app-main" tabindex="-1">
             {activeView}
           </main>
-          <ContextRail router={router} user={user} apiStatus={apiStatus} socketStatus={socketStatus} />
+          <ContextRail router={router} unreadCount={unreadNotifications} notificationVersion={notificationVersion} user={user} apiStatus={apiStatus} socketStatus={socketStatus} />
         </div>
       </Layout>
     </div>
