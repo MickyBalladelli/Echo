@@ -30,7 +30,7 @@ function mapChannel(row) {
     isOwner: row.owner_id === row.viewer_id,
     canModerate: row.membership_role === 'owner' || row.membership_role === 'moderator',
     muted: Boolean(row.membership_muted_until && new Date(row.membership_muted_until) > new Date()),
-    notificationsEnabled: row.membership_notifications_enabled !== false
+    notificationsEnabled: Boolean(row.membership_notifications_enabled)
   }
 }
 
@@ -189,7 +189,7 @@ async function channelNotificationsEnabled(userId, channelId, transaction) {
     ...(transaction ? { transaction } : {})
   })
   if (!rows[0]) return true
-  return rows[0].notifications_enabled !== false &&
+  return Boolean(rows[0].notifications_enabled) &&
     (!rows[0].muted_until || new Date(rows[0].muted_until) < new Date())
 }
 

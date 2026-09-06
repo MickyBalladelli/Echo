@@ -1,4 +1,5 @@
 import { QueryTypes } from 'sequelize'
+import { asTags } from '../db/dialect.js'
 import { sequelize } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
 import { createPost } from '../posts/service.js'
@@ -8,7 +9,7 @@ function mapNote(row) {
     id: row.id,
     title: row.title,
     body: row.body,
-    tags: row.tags || [],
+    tags: asTags(row.tags),
     visibility: row.visibility,
     isArchived: Boolean(row.is_archived),
     isPinned: Boolean(row.is_pinned),
@@ -110,7 +111,7 @@ export async function updateNote(userId, noteId, input) {
   const values = {
     title: input.title ?? current.title,
     body: input.body ?? current.body,
-    tags: [...new Set(input.tags ?? current.tags)],
+    tags: [...new Set(input.tags ?? asTags(current.tags))],
     visibility: input.visibility ?? current.visibility,
     isArchived: input.isArchived ?? current.is_archived,
     isPinned: input.isPinned ?? current.is_pinned

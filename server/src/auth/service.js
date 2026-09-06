@@ -1,4 +1,5 @@
 import { QueryTypes } from 'sequelize'
+import { asJsonArray } from '../db/dialect.js'
 import { HttpError } from '../http/errors.js'
 import { sequelize, withTransaction } from '../db/pool.js'
 import { createSession } from './sessions.js'
@@ -20,11 +21,11 @@ function publicUser(row) {
       avatarUrl: row.avatar_url || null,
       bannerUrl: row.banner_url || null,
       profileVisibility: row.profile_visibility || 'public',
-      showFollowers: row.show_followers !== false,
-      showFollowing: row.show_following !== false,
+      showFollowers: Boolean(row.show_followers),
+      showFollowing: Boolean(row.show_following),
       locale: row.locale || 'en'
     },
-    badges: row.badges || [],
+    badges: asJsonArray(row.badges),
     emailVerified: Boolean(row.email_verified_at)
   }
 }

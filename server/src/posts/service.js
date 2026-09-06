@@ -1,5 +1,6 @@
 import { QueryTypes } from 'sequelize'
 import { profiledQuery, sequelize, withTransaction } from '../db/pool.js'
+import { asJson, asJsonArray, isSqlite } from '../db/dialect.js'
 import { HttpError } from '../http/errors.js'
 import { encodeCursor } from '../http/pagination.js'
 import { notifyChannelMentions, notifyChannelPost, notifyLike, notifyPostMentions, notifyReply } from '../notifications/service.js'
@@ -184,7 +185,7 @@ function mapPost(row) {
       username: row.username,
       displayName: row.display_name || row.username,
       avatarUrl: row.avatar_url || null,
-      badges: row.author_badges || []
+      badges: asJsonArray(row.author_badges)
     },
     parentPostId: row.parent_post_id,
     repostOfPostId: row.repost_of_post_id,
@@ -197,14 +198,14 @@ function mapPost(row) {
     imageUrl: row.image_url || null,
     imageAltText: row.image_alt_text || null,
     contentWarning: row.content_warning || null,
-    linkPreview: row.link_preview || null,
-    poll: row.poll || null,
+    linkPreview: asJson(row.link_preview, null),
+    poll: asJson(row.poll, null),
     likeCount: Number(row.like_count),
     replyCount: Number(row.reply_count),
     liked: Boolean(row.liked),
     following: Boolean(row.following),
     bookmarked: Boolean(row.bookmarked),
-    repostOf: row.repost_of || null,
+    repostOf: asJson(row.repost_of, null),
     isEdited: row.updated_at && row.created_at && new Date(row.updated_at).getTime() > new Date(row.created_at).getTime() + 1000
   }
 
@@ -423,9 +424,39 @@ export async function listPopularPosts(viewerId, limit) {
 }
 
 async function listThreadReplies(viewerId, postId, transaction) {
-  return selectPosts({
-    viewerId,
-    withClause: `
+  // SQLite has no ARRAY path values, so cycle detection uses a
+  // comma-delimited id path with instr() instead of `= ANY(path)`.
+  const withClause = isSqlite ? `
+      WITH RECURSIVE reply_tree AS (
+        SELECT
+          p.id,
+          p.parent_post_id,
+          1 AS depth,
+          ',' || p.id || ',' AS path
+        FROM posts p
+        JOIN users u ON u.id = p.author_id AND u.deleted_at IS NULL AND u.status = 'active'
+        WHERE p.parent_post_id = :rootPostId
+          AND p.deleted_at IS NULL
+          AND ${postVisibilityAccess('p')}
+
+        UNION ALL
+
+        SELECT
+          child.id,
+          child.parent_post_id,
+          reply_tree.depth + 1,
+          reply_tree.path || child.id || ','
+        FROM posts child
+        JOIN users child_user ON child_user.id = child.author_id
+          AND child_user.deleted_at IS NULL
+          AND child_user.status = 'active'
+        JOIN reply_tree ON reply_tree.id = child.parent_post_id
+        WHERE child.deleted_at IS NULL
+          AND ${postVisibilityAccess('child')}
+          AND reply_tree.depth < :maxReplyDepth
+          AND instr(reply_tree.path, ',' || child.id || ',') = 0
+      )
+    ` : `
       WITH RECURSIVE reply_tree AS (
         SELECT
           p.id,
@@ -455,7 +486,10 @@ async function listThreadReplies(viewerId, postId, transaction) {
           AND reply_tree.depth < :maxReplyDepth
           AND NOT child.id = ANY(reply_tree.path)
       )
-    `,
+    `
+  return selectPosts({
+    viewerId,
+    withClause,
     extraFrom: 'JOIN reply_tree ON reply_tree.id = p.id',
     extraSelect: ', reply_tree.depth AS reply_depth',
     extraGroupBy: 'reply_tree.depth',
@@ -639,7 +673,33 @@ export async function createReply(authorId, parentPostId, input) {
       throw new HttpError(404, 'PARENT_POST_NOT_FOUND', 'Parent post not found')
     }
 
-    const depthRows = await sequelize.query(`
+    const depthRows = await sequelize.query(isSqlite ? `
+      WITH RECURSIVE ancestors AS (
+        SELECT
+          p.id,
+          p.parent_post_id,
+          0 AS depth,
+          ',' || p.id || ',' AS path
+        FROM posts p
+        WHERE p.id = :parentPostId
+          AND p.deleted_at IS NULL
+
+        UNION ALL
+
+        SELECT
+          parent.id,
+          parent.parent_post_id,
+          ancestors.depth + 1,
+          ancestors.path || parent.id || ','
+        FROM posts parent
+        JOIN ancestors ON ancestors.parent_post_id = parent.id
+        WHERE parent.deleted_at IS NULL
+          AND ancestors.depth < :maxReplyDepth
+          AND instr(ancestors.path, ',' || parent.id || ',') = 0
+      )
+      SELECT COALESCE(MAX(depth), 0) AS depth
+      FROM ancestors
+    ` : `
       WITH RECURSIVE ancestors AS (
         SELECT
           p.id,

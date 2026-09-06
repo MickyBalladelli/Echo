@@ -1,4 +1,5 @@
 import { QueryTypes } from 'sequelize'
+import { asJsonArray } from '../db/dialect.js'
 import { profiledQuery } from '../db/pool.js'
 import { encodeCursor } from '../http/pagination.js'
 import { listPopularPosts, listPosts } from '../posts/service.js'
@@ -12,7 +13,7 @@ function mapUser(row) {
       displayName: row.display_name || row.username,
       bio: row.bio || '',
       avatarUrl: row.avatar_url || null,
-      badges: row.badges || []
+      badges: asJsonArray(row.badges)
     },
     mutualCount: Number(row.mutual_count || 0)
   }

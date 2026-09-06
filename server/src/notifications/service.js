@@ -1,5 +1,6 @@
 import { QueryTypes } from 'sequelize'
 import { sequelize } from '../db/pool.js'
+import { asJson, isSqlite } from '../db/dialect.js'
 import { HttpError } from '../http/errors.js'
 import { encodeCursor } from '../http/pagination.js'
 import { emitNotification } from './realtime.js'
@@ -46,7 +47,7 @@ function mapNotification(row) {
     postId: row.post_id || null,
     channelId: row.channel_id || null,
     conversationId: row.conversation_id || null,
-    payload: row.payload || {},
+    payload: asJson(row.payload, {}),
     readAt: groupedRead ? row.read_at || null : null,
     createdAt: row.created_at,
     groupKey: row.notification_group_key || row.group_key || row.id,
@@ -245,11 +246,11 @@ export async function createNotification({
 
   const rows = await sequelize.query(`
     INSERT INTO notifications (
-      recipient_id, actor_id, type, post_id, channel_id, conversation_id, payload, dedupe_key, group_key
+      recipient_id, actor_id, type, post_id, channel_id, conversation_id, payload, dedupe_key, group_key, expires_at
     )
     VALUES (
       :recipientId, :actorId, :type, :postId, :channelId, :conversationId,
-      CAST(:payload AS JSONB), :dedupeKey, :groupKey
+      CAST(:payload AS JSONB), :dedupeKey, :groupKey, :expiresAt
     )
     ON CONFLICT (recipient_id, type, dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING
     RETURNING id, type, post_id, channel_id
@@ -263,7 +264,8 @@ export async function createNotification({
       conversationId,
       payload: JSON.stringify(payload),
       dedupeKey,
-      groupKey: groupKey || notificationGroupKey({ type, recipientId, postId, channelId, conversationId })
+      groupKey: groupKey || notificationGroupKey({ type, recipientId, postId, channelId, conversationId }),
+      expiresAt: new Date(Date.now() + NOTIFICATION_RETENTION_DAYS * 24 * 60 * 60 * 1000).toISOString()
     },
     type: QueryTypes.SELECT,
     ...(transaction ? { transaction } : {})
@@ -460,6 +462,30 @@ export async function listNotifications(recipientId, { cursor, limit }) {
     replacements.cursorId = cursor.id
   }
 
+  // SQLite has no DISTINCT ON or BOOL_AND, so grouping uses a
+  // ROW_NUMBER() window plus a SUM(CASE) read check instead.
+  const groupReadSql = isSqlite
+    ? `SUM(CASE WHEN n.read_at IS NULL THEN 1 ELSE 0 END) OVER (
+         PARTITION BY COALESCE(n.group_key, n.id::TEXT)
+       ) = 0 AS group_read`
+    : `BOOL_AND(n.read_at IS NOT NULL) OVER (
+         PARTITION BY COALESCE(n.group_key, n.id::TEXT)
+       ) AS group_read`
+  const latestSql = isSqlite
+    ? `latest_notifications AS (
+      SELECT * FROM (
+        SELECT visible_notifications.*,
+          ROW_NUMBER() OVER (
+            PARTITION BY notification_group_key ORDER BY created_at DESC, id DESC
+          ) AS group_row_number
+        FROM visible_notifications
+      ) WHERE group_row_number = 1
+    )`
+    : `latest_notifications AS (
+      SELECT DISTINCT ON (notification_group_key) *
+      FROM visible_notifications
+      ORDER BY notification_group_key, created_at DESC, id DESC
+    )`
   const rows = await sequelize.query(`
     WITH visible_notifications AS (
       SELECT n.*, actor.username AS actor_username, profile.display_name AS actor_display_name,
@@ -468,9 +494,7 @@ export async function listNotifications(recipientId, { cursor, limit }) {
         COUNT(*) OVER (
           PARTITION BY COALESCE(n.group_key, n.id::TEXT)
         )::INTEGER AS group_count,
-        BOOL_AND(n.read_at IS NOT NULL) OVER (
-          PARTITION BY COALESCE(n.group_key, n.id::TEXT)
-        ) AS group_read
+        ${groupReadSql}
       FROM notifications n
       LEFT JOIN users actor ON actor.id = n.actor_id
       LEFT JOIN profiles profile ON profile.user_id = actor.id
@@ -486,11 +510,7 @@ export async function listNotifications(recipientId, { cursor, limit }) {
           SELECT 1 FROM user_mutes hidden_mute
           WHERE hidden_mute.user_id = :recipientId AND hidden_mute.muted_user_id = n.actor_id
         ))
-    ), latest_notifications AS (
-      SELECT DISTINCT ON (notification_group_key) *
-      FROM visible_notifications
-      ORDER BY notification_group_key, created_at DESC, id DESC
-    )
+    ), ${latestSql}
     SELECT * FROM latest_notifications
     ORDER BY created_at DESC, id DESC
     LIMIT :limit

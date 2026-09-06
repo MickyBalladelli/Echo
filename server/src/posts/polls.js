@@ -1,4 +1,5 @@
 import { QueryTypes } from 'sequelize'
+import { asJsonArray } from '../db/dialect.js'
 import { sequelize, withTransaction } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
 
@@ -28,7 +29,7 @@ async function pollForPost(postId, viewerId = null, transaction) {
     expiresAt: row.expires_at,
     totalVotes: Number(row.total_votes),
     viewerOptionId: row.viewer_option_id || null,
-    options: row.options || []
+    options: asJsonArray(row.options)
   }
 }
 

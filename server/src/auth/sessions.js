@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { QueryTypes } from 'sequelize'
+import { asJsonArray } from '../db/dialect.js'
 import { sequelize } from '../db/pool.js'
 
 const sessionLifetimeSeconds = 60 * 60 * 24 * 30
@@ -109,11 +110,11 @@ export async function findSessionByToken(token, transaction) {
         avatarUrl: row.avatar_url,
         bannerUrl: row.banner_url,
         profileVisibility: row.profile_visibility || 'public',
-        showFollowers: row.show_followers !== false,
-        showFollowing: row.show_following !== false
+        showFollowers: Boolean(row.show_followers),
+        showFollowing: Boolean(row.show_following)
         ,locale: row.locale || 'en'
       },
-      badges: row.badges || [],
+      badges: asJsonArray(row.badges),
       emailVerified: Boolean(row.email_verified_at)
     }
   }

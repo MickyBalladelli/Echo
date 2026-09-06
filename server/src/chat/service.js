@@ -1,4 +1,5 @@
 import { QueryTypes } from 'sequelize'
+import { asJsonArray } from '../db/dialect.js'
 import { sequelize, withTransaction } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
 import { encodeCursor } from '../http/pagination.js'
@@ -34,7 +35,7 @@ function mapMessage(row) {
       displayName: row.display_name || row.username,
       avatarUrl: row.avatar_url || null
     },
-    readBy: row.read_by || []
+    readBy: asJsonArray(row.read_by)
   }
 }
 

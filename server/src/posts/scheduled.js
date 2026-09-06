@@ -1,4 +1,5 @@
 import { QueryTypes } from 'sequelize'
+import { asJson } from '../db/dialect.js'
 import { sequelize, withTransaction } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
 import { createPost } from './service.js'
@@ -6,7 +7,7 @@ import { createPost } from './service.js'
 function mapScheduled(row) {
   return {
     id: row.id,
-    payload: row.payload,
+    payload: asJson(row.payload, {}),
     scheduledAt: row.scheduled_at,
     status: row.status,
     postId: row.post_id || null,

@@ -1,4 +1,5 @@
 import { QueryTypes } from 'sequelize'
+import { asJsonArray } from '../db/dialect.js'
 import { sequelize, withTransaction } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
 import { encodeCursor } from '../http/pagination.js'
@@ -17,9 +18,9 @@ function mapUser(row) {
       bannerUrl: row.banner_url || null,
       pinnedPostId: row.pinned_post_id || null,
       profileVisibility: row.profile_visibility || 'public',
-      showFollowers: row.show_followers !== false,
-      showFollowing: row.show_following !== false,
-      badges: row.badges || []
+      showFollowers: Boolean(row.show_followers),
+      showFollowing: Boolean(row.show_following),
+      badges: asJsonArray(row.badges)
     },
     mutualCount: Number(row.mutual_count || 0),
     mutual: Boolean(row.mutual)

@@ -4,7 +4,11 @@ import { z } from 'zod'
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
-  DATABASE_URL: z.string().min(1),
+  DB_DIALECT: z.enum(['postgres', 'sqlite', 'turso']).default('postgres'),
+  DATABASE_URL: z.string().min(1).optional(),
+  SQLITE_PATH: z.string().min(1).default('./data/echo.sqlite'),
+  TURSO_URL: z.string().min(1).optional(),
+  TURSO_AUTH_TOKEN: z.string().optional(),
   CLIENT_ORIGIN: z.string().url().default('http://localhost:5173'),
   CLIENT_ORIGINS: z.string().optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
@@ -46,10 +50,22 @@ if (clientOrigins.some(origin => {
   throw new Error('Invalid environment: CLIENT_ORIGINS must contain HTTP(S) URLs')
 }
 
+if (result.data.DB_DIALECT === 'postgres' && !result.data.DATABASE_URL) {
+  throw new Error('Invalid environment: DATABASE_URL is required when DB_DIALECT=postgres')
+}
+
+if (result.data.DB_DIALECT === 'turso' && !result.data.TURSO_URL) {
+  throw new Error('Invalid environment: TURSO_URL is required when DB_DIALECT=turso')
+}
+
 export const env = Object.freeze({
   nodeEnv: result.data.NODE_ENV,
   port: result.data.PORT,
+  dbDialect: result.data.DB_DIALECT,
   databaseUrl: result.data.DATABASE_URL,
+  sqlitePath: result.data.SQLITE_PATH,
+  tursoUrl: result.data.TURSO_URL,
+  tursoAuthToken: result.data.TURSO_AUTH_TOKEN,
   clientOrigin: result.data.CLIENT_ORIGIN,
   clientOrigins: Object.freeze(clientOrigins),
   logLevel: result.data.LOG_LEVEL,
