@@ -761,16 +761,18 @@ export async function createReply(authorId, parentPostId, input) {
 
     const replyRows = await sequelize.query(`
       INSERT INTO posts (
-        author_id, parent_post_id, channel_id, body, visibility, channel_moderation_status, moderation_status
+        author_id, parent_post_id, channel_id, body, image_url, image_alt_text, visibility, channel_moderation_status, moderation_status
       )
-      VALUES (:authorId, :parentPostId, :channelId, :body, 'public', :channelModerationStatus, :contentModerationStatus)
+      VALUES (:authorId, :parentPostId, :channelId, :body, :imageUrl, :imageAltText, 'public', :channelModerationStatus, :contentModerationStatus)
       RETURNING id
     `, {
       replacements: {
         authorId,
         parentPostId,
         channelId: parent.channel_id || null,
-        body: input.body,
+        body: input.body || '',
+        imageUrl: input.imageUrl || null,
+        imageAltText: input.imageAltText || null,
         channelModerationStatus,
         contentModerationStatus
       },

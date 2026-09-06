@@ -28,7 +28,7 @@ function withPostFormatRules(schema) {
 }
 
 export const createPostSchema = withPostFormatRules(postInput).superRefine((value, context) => {
-  if (!value.body && !value.repostOfPostId) {
+  if (!value.body && !value.imageUrl && !value.repostOfPostId) {
     context.addIssue({ code: 'custom', path: ['body'], message: 'Write something or choose a post to repost' })
   }
 })
@@ -43,7 +43,13 @@ export const updatePostSchema = withPostFormatRules(z.object({
 }))
 
 export const createReplySchema = z.object({
-  body: z.string().trim().min(1).max(280)
+  body: z.string().trim().max(280).default(''),
+  imageUrl: imageUrl.optional().nullable(),
+  imageAltText: z.string().trim().max(120).optional().nullable()
+}).superRefine((value, context) => {
+  if (!value.body && !value.imageUrl) {
+    context.addIssue({ code: 'custom', path: ['body'], message: 'Write a reply or add a GIF' })
+  }
 })
 
 export const postBodySchema = z.object({

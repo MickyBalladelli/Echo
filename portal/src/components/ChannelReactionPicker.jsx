@@ -42,7 +42,16 @@ function filterBuiltInGifs(query) {
     : gifOptions
 }
 
-export function ChannelReactionPicker({ open, position, onSelect, onClose, canUseRichReactions = false }) {
+export function ChannelReactionPicker({
+  open,
+  position,
+  onSelect,
+  onClose,
+  canUseRichReactions = false,
+  panelTitle = 'React',
+  dialogLabel = 'Choose a reaction',
+  selectionVerb = 'React with'
+}) {
   const activeTab = signal('emoji')
   const search = signal('')
   const gifs = signal(gifOptions)
@@ -154,7 +163,7 @@ export function ChannelReactionPicker({ open, position, onSelect, onClose, canUs
                 <h4>{category.label}</h4>
                 <div class="channel-chat-emoji-grid">
                   {emojis.map(emoji => (
-                    <button key={emoji} class="channel-chat-reaction-option" type="button" aria-label={`React with ${emoji}`} onClick={() => choose('emoji', emoji, emoji)}>{emoji}</button>
+                    <button key={emoji} class="channel-chat-reaction-option" type="button" aria-label={`${selectionVerb} ${emoji}`} onClick={() => choose('emoji', emoji, emoji)}>{emoji}</button>
                   ))}
                 </div>
               </section>
@@ -167,7 +176,7 @@ export function ChannelReactionPicker({ open, position, onSelect, onClose, canUs
       return (
         <div class="channel-chat-gif-grid">
           {gifs.value.map(gif => (
-            <button key={gif.id || gif.url} class="channel-chat-gif-option" type="button" aria-label={`Use ${gif.title || gif.label} GIF`} onClick={() => choose('gif', gif.url, gif.title || gif.label)}>
+            <button key={gif.id || gif.url} class="channel-chat-gif-option" type="button" aria-label={`${selectionVerb} ${gif.title || gif.label} GIF`} onClick={() => choose('gif', gif.url, gif.title || gif.label)}>
               <img src={gif.previewUrl || gif.url} alt={gif.title || gif.label} loading="lazy" />
             </button>
           ))}
@@ -184,7 +193,7 @@ export function ChannelReactionPicker({ open, position, onSelect, onClose, canUs
       return (
         <div class="channel-chat-sticker-grid">
           {stickers.map(sticker => (
-            <button key={sticker.label} class="channel-chat-sticker-option" type="button" aria-label={`Use ${sticker.label} sticker`} onClick={() => choose('sticker', sticker.value, sticker.label)}>
+            <button key={sticker.label} class="channel-chat-sticker-option" type="button" aria-label={`${selectionVerb} ${sticker.label} sticker`} onClick={() => choose('sticker', sticker.value, sticker.label)}>
               <span aria-hidden="true">{sticker.value}</span>
               <small>{sticker.label}</small>
             </button>
@@ -200,14 +209,14 @@ export function ChannelReactionPicker({ open, position, onSelect, onClose, canUs
     <div
       class="channel-chat-reaction-popover"
       role="dialog"
-      aria-label="Choose a reaction"
+      aria-label={dialogLabel}
       aria-hidden={popupHidden}
       tabIndex="-1"
       onKeyDown={handleKeyDown}
       style={popupStyle}
     >
       <div class="channel-chat-reaction-popover-header">
-        <strong>React</strong>
+        <strong>{panelTitle}</strong>
         <button type="button" class="channel-chat-reaction-close" aria-label="Close reactions" onClick={onClose}>×</button>
       </div>
       {tabView}

@@ -1,8 +1,9 @@
 import { computed, onMount, signal } from '../lib/vendor.js'
-import { Button, Card, CheckBox, DateTimePicker, FormField, Label, Select, TextField } from '../lib/vendor.js'
+import { Button, Card, CheckBox, DateTimePicker, FormField, IconButton, Label, Select, TextField } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { clearOfflineDraft, readOfflineDraft, writeOfflineDraft } from '../lib/offline-drafts.js'
 import { mediaSrc } from '../lib/media.js'
+import { ChannelReactionPicker } from './ChannelReactionPicker.jsx'
 
 const maxPostLength = 280
 const maxLongPostLength = 20000
@@ -48,10 +49,13 @@ export function PostComposer({ onCreated, channelId = null }) {
   const pollQuestion = signal('')
   const pollOptions = signal(['', ''])
   const pollEnabled = signal(false)
+  const richPickerOpen = signal(false)
+  const richPickerPosition = signal(null)
   const maxLength = computed(() => postFormat.value === 'long' ? maxLongPostLength : maxPostLength)
   const remaining = computed(() => maxLength.value - body.value.length)
   let draftTimer
   let loaded = false
+  let bodyInput = null
 
   function offlineScope() {
     return channelId || 'home'
@@ -110,6 +114,56 @@ export function PostComposer({ onCreated, channelId = null }) {
     draftTimer = setTimeout(saveDraft, 700)
   }
 
+  function closeRichPicker() {
+    richPickerOpen.value = false
+    richPickerPosition.value = null
+  }
+
+  function toggleRichPicker(event) {
+    if (richPickerOpen.value) {
+      closeRichPicker()
+      return
+    }
+
+    const rect = event.currentTarget.getBoundingClientRect()
+    const popupWidth = Math.min(360, window.innerWidth - 32)
+    const popupHeight = Math.min(480, window.innerHeight * 0.7)
+    const top = rect.top >= popupHeight + 20
+      ? rect.top - popupHeight - 8
+      : Math.min(window.innerHeight - popupHeight - 12, rect.bottom + 8)
+    const left = Math.min(window.innerWidth - popupWidth - 12, Math.max(12, rect.right - popupWidth))
+
+    richPickerPosition.value = { top: Math.max(12, top), left }
+    richPickerOpen.value = true
+  }
+
+  function insertRichText(value) {
+    const currentBody = body.value
+    const start = typeof bodyInput?.selectionStart === 'number' ? bodyInput.selectionStart : currentBody.length
+    const end = typeof bodyInput?.selectionEnd === 'number' ? bodyInput.selectionEnd : start
+    const nextBody = `${currentBody.slice(0, start)}${value}${currentBody.slice(end)}`
+    body.value = nextBody
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => {
+        bodyInput?.focus()
+        const cursor = start + value.length
+        bodyInput?.setSelectionRange(cursor, cursor)
+      })
+    }
+  }
+
+  function selectRichContent({ type, value, label }) {
+    if (type === 'gif') {
+      insertRichText(value)
+      imageUrl.value = value
+      imageName.value = `GIF · ${label}`
+      imageAltText.value = label
+      scheduleDraft()
+    } else {
+      insertRichText(value)
+    }
+  }
+
   async function clearDraft() {
     clearTimeout(draftTimer)
     try {
@@ -128,6 +182,7 @@ export function PostComposer({ onCreated, channelId = null }) {
     pollQuestion.value = ''
     pollOptions.value = ['', '']
     pollEnabled.value = false
+    closeRichPicker()
     clearOfflineDraft(offlineScope())
     draftStatus.value = 'saved'
   }
@@ -187,8 +242,8 @@ export function PostComposer({ onCreated, channelId = null }) {
     event.preventDefault()
     const trimmedBody = body.value.trim()
 
-    if (!trimmedBody) {
-      error.value = 'Write something first.'
+    if (!trimmedBody && !imageUrl.value) {
+      error.value = 'Write something or add a GIF first.'
       return
     }
 
@@ -241,6 +296,7 @@ export function PostComposer({ onCreated, channelId = null }) {
       pollQuestion.value = ''
       pollOptions.value = ['', '']
       pollEnabled.value = false
+      closeRichPicker()
       draftStatus.value = 'saved'
       if (createdPost) onCreated(createdPost)
     } catch (requestError) {
@@ -326,6 +382,7 @@ export function PostComposer({ onCreated, channelId = null }) {
           rows="4"
           placeholder="What is happening? Add #hashtags or a link."
           aria-label="Post text"
+          onFocus={event => bodyInput = event.currentTarget}
           onInput={findMention}
         />
         {(mentionLoading.value || mentionSuggestions.value.length > 0) && (
@@ -367,6 +424,16 @@ export function PostComposer({ onCreated, channelId = null }) {
             Add image
             <input type="file" accept="image/png,image/jpeg,image/webp" onChange={selectImage} />
           </label>
+          <IconButton
+            class="post-rich-content-toggle"
+            variant="tertiary"
+            type="button"
+            icon="😀"
+            ariaLabel="Add emoji, sticker, or GIF"
+            title="Add emoji, sticker, or GIF"
+            pressed={richPickerOpen}
+            onClick={toggleRichPicker}
+          />
           <FormField id="post-content-warning" label="Content warning" class="post-option-field">
             <TextField id="post-content-warning" value={contentWarning} maxLength={120} placeholder="Optional" ariaLabel="Content warning" />
           </FormField>
@@ -402,6 +469,16 @@ export function PostComposer({ onCreated, channelId = null }) {
             </div>
           </div>
         )}
+        <ChannelReactionPicker
+          open={richPickerOpen}
+          position={richPickerPosition}
+          onSelect={selectRichContent}
+          onClose={closeRichPicker}
+          canUseRichReactions
+          panelTitle="Add to post"
+          dialogLabel="Add content to post"
+          selectionVerb="Add"
+        />
         <div class="post-composer-footer">
           <div class="post-composer-error" role="alert" aria-live="polite">{error}</div>
           <div class="post-composer-actions">
