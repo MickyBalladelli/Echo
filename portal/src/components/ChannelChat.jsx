@@ -24,7 +24,18 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
   const error = signal('')
   const mentionSuggestions = signal([])
   const reactionQueues = new Map()
+  const reactionPickerStates = new Map()
   let composeSyncFrame = null
+
+  function getReactionPickerState(messageId) {
+    if (!reactionPickerStates.has(messageId)) {
+      reactionPickerStates.set(messageId, {
+        open: signal(false),
+        position: signal(null)
+      })
+    }
+    return reactionPickerStates.get(messageId)
+  }
 
   function syncComposePosition() {
     if (typeof document === 'undefined') return
@@ -382,6 +393,7 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
     const compact = Boolean(previous && previous.sender.id === message.sender.id &&
       new Date(message.createdAt).getTime() - new Date(previous.createdAt).getTime() < 5 * 60 * 1000)
     const member = readMembers().find(item => item.id === message.sender.id)
+    const reactionPickerState = getReactionPickerState(message.id)
 
     return <ChannelChatMessage
       message={message}
@@ -390,6 +402,8 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
       compact={compact}
       onReply={replyTo}
       onReaction={toggleReaction}
+      reactionPickerOpen={reactionPickerState.open}
+      reactionPickerPosition={reactionPickerState.position}
       channelRole={member?.role}
       members={readMembers()}
       router={router}
@@ -497,6 +511,7 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
       stopRealtime()
       stopRealtimeUpdate()
       reactionQueues.clear()
+      reactionPickerStates.clear()
       if (composeSyncFrame !== null) cancelAnimationFrame(composeSyncFrame)
       resizeObserver?.disconnect()
       window.removeEventListener('resize', scheduleComposePosition)

@@ -22,10 +22,8 @@ function renderBody(body, router, members) {
     : part)
 }
 
-export function ChannelChatMessage({ message, currentUserId, currentUsername, compact = false, onReply, onReaction, channelRole, members = [], router }) {
+export function ChannelChatMessage({ message, currentUserId, currentUsername, compact = false, onReply, onReaction, reactionPickerOpen, reactionPickerPosition, channelRole, members = [], router }) {
   const copied = signal(false)
-  const reactionPickerOpen = signal(false)
-  const reactionPickerPosition = signal(null)
   const own = message.sender.id === currentUserId
   const mentioned = mentionsUsername(message.body, currentUsername)
   const roleLabel = channelRole === 'owner' ? 'Owner' : channelRole === 'moderator' ? 'Moderator' : ''
