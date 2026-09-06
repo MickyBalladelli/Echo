@@ -41,6 +41,7 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
       state.value = 'ready'
       onHeaderChange({
         name: channel.value.name,
+        slug: channel.value.slug,
         visibility: channel.value.visibility
       })
     } catch (requestError) {
@@ -115,6 +116,7 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
       channel.value = result.data.channel
       onHeaderChange({
         name: channel.value.name,
+        slug: channel.value.slug,
         visibility: channel.value.visibility
       })
     } catch (requestError) {
@@ -281,6 +283,9 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
             members={members}
             currentUserId={currentUserId}
             currentUsername={currentUsername}
+            onJoin={toggleMembership}
+            joinBusy={busy}
+            joinLabel={channel.value?.membershipRole ? 'Leave' : channel.value?.invited ? 'Accept invite' : 'Join channel'}
           />
         </section>
         <Popup

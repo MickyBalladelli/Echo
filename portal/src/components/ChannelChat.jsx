@@ -12,7 +12,7 @@ const maxAttachmentTotalBytes = 1024 * 1024
 const chatLoadTimeoutMs = 10000
 const paperclipIcon = html`<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M18.4 12.2 10.7 19.9a4.5 4.5 0 0 1-6.4-6.4l9.2-9.2a3 3 0 0 1 4.2 4.2l-9.2 9.2a1.5 1.5 0 0 1-2.1-2.1l8.5-8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>`
 
-export function ChannelChat({ slug, channel, members, currentUserId, currentUsername }) {
+export function ChannelChat({ slug, channel, members, currentUserId, currentUsername, onJoin, joinBusy, joinLabel = 'Join channel' }) {
   const readChannel = () => channel?.value ?? channel
   const messages = signal([])
   const body = signal('')
@@ -93,7 +93,7 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
   }
 
   function addMessage(message) {
-    if (message.channelId !== readChannel().id || messages.value.some(item => item.id === message.id)) return
+    if (!readChannel()?.id || message.channelId !== readChannel().id || messages.value.some(item => item.id === message.id)) return
     const viewport = messageViewport()
     const shouldStickToBottom = !viewport || viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 120
     messages.value = sortMessages([...messages.value, message])
@@ -169,7 +169,7 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
   }
 
   async function load() {
-    if (!readChannel().membershipRole) {
+    if (!readChannel()?.membershipRole) {
       nextCursor.value = null
       state.value = 'ready'
       return
@@ -240,10 +240,15 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
     event.preventDefault()
     const cleanBody = body.value.trim()
     if ((!cleanBody && !attachments.value.length) || busy.value) return
+    const channelId = readChannel()?.id
+    if (!channelId) {
+      error.value = 'Channel is still loading. Try again in a moment.'
+      return
+    }
     busy.value = true
     error.value = ''
     const attachmentPayload = attachments.value.map(({ id, ...attachment }) => attachment)
-    const request = { channelId: readChannel().id, body: cleanBody, attachments: attachmentPayload }
+    const request = { channelId, body: cleanBody, attachments: attachmentPayload }
     emitRealtime('channel:chat:message:send', request, async response => {
       if (response.ok) {
         addMessage(response.message)
@@ -346,13 +351,9 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
   ))
 
   const content = computed(() => {
-    if (!readChannel().membershipRole) return <Card><EmptyState title="Join to chat" description="Channel chat is available to members." /></Card>
-    if (state.value === 'loading') return <Card><div role="status">Loading channel chat…</div></Card>
-    if (state.value === 'error') return <Card><EmptyState status="error" title="Chat unavailable" description={error.value} action={<Button onClick={load}>Try again</Button>} /></Card>
-    return <Card class="channel-chat-card">
-      <KeyboardList label="Channel chat messages" className="channel-chat-list">
-        {messageListView}
-      </KeyboardList>
+    const currentChannel = readChannel()
+    if (!currentChannel?.membershipRole) return <Card><EmptyState title="Join to chat" description="Channel chat is available to members. Join this channel to see messages and send your own." action={onJoin ? <Button loading={joinBusy} onClick={onJoin}>{joinLabel}</Button> : undefined} /></Card>
+    const composeForm = (
       <form class="channel-chat-compose" onSubmit={send}>
         <input id="channel-chat-attachment-input" class="channel-chat-file-input" type="file" multiple onChange={selectFiles} />
         <IconButton
@@ -367,7 +368,7 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
           use:bind={body}
           maxlength="4000"
           rows="1"
-          placeholder={`Message #${readChannel().slug}`}
+          placeholder={`Message #${currentChannel.slug}`}
           aria-label="Channel chat message"
           onInput={updateMentionSuggestions}
           onKeyDown={handleBodyKeyDown}
@@ -376,14 +377,34 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
         <Button type="submit" loading={busy}>Send message</Button>
         {selectedAttachmentsView}
       </form>
+    )
+    if (state.value === 'loading') return <Card class="channel-chat-card">
+      <KeyboardList label="Channel chat messages" className="channel-chat-list">
+        <div class="channel-chat-empty"><div role="status">Loading channel chat…</div></div>
+      </KeyboardList>
+      {composeForm}
+      <div class="post-feed-error" role="alert">{error}</div>
+    </Card>
+    if (state.value === 'error') return <Card class="channel-chat-card">
+      <KeyboardList label="Channel chat messages" className="channel-chat-list">
+        <div class="channel-chat-empty"><EmptyState status="error" title="Chat unavailable" description={error.value} action={<Button onClick={load}>Try again</Button>} /></div>
+      </KeyboardList>
+      {composeForm}
+      <div class="post-feed-error" role="alert">{error}</div>
+    </Card>
+    return <Card class="channel-chat-card">
+      <KeyboardList label="Channel chat messages" className="channel-chat-list">
+        {messageListView}
+      </KeyboardList>
+      {composeForm}
       <div class="post-feed-error" role="alert">{error}</div>
     </Card>
   })
 
   onMount(() => {
-    let wasMember = Boolean(readChannel().membershipRole)
+    let wasMember = Boolean(readChannel()?.membershipRole)
     const stopMembershipEffect = effect(() => {
-      const isMember = Boolean(readChannel().membershipRole)
+      const isMember = Boolean(readChannel()?.membershipRole)
       if (isMember && !wasMember) {
         state.value = 'loading'
         error.value = ''
