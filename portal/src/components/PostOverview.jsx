@@ -38,7 +38,12 @@ function buildOverviewItems(posts, router) {
       label: `@${username} · ${getPostSnippet(post)}`,
       meta: formatRelativeTime(post.createdAt),
       expanded: true,
-      onClick: event => router.link(`/posts/${post.id}`)(event)
+      active: router.path.value === `/posts/${post.id}`,
+      onClick: node.children.length > 0
+        ? event => {
+          if (event.target?.closest?.('.prism-tree-label')) router.navigate(`/posts/${post.id}`)
+        }
+        : () => router.navigate(`/posts/${post.id}`)
     }
 
     if (node.children.length > 0) {
