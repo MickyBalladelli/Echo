@@ -1,4 +1,4 @@
-import { computed, onMount, signal } from '../lib/vendor.js'
+import { computed, effect, onMount, signal } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 
 const emojiCategories = Object.freeze([
@@ -47,7 +47,6 @@ export function ChannelReactionPicker({ open, position, onSelect, onClose, canUs
   const search = signal('')
   const gifs = signal(gifOptions)
   const gifLoading = signal(false)
-  const gifProviderChecked = signal(false)
   const gifProviderConfigured = signal(false)
   const gifNextOffset = signal(null)
   let gifSearchTimer = null
@@ -69,32 +68,26 @@ export function ChannelReactionPicker({ open, position, onSelect, onClose, canUs
         ? [...gifs.value, ...received]
         : data.configured ? received : filterBuiltInGifs(query)
       gifNextOffset.value = data.configured ? data.nextOffset ?? null : null
-      gifProviderChecked.value = true
     } catch {
       if (requestId !== gifRequestId) return
       gifProviderConfigured.value = false
       gifs.value = filterBuiltInGifs(query)
       gifNextOffset.value = null
-      gifProviderChecked.value = true
     } finally {
       if (requestId === gifRequestId) gifLoading.value = false
     }
   }
 
-  function scheduleGifSearch() {
-    clearTimeout(gifSearchTimer)
-    gifSearchTimer = setTimeout(() => loadGifs(), 300)
-  }
-
   function selectTab(tabId) {
     activeTab.value = tabId
-    if (tabId === 'gif' && !gifProviderChecked.value) loadGifs()
   }
 
-  function handleSearchInput(event) {
-    search.value = event.currentTarget.value
-    if (activeTab.value === 'gif') scheduleGifSearch()
-  }
+  effect(() => {
+    search.value
+    if (activeTab.value !== 'gif' || !open?.value) return
+    clearTimeout(gifSearchTimer)
+    gifSearchTimer = setTimeout(() => loadGifs(), 300)
+  })
 
   function handleKeyDown(event) {
     if (event.key === 'Escape') onClose?.()
@@ -115,103 +108,117 @@ export function ChannelReactionPicker({ open, position, onSelect, onClose, canUs
     onSelect?.({ type, value, label })
   }
 
-  const picker = computed(() => {
-    if (!open?.value) return null
-
-    const query = search.value.trim().toLowerCase()
+  const tabs = [
+    { id: 'emoji', label: 'Emoji' },
+    ...(canUseRichReactions
+      ? [
+        { id: 'gif', label: 'GIFs' },
+        { id: 'sticker', label: 'Stickers' }
+      ]
+      : [])
+  ]
+  const popupStyle = computed(() => {
     const pickerPosition = position?.value || { top: 12, left: 12 }
+    return `top: ${pickerPosition.top}px; left: ${pickerPosition.left}px; display: ${open?.value ? 'grid' : 'none'}`
+  })
+  const popupHidden = computed(() => open?.value ? 'false' : 'true')
+  const searchPlaceholder = computed(() => activeTab.value === 'emoji' ? 'Search emoji' : `Search ${activeTab.value === 'gif' ? 'GIFs' : 'stickers'}`)
+  const searchAriaLabel = computed(() => `Search ${activeTab.value}`)
+  const tabView = computed(() => (
+    <div class="channel-chat-reaction-tabs" role="tablist" aria-label="Reaction types">
+      {tabs.map(tab => (
+        <button
+          key={tab.id}
+          type="button"
+          role="tab"
+          aria-selected={activeTab.value === tab.id}
+          class={activeTab.value === tab.id ? 'is-active' : ''}
+          onClick={() => selectTab(tab.id)}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  ))
+  const contentView = computed(() => {
+    const query = search.value.trim().toLowerCase()
     const stickers = query ? stickerOptions.filter(sticker => sticker.label.toLowerCase().includes(query)) : stickerOptions
-    const tabs = [
-      { id: 'emoji', label: 'Emoji' },
-      ...(canUseRichReactions
-        ? [
-          { id: 'gif', label: 'GIFs' },
-          { id: 'sticker', label: 'Stickers' }
-        ]
-        : [])]
-
-    return (
-      <div
-        class="channel-chat-reaction-popover"
-        role="dialog"
-        aria-label="Choose a reaction"
-        tabIndex="-1"
-        onKeyDown={handleKeyDown}
-        style={`top: ${pickerPosition.top}px; left: ${pickerPosition.left}px`}
-      >
-        <div class="channel-chat-reaction-popover-header">
-          <strong>React</strong>
-          <button type="button" class="channel-chat-reaction-close" aria-label="Close reactions" onClick={onClose}>×</button>
+    if (activeTab.value === 'emoji') {
+      return (
+        <div class="channel-chat-emoji-content">
+          {emojiCategories.map(category => {
+            const emojis = query ? category.emojis.filter(emoji => emoji.includes(query)) : category.emojis
+            if (!emojis.length) return null
+            return (
+              <section key={category.label} class="channel-chat-emoji-category" aria-label={category.label}>
+                <h4>{category.label}</h4>
+                <div class="channel-chat-emoji-grid">
+                  {emojis.map(emoji => (
+                    <button key={emoji} class="channel-chat-reaction-option" type="button" aria-label={`React with ${emoji}`} onClick={() => choose('emoji', emoji, emoji)}>{emoji}</button>
+                  ))}
+                </div>
+              </section>
+            )
+          })}
         </div>
-        <div class="channel-chat-reaction-tabs" role="tablist" aria-label="Reaction types">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              type="button"
-              role="tab"
-              aria-selected={activeTab.value === tab.id}
-              class={activeTab.value === tab.id ? 'is-active' : ''}
-              onClick={() => selectTab(tab.id)}
-            >
-              {tab.label}
+      )
+    }
+    if (canUseRichReactions && activeTab.value === 'gif') {
+      return (
+        <div class="channel-chat-gif-grid">
+          {gifs.value.map(gif => (
+            <button key={gif.id || gif.url} class="channel-chat-gif-option" type="button" aria-label={`Use ${gif.title || gif.label} GIF`} onClick={() => choose('gif', gif.url, gif.title || gif.label)}>
+              <img src={gif.previewUrl || gif.url} alt={gif.title || gif.label} loading="lazy" />
             </button>
           ))}
+          {gifLoading.value && <p class="channel-chat-reaction-empty">Loading GIFs…</p>}
+          {!gifLoading.value && !gifs.value.length && <p class="channel-chat-reaction-empty">No GIFs found</p>}
+          {!gifLoading.value && !gifProviderConfigured.value && <p class="channel-chat-reaction-empty">Add GIPHY_API_KEY for live search</p>}
+          {!gifLoading.value && gifNextOffset.value !== null && (
+            <button class="channel-chat-gif-load-more" type="button" onClick={() => loadGifs({ append: true })}>Load more GIFs</button>
+          )}
         </div>
-        <input
-          class="channel-chat-reaction-search"
-          type="search"
-          placeholder={activeTab.value === 'emoji' ? 'Search emoji' : `Search ${activeTab.value === 'gif' ? 'GIFs' : 'stickers'}`}
-          aria-label={`Search ${activeTab.value}`}
-          onInput={handleSearchInput}
-          use:bind={search}
-        />
-        {activeTab.value === 'emoji' && (
-          <div class="channel-chat-emoji-content">
-            {emojiCategories.map(category => {
-              const emojis = query ? category.emojis.filter(emoji => emoji.includes(query)) : category.emojis
-              if (!emojis.length) return null
-              return (
-                <section key={category.label} class="channel-chat-emoji-category" aria-label={category.label}>
-                  <h4>{category.label}</h4>
-                  <div class="channel-chat-emoji-grid">
-                    {emojis.map(emoji => (
-                      <button key={emoji} class="channel-chat-reaction-option" type="button" aria-label={`React with ${emoji}`} onClick={() => choose('emoji', emoji, emoji)}>{emoji}</button>
-                    ))}
-                  </div>
-                </section>
-              )
-            })}
-          </div>
-        )}
-        {canUseRichReactions && activeTab.value === 'gif' && (
-          <div class="channel-chat-gif-grid">
-            {gifs.value.map(gif => (
-              <button key={gif.id || gif.url} class="channel-chat-gif-option" type="button" aria-label={`Use ${gif.title || gif.label} GIF`} onClick={() => choose('gif', gif.url, gif.title || gif.label)}>
-                <img src={gif.previewUrl || gif.url} alt={gif.title || gif.label} loading="lazy" />
-              </button>
-            ))}
-            {gifLoading.value && <p class="channel-chat-reaction-empty">Loading GIFs…</p>}
-            {!gifLoading.value && !gifs.value.length && <p class="channel-chat-reaction-empty">No GIFs found</p>}
-            {!gifLoading.value && !gifProviderConfigured.value && <p class="channel-chat-reaction-empty">Add GIPHY_API_KEY for live search</p>}
-            {!gifLoading.value && gifNextOffset.value !== null && (
-              <button class="channel-chat-gif-load-more" type="button" onClick={() => loadGifs({ append: true })}>Load more GIFs</button>
-            )}
-          </div>
-        )}
-        {canUseRichReactions && activeTab.value === 'sticker' && (
-          <div class="channel-chat-sticker-grid">
-            {stickers.map(sticker => (
-              <button key={sticker.label} class="channel-chat-sticker-option" type="button" aria-label={`Use ${sticker.label} sticker`} onClick={() => choose('sticker', sticker.value, sticker.label)}>
-                <span aria-hidden="true">{sticker.value}</span>
-                <small>{sticker.label}</small>
-              </button>
-            ))}
-            {!stickers.length && <p class="channel-chat-reaction-empty">No stickers found</p>}
-          </div>
-        )}
-      </div>
-    )
+      )
+    }
+    if (canUseRichReactions && activeTab.value === 'sticker') {
+      return (
+        <div class="channel-chat-sticker-grid">
+          {stickers.map(sticker => (
+            <button key={sticker.label} class="channel-chat-sticker-option" type="button" aria-label={`Use ${sticker.label} sticker`} onClick={() => choose('sticker', sticker.value, sticker.label)}>
+              <span aria-hidden="true">{sticker.value}</span>
+              <small>{sticker.label}</small>
+            </button>
+          ))}
+          {!stickers.length && <p class="channel-chat-reaction-empty">No stickers found</p>}
+        </div>
+      )
+    }
+    return null
   })
 
-  return picker
+  return (
+    <div
+      class="channel-chat-reaction-popover"
+      role="dialog"
+      aria-label="Choose a reaction"
+      aria-hidden={popupHidden}
+      tabIndex="-1"
+      onKeyDown={handleKeyDown}
+      style={popupStyle}
+    >
+      <div class="channel-chat-reaction-popover-header">
+        <strong>React</strong>
+        <button type="button" class="channel-chat-reaction-close" aria-label="Close reactions" onClick={onClose}>×</button>
+      </div>
+      {tabView}
+      <input
+        class="channel-chat-reaction-search"
+        type="search"
+        placeholder={searchPlaceholder}
+        aria-label={searchAriaLabel}
+        use:bind={{ source: search, debounce: 250 }}
+      />
+      {contentView}
+    </div>
+  )
 }

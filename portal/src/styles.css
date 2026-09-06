@@ -3955,7 +3955,7 @@ img {
   transform: translateY(0);
 }
 
-.channel-chat-message-row:has(.channel-chat-reaction-popover) .channel-chat-message-actions {
+.channel-chat-message-row:has(.channel-chat-reaction-popover[aria-hidden="false"]) .channel-chat-message-actions {
   opacity: 1;
   pointer-events: auto;
   transform: none;
