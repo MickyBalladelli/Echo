@@ -40,6 +40,11 @@ const topLevelPageHeaders = Object.freeze({
   '/moderation': { eyebrow: 'STAFF / MODERATION', title: 'Moderation' }
 })
 
+function getProfileReturnPath(search) {
+  const from = new URLSearchParams(search || '').get('from')
+  return from?.startsWith('/channels/') ? from : '/'
+}
+
 export function AppShell({
   userState,
   apiStatus,
@@ -190,6 +195,34 @@ export function AppShell({
   const globalHeader = computed(() => {
     const channel = channelHeader.value
     const pageHeader = topLevelPageHeaders[router.path.value]
+    const onProfilePage = router.path.value.startsWith('/users/')
+
+    if (onProfilePage) {
+      const returnPath = getProfileReturnPath(router.search.value)
+      const backLabel = returnPath.startsWith('/channels/') ? 'Back to channel' : 'Back to home'
+
+      return (
+        <div class="echo-header-content echo-channel-header-content">
+          <div class="echo-header-brand">
+            <img class="echo-header-icon" src={echoIconUrl} alt="" aria-hidden="true" />
+            <div class="echo-header-copy"><div class="echo-header-title-row"><Label size="large">Echo</Label><HeaderStatus apiStatus={apiStatus} socketStatus={socketStatus} /></div><span>Small signals. Real people.</span></div>
+          </div>
+          <div class="echo-channel-header-details">
+            <div class="echo-channel-primary">
+              <IconButton
+                class="echo-channel-back-button"
+                icon={ArrowLeftIcon()}
+                size="small"
+                ariaLabel={backLabel}
+                title={backLabel}
+                onClick={event => router.link(returnPath)(event)}
+              />
+              <div class="echo-channel-identity"><h1>Profile</h1></div>
+            </div>
+          </div>
+        </div>
+      )
+    }
 
     if (pageHeader) {
       return (

@@ -45,7 +45,11 @@ export function MentionProfilePopover({ username, previewUser = null, router, ch
     }
   }
 
-  const profileHref = `/users/${encodeURIComponent(username)}`
+  const profilePath = `/users/${encodeURIComponent(username)}`
+  const returnPath = router?.path?.value?.startsWith('/channels/') ? router.path.value : ''
+  const profileHref = returnPath
+    ? `${profilePath}?from=${encodeURIComponent(returnPath)}`
+    : profilePath
   const popover = computed(() => {
     if (!open.value) return null
 

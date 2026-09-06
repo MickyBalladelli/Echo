@@ -6,7 +6,6 @@ export function UserProfilePage({ username, router, currentUserId }) {
     <PageFrame
       hideHeader
     >
-      <a class="back-link" href="/" onClick={router.link('/')}>← Back to home</a>
       <UserSocialContent username={username} router={router} currentUserId={currentUserId} />
     </PageFrame>
   )
