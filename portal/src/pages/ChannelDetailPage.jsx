@@ -22,6 +22,17 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
   const announcement = signal('')
   const detailsOpen = signal(false)
 
+  function updateHeader() {
+    if (!channel.value) return
+    onHeaderChange({
+      name: channel.value.name,
+      slug: channel.value.slug,
+      visibility: channel.value.visibility,
+      isOwner: channel.value.isOwner,
+      onManage: () => detailsOpen.value = true
+    })
+  }
+
   async function load() {
     state.value = 'loading'
     error.value = ''
@@ -39,11 +50,7 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
       rules.value = channel.value.rules || ''
       privateChannel.value = channel.value.visibility === 'private'
       state.value = 'ready'
-      onHeaderChange({
-        name: channel.value.name,
-        slug: channel.value.slug,
-        visibility: channel.value.visibility
-      })
+      updateHeader()
     } catch (requestError) {
       error.value = requestError.message || 'Could not load channel'
       state.value = 'error'
@@ -114,11 +121,7 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
         })
       })
       channel.value = result.data.channel
-      onHeaderChange({
-        name: channel.value.name,
-        slug: channel.value.slug,
-        visibility: channel.value.visibility
-      })
+      updateHeader()
     } catch (requestError) {
       error.value = requestError.message || 'Could not save channel'
     } finally {
@@ -162,6 +165,7 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
 
   const headerActions = computed(() => {
     if (state.value !== 'ready' || !channel.value) return null
+    if (channel.value.isOwner) return null
 
     return (
       <div class="channel-header-actions">

@@ -1,7 +1,7 @@
 import { computed, createRouter, onMount, routerView, signal } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import echoIconUrl from '../assets/icons/echo-favicon.png'
-import { ArrowLeftIcon, Header, IconButton, Label, Layout } from '../lib/vendor.js'
+import { ArrowLeftIcon, Button, Header, IconButton, Label, Layout } from '../lib/vendor.js'
 import { AccountMenu } from './AccountMenu.jsx'
 import { ContextRail } from './ContextRail.jsx'
 import { HeaderStatus } from './HeaderStatus.jsx'
@@ -150,6 +150,17 @@ export function AppShell({
     if (topLevelPageHeaders[router.path.value]) return 'echo-layout echo-layout-top-level'
     return 'echo-layout'
   })
+  const headerTrailing = computed(() => {
+    const channel = channelHeader.value
+    return (
+      <>
+        {channel?.isOwner && channel.onManage && (
+          <Button variant="tertiary" onClick={channel.onManage}>Manage channel</Button>
+        )}
+        <AccountMenu user={userState.value} router={router} onLogout={onLogout} />
+      </>
+    )
+  })
   const globalHeader = computed(() => {
     const channel = channelHeader.value
     const pageHeader = topLevelPageHeaders[router.path.value]
@@ -220,7 +231,7 @@ export function AppShell({
           sticky: true,
           ariaLabel: 'Echo header',
           children: globalHeader,
-          trailing: <AccountMenu user={user} router={router} onLogout={onLogout} />
+          trailing: headerTrailing
         })}
         navigator={ShellNavigation({ router, user, unreadNotifications, notificationVersion })}
       >

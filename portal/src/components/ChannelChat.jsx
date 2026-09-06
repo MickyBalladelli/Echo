@@ -23,6 +23,29 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
   const nextCursor = signal(null)
   const error = signal('')
   const mentionSuggestions = signal([])
+  let composeSyncFrame = null
+
+  function syncComposePosition() {
+    if (typeof document === 'undefined') return
+    const card = document.querySelector('.channel-chat-card')
+    const compose = card?.querySelector('.channel-chat-compose')
+    if (!card || !compose) return
+    const bounds = card.getBoundingClientRect()
+    compose.style.setProperty('--channel-chat-compose-left', `${bounds.left}px`)
+    compose.style.setProperty('--channel-chat-compose-width', `${bounds.width}px`)
+  }
+
+  function scheduleComposePosition() {
+    if (typeof requestAnimationFrame !== 'function') {
+      syncComposePosition()
+      return
+    }
+    if (composeSyncFrame !== null) cancelAnimationFrame(composeSyncFrame)
+    composeSyncFrame = requestAnimationFrame(() => {
+      composeSyncFrame = null
+      syncComposePosition()
+    })
+  }
 
   function messageViewport() {
     if (typeof document === 'undefined') return null
@@ -409,14 +432,25 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
         state.value = 'loading'
         error.value = ''
         load()
+        scheduleComposePosition()
       }
       wasMember = isMember
     })
     load()
+    scheduleComposePosition()
+    const resizeObserver = typeof ResizeObserver === 'function'
+      ? new ResizeObserver(scheduleComposePosition)
+      : null
+    const card = document.querySelector('.channel-chat-card')
+    if (card) resizeObserver?.observe(card)
+    window.addEventListener('resize', scheduleComposePosition)
     const stopRealtime = onRealtimeEvent('channel:chat:message', addMessage)
     return () => {
       stopMembershipEffect()
       stopRealtime()
+      if (composeSyncFrame !== null) cancelAnimationFrame(composeSyncFrame)
+      resizeObserver?.disconnect()
+      window.removeEventListener('resize', scheduleComposePosition)
     }
   })
 

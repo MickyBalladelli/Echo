@@ -3571,7 +3571,9 @@ img {
   display: grid;
   gap: 0;
   overflow: hidden;
-  min-height: min(680px, calc(100vh - 13rem));
+  height: calc(100dvh - var(--echo-header-height) - 32px);
+  min-height: 0;
+  grid-template-rows: minmax(0, 1fr) auto auto;
   border: 1px solid #2b2c32;
   border-radius: 12px;
   background: #1b1c20;
@@ -3581,79 +3583,84 @@ img {
 
 @media (min-width: 901px) {
   .echo-layout-channel .prism-layout-body {
-    height: auto;
-    min-height: 100dvh;
-    overflow: visible;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .echo-layout-channel .prism-layout-content,
   .echo-layout-channel .app-content-grid,
   .echo-layout-channel .app-main,
   .echo-layout-channel .route-page {
-    height: auto;
+    height: 100%;
     min-height: 0;
+    overflow: hidden;
   }
 
   .echo-layout-channel .channel-detail-stack {
-    height: auto;
+    height: 100%;
     min-height: 0;
     gap: 16px;
   }
 
   .echo-layout-channel .channel-message-section {
-    height: auto;
+    height: 100%;
     min-height: 0;
   }
 
   .echo-layout-channel .app-content-grid {
     padding-top: 0;
-    padding-bottom: 24px;
-    overflow: visible;
+    padding-bottom: 0;
   }
 
   .echo-layout-channel .route-page {
     max-width: none;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
   }
 
   .echo-layout-channel .channel-chat-card {
-    height: auto;
+    height: 100%;
     min-height: 0;
     grid-template-rows: minmax(0, 1fr) auto auto;
   }
 
   .echo-layout-channel .channel-chat-list {
-    min-height: 420px;
-    overflow: visible;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .echo-layout-channel .channel-chat-list .virtual-list {
-    height: auto;
-    max-height: min(68vh, 680px);
-    min-height: 420px;
+    height: 100%;
+    max-height: none;
+    min-height: 0;
   }
 
   .echo-layout-channel .channel-chat-empty {
-    height: auto;
-    min-height: 420px;
+    height: 100%;
+    min-height: 0;
   }
 }
 
 .channel-chat-list {
-  min-height: 420px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .channel-chat-list .virtual-list {
-  max-height: min(68vh, 680px);
-  min-height: 420px;
+  height: 100%;
+  max-height: none;
+  min-height: 0;
   gap: 0;
-  padding: 18px 0;
+  padding: 18px 0 96px;
   overflow-y: auto;
   overscroll-behavior-y: auto;
   background: #1b1c20;
 }
 
 .channel-chat-empty {
-  min-height: 420px;
+  height: 100%;
+  min-height: 0;
   display: grid;
   place-items: center;
   padding: 28px;
@@ -3875,7 +3882,9 @@ img {
 
 .channel-chat-compose {
   display: grid;
-  position: sticky;
+  position: fixed;
+  left: var(--channel-chat-compose-left, 0px);
+  width: var(--channel-chat-compose-width, 100vw);
   bottom: 0;
   grid-template-columns: 34px minmax(0, 1fr) auto;
   gap: 8px;
