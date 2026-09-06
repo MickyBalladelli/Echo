@@ -1,4 +1,4 @@
-import { computed, signal } from '../lib/vendor.js'
+import { computed, onMount, signal } from '../lib/vendor.js'
 
 const emojiCategories = Object.freeze([
   { label: 'Smileys', emojis: ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😋', '😛', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤯', '🤠', '😈', '👿', '👹', '👺', '🤡', '💩', '👻', '💀', '☠️', '👽', '🤖', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾'] },
@@ -30,6 +30,18 @@ export function ChannelReactionPicker({ open, position, onSelect, onClose, canUs
   const activeTab = signal('emoji')
   const search = signal('')
 
+  function handleKeyDown(event) {
+    if (event.key === 'Escape') onClose?.()
+  }
+
+  onMount(() => {
+    const handleDocumentKeyDown = event => {
+      if (event.key === 'Escape' && open?.value) onClose?.()
+    }
+    document.addEventListener('keydown', handleDocumentKeyDown)
+    return () => document.removeEventListener('keydown', handleDocumentKeyDown)
+  })
+
   function choose(type, value, label) {
     onSelect?.({ type, value, label })
   }
@@ -53,6 +65,8 @@ export function ChannelReactionPicker({ open, position, onSelect, onClose, canUs
         class="channel-chat-reaction-popover"
         role="dialog"
         aria-label="Choose a reaction"
+        tabIndex="-1"
+        onKeyDown={handleKeyDown}
         style={`top: ${pickerPosition.top}px; left: ${pickerPosition.left}px`}
       >
         <div class="channel-chat-reaction-popover-header">
