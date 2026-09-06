@@ -26,7 +26,7 @@ const stickerOptions = Object.freeze([
   { label: 'No words', value: '😶💬' }
 ])
 
-export function ChannelReactionPicker({ open, position, onSelect, onClose }) {
+export function ChannelReactionPicker({ open, position, onSelect, onClose, canUseRichReactions = false }) {
   const activeTab = signal('emoji')
   const search = signal('')
 
@@ -41,9 +41,12 @@ export function ChannelReactionPicker({ open, position, onSelect, onClose }) {
     const pickerPosition = position?.value || { top: 12, left: 12 }
     const tabs = [
       { id: 'emoji', label: 'Emoji' },
-      { id: 'gif', label: 'GIFs' },
-      { id: 'sticker', label: 'Stickers' }
-    ]
+      ...(canUseRichReactions
+        ? [
+          { id: 'gif', label: 'GIFs' },
+          { id: 'sticker', label: 'Stickers' }
+        ]
+        : [])]
 
     return (
       <div
@@ -95,7 +98,7 @@ export function ChannelReactionPicker({ open, position, onSelect, onClose }) {
             })}
           </div>
         )}
-        {activeTab.value === 'gif' && (
+        {canUseRichReactions && activeTab.value === 'gif' && (
           <div class="channel-chat-gif-grid">
             {gifOptions.map(gif => (
               <button key={gif.url} class="channel-chat-gif-option" type="button" aria-label={`Use ${gif.label} GIF`} onClick={() => choose('gif', gif.url, gif.label)}>
@@ -104,7 +107,7 @@ export function ChannelReactionPicker({ open, position, onSelect, onClose }) {
             ))}
           </div>
         )}
-        {activeTab.value === 'sticker' && (
+        {canUseRichReactions && activeTab.value === 'sticker' && (
           <div class="channel-chat-sticker-grid">
             {stickerOptions.map(sticker => (
               <button key={sticker.label} class="channel-chat-sticker-option" type="button" aria-label={`Use ${sticker.label} sticker`} onClick={() => choose('sticker', sticker.value, sticker.label)}>

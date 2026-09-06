@@ -192,7 +192,7 @@ export async function toggleChannelChatMessageReaction(userId, channelId, messag
   const message = await withTransaction(async transaction => {
     await requireMember(userId, channelId, transaction)
     const rows = await sequelize.query(`
-      SELECT reactions
+      SELECT sender_id, reactions
       FROM channel_chat_messages
       WHERE id = :messageId
         AND channel_id = :channelId
@@ -206,6 +206,9 @@ export async function toggleChannelChatMessageReaction(userId, channelId, messag
       transaction
     })
     if (!rows[0]) throw new HttpError(404, 'MESSAGE_NOT_FOUND', 'Message not found')
+    if (reaction.type !== 'emoji' && rows[0].sender_id !== userId) {
+      throw new HttpError(403, 'MESSAGE_OWNER_REQUIRED', 'Only the message owner can add GIFs or stickers')
+    }
 
     const storedReactions = parseReactions(rows[0].reactions)
     const reactionIndex = storedReactions.findIndex(item => item.userId === userId &&

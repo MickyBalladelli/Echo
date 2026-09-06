@@ -76,20 +76,26 @@ export function ChannelChatMessage({ message, currentUserId, currentUsername, co
 
     return (
       <div class="channel-chat-message-reactions">
-        {reactions.map(reaction => (
-          <button
-            key={`${reaction.type}-${reaction.value}`}
-            class="channel-chat-reaction"
-            type="button"
-            aria-label={`${reaction.reacted ? 'Remove' : 'Add'} ${reaction.label} reaction`}
-            onClick={() => toggleReaction(reaction)}
-          >
-            {reaction.type === 'gif'
-              ? <img src={reaction.value} alt={reaction.label} />
-              : <span aria-hidden="true">{reaction.value}</span>}
-            <b>{reaction.count || 1}</b>
-          </button>
-        ))}
+        {reactions.map(reaction => {
+          const canToggle = reaction.type === 'emoji' || own
+          const content = (
+            <>
+              {reaction.type === 'gif'
+                ? <img src={reaction.value} alt={reaction.label} />
+                : <span aria-hidden="true">{reaction.value}</span>}
+              <b>{reaction.count || 1}</b>
+            </>
+          )
+          return canToggle
+            ? <button
+              key={`${reaction.type}-${reaction.value}`}
+              class="channel-chat-reaction"
+              type="button"
+              aria-label={`${reaction.reacted ? 'Remove' : 'Add'} ${reaction.label} reaction`}
+              onClick={() => toggleReaction(reaction)}
+            >{content}</button>
+            : <span key={`${reaction.type}-${reaction.value}`} class="channel-chat-reaction" role="img" aria-label={`${reaction.label} reaction`}>{content}</span>
+        })}
       </div>
     )
   }
@@ -198,7 +204,13 @@ export function ChannelChatMessage({ message, currentUserId, currentUsername, co
           {copied.value && <span class="channel-chat-message-copied" role="status">Copied</span>}
         </div>
       </div>
-      <ChannelReactionPicker open={reactionPickerOpen} position={reactionPickerPosition} onSelect={toggleReaction} onClose={closeReactionPicker} />
+      <ChannelReactionPicker
+        open={reactionPickerOpen}
+        position={reactionPickerPosition}
+        onSelect={toggleReaction}
+        onClose={closeReactionPicker}
+        canUseRichReactions={own}
+      />
     </div>
   )
 }
