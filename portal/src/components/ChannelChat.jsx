@@ -23,6 +23,7 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
   const nextCursor = signal(null)
   const error = signal('')
   const mentionSuggestions = signal([])
+  const reactionQueues = new Map()
   let composeSyncFrame = null
 
   function syncComposePosition() {
@@ -122,6 +123,46 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
     messages.value = sortMessages([...messages.value, message])
     if (shouldStickToBottom) scrollMessagesToBottom()
     if (message.sender.id !== currentUserId) markRead(message.id)
+  }
+
+  function updateMessage(message) {
+    if (!readChannel()?.id || message.channelId !== readChannel().id) return
+    const current = messages.value.find(item => item.id === message.id)
+    const reactionActorId = message.reactionActorId
+    const reactions = Array.isArray(message.reactions)
+      ? message.reactions.map(reaction => {
+        const previous = current?.reactions?.find(item => item.type === reaction.type && item.value === reaction.value)
+        return {
+          ...reaction,
+          reacted: reactionActorId && reactionActorId !== currentUserId
+            ? Boolean(previous?.reacted)
+            : reaction.reacted
+        }
+      })
+      : []
+    const { reactionActorId: _reactionActorId, ...cleanMessage } = message
+    messages.value = messages.value.map(item => item.id === message.id ? { ...cleanMessage, reactions } : item)
+  }
+
+  function toggleReaction(message, reaction) {
+    const previous = reactionQueues.get(message.id) || Promise.resolve()
+    const request = previous.catch(() => {}).then(async () => {
+      try {
+        const result = await apiRequest(`/api/channels/${encodeURIComponent(slug)}/chat/${encodeURIComponent(message.id)}/reactions`, {
+          method: 'PUT',
+          body: JSON.stringify(reaction)
+        })
+        updateMessage(result.data.message)
+        return result.data.message
+      } catch (requestError) {
+        error.value = requestError.message || 'Could not save reaction'
+      }
+    })
+    reactionQueues.set(message.id, request)
+    request.finally(() => {
+      if (reactionQueues.get(message.id) === request) reactionQueues.delete(message.id)
+    })
+    return request
   }
 
   function markRead(messageId) {
@@ -348,6 +389,7 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
       currentUsername={currentUsername}
       compact={compact}
       onReply={replyTo}
+      onReaction={toggleReaction}
       channelRole={member?.role}
       members={readMembers()}
       router={router}
@@ -449,9 +491,12 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
     if (card) resizeObserver?.observe(card)
     window.addEventListener('resize', scheduleComposePosition)
     const stopRealtime = onRealtimeEvent('channel:chat:message', addMessage)
+    const stopRealtimeUpdate = onRealtimeEvent('channel:chat:message:updated', updateMessage)
     return () => {
       stopMembershipEffect()
       stopRealtime()
+      stopRealtimeUpdate()
+      reactionQueues.clear()
       if (composeSyncFrame !== null) cancelAnimationFrame(composeSyncFrame)
       resizeObserver?.disconnect()
       window.removeEventListener('resize', scheduleComposePosition)

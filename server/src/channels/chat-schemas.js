@@ -17,3 +17,9 @@ export const channelChatMessageSchema = z.object({
     context.addIssue({ code: z.ZodIssueCode.custom, path: ['body'], message: 'Message or attachment is required' })
   }
 })
+
+export const channelChatReactionSchema = z.object({
+  type: z.enum(['emoji', 'gif', 'sticker']),
+  value: z.string().trim().min(1).max(2000),
+  label: z.string().trim().min(1).max(200)
+})

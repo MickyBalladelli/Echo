@@ -32,7 +32,6 @@ export function ChannelReactionPicker({ open, position, onSelect, onClose }) {
 
   function choose(type, value, label) {
     onSelect?.({ type, value, label })
-    onClose?.()
   }
 
   const picker = computed(() => {

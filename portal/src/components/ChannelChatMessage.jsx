@@ -1,4 +1,4 @@
-import { computed, signal } from '../lib/vendor.js'
+import { signal } from '../lib/vendor.js'
 import { Badge, ChatIcon, CopyIcon, IconButton } from '../lib/vendor.js'
 import { formatClockTime } from '../lib/dates.js'
 import { UserAvatar } from './UserAvatar.jsx'
@@ -22,11 +22,10 @@ function renderBody(body, router, members) {
     : part)
 }
 
-export function ChannelChatMessage({ message, currentUserId, currentUsername, compact = false, onReply, channelRole, members = [], router }) {
+export function ChannelChatMessage({ message, currentUserId, currentUsername, compact = false, onReply, onReaction, channelRole, members = [], router }) {
   const copied = signal(false)
   const reactionPickerOpen = signal(false)
   const reactionPickerPosition = signal(null)
-  const selectedReaction = signal(null)
   const own = message.sender.id === currentUserId
   const mentioned = mentionsUsername(message.body, currentUsername)
   const roleLabel = channelRole === 'owner' ? 'Owner' : channelRole === 'moderator' ? 'Moderator' : ''
@@ -47,8 +46,7 @@ export function ChannelChatMessage({ message, currentUserId, currentUsername, co
   }
 
   function toggleReaction(reaction) {
-    selectedReaction.value = selectedReaction.value?.value === reaction.value ? null : reaction
-    closeReactionPicker()
+    onReaction?.(message, reaction)
   }
 
   function closeReactionPicker() {
@@ -74,26 +72,29 @@ export function ChannelChatMessage({ message, currentUserId, currentUsername, co
     reactionPickerOpen.value = true
   }
 
-  const selectedReactionView = computed(() => {
-    const reaction = selectedReaction.value
-    if (!reaction) return null
+  function renderSelectedReactions() {
+    const reactions = Array.isArray(message.reactions) ? message.reactions : []
+    if (!reactions.length) return null
 
     return (
       <div class="channel-chat-message-reactions">
-        <button
-          class="channel-chat-reaction"
-          type="button"
-          aria-label={`Remove ${reaction.label} reaction`}
-          onClick={() => toggleReaction(reaction)}
-        >
-          {reaction.type === 'gif'
-            ? <img src={reaction.value} alt={reaction.label} />
-            : <span aria-hidden="true">{reaction.value}</span>}
-          <b>1</b>
-        </button>
+        {reactions.map(reaction => (
+          <button
+            key={`${reaction.type}-${reaction.value}`}
+            class="channel-chat-reaction"
+            type="button"
+            aria-label={`${reaction.reacted ? 'Remove' : 'Add'} ${reaction.label} reaction`}
+            onClick={() => toggleReaction(reaction)}
+          >
+            {reaction.type === 'gif'
+              ? <img src={reaction.value} alt={reaction.label} />
+              : <span aria-hidden="true">{reaction.value}</span>}
+            <b>{reaction.count || 1}</b>
+          </button>
+        ))}
       </div>
     )
-  })
+  }
 
   function attachmentBlob(attachment) {
     const encoded = attachment.data.split(',')[1] || ''
@@ -169,7 +170,7 @@ export function ChannelChatMessage({ message, currentUserId, currentUsername, co
           </div>
         )}
         {message.updatedAt !== message.createdAt && <small class="channel-chat-message-edited">(edited)</small>}
-        {selectedReactionView}
+        {renderSelectedReactions()}
         <div class="channel-chat-message-actions">
           <IconButton
             class="channel-chat-react-button"

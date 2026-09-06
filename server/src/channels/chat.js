@@ -6,6 +6,7 @@ import { inspectContent } from '../moderation/signals.js'
 import { notifyChannelMentions } from '../notifications/service.js'
 import { publishRealtimeEvent } from '../realtime/events.js'
 import { roomName } from '../realtime/rooms.js'
+import { isPostgres } from '../db/dialect.js'
 
 const maxAttachmentBytes = 1024 * 1024
 const maxAttachmentCount = 3
@@ -25,7 +26,37 @@ async function requireMember(userId, channelId, transaction) {
   return rows[0]
 }
 
-function mapMessage(row) {
+function parseReactions(value) {
+  if (Array.isArray(value)) return value
+  if (typeof value !== 'string') return []
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function mapReactions(value, currentUserId) {
+  const grouped = new Map()
+  for (const reaction of parseReactions(value)) {
+    if (!reaction?.userId || !reaction.type || !reaction.value) continue
+    const key = `${reaction.type}:${reaction.value}`
+    const current = grouped.get(key) || {
+      type: reaction.type,
+      value: reaction.value,
+      label: reaction.label || reaction.value,
+      count: 0,
+      reacted: false
+    }
+    current.count += 1
+    current.reacted = current.reacted || reaction.userId === currentUserId
+    grouped.set(key, current)
+  }
+  return [...grouped.values()]
+}
+
+function mapMessage(row, currentUserId) {
   const attachments = Array.isArray(row.attachments)
     ? row.attachments
     : typeof row.attachments === 'string' ? JSON.parse(row.attachments) : []
@@ -35,6 +66,7 @@ function mapMessage(row) {
     channelId: row.channel_id,
     body: row.body,
     attachments,
+    reactions: mapReactions(row.reactions, currentUserId),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     deletedAt: row.deleted_at,
@@ -105,7 +137,7 @@ export async function listChannelChatMessages(userId, channelId, { cursor, limit
   const page = hasMore ? rows.slice(0, limit) : rows
   const last = page.at(-1)
   return {
-    messages: page.map(mapMessage).reverse(),
+    messages: page.map(message => mapMessage(message, userId)).reverse(),
     nextCursor: hasMore && last ? encodeCursor({ createdAt: last.created_at, id: last.id }) : null
   }
 }
@@ -142,7 +174,7 @@ export async function sendChannelChatMessage(userId, channelId, body, attachment
       WHERE message.id = :messageId
       LIMIT 1
     `, { replacements: { messageId: rows[0].id }, type: QueryTypes.SELECT, transaction })
-    const message = mapMessage(result[0])
+    const message = mapMessage(result[0], userId)
     await notifyChannelMentions({
       channelId,
       actorId: userId,
@@ -153,6 +185,65 @@ export async function sendChannelChatMessage(userId, channelId, body, attachment
     return message
   })
   publishRealtimeEvent(roomName('channel', channelId), 'channel:chat:message', message, `channel-chat:${message.id}`)
+  return message
+}
+
+export async function toggleChannelChatMessageReaction(userId, channelId, messageId, reaction) {
+  const message = await withTransaction(async transaction => {
+    await requireMember(userId, channelId, transaction)
+    const rows = await sequelize.query(`
+      SELECT reactions
+      FROM channel_chat_messages
+      WHERE id = :messageId
+        AND channel_id = :channelId
+        AND deleted_at IS NULL
+        AND moderation_status IN ('active', 'flagged', 'appeal_accepted')
+      LIMIT 1
+      ${isPostgres() ? 'FOR UPDATE' : ''}
+    `, {
+      replacements: { channelId, messageId },
+      type: QueryTypes.SELECT,
+      transaction
+    })
+    if (!rows[0]) throw new HttpError(404, 'MESSAGE_NOT_FOUND', 'Message not found')
+
+    const storedReactions = parseReactions(rows[0].reactions)
+    const reactionIndex = storedReactions.findIndex(item => item.userId === userId &&
+      item.type === reaction.type && item.value === reaction.value)
+    const nextReactions = reactionIndex >= 0
+      ? storedReactions.filter((_, index) => index !== reactionIndex)
+      : [...storedReactions, { ...reaction, userId }]
+
+    await sequelize.query(`
+      UPDATE channel_chat_messages
+      SET reactions = CAST(:reactions AS JSONB), updated_at = CURRENT_TIMESTAMP
+      WHERE id = :messageId AND channel_id = :channelId
+    `, {
+      replacements: {
+        channelId,
+        messageId,
+        reactions: JSON.stringify(nextReactions)
+      },
+      transaction
+    })
+
+    const updatedRows = await sequelize.query(`
+      SELECT message.*, sender.username, profile.display_name, profile.avatar_url
+      FROM channel_chat_messages message
+      JOIN users sender ON sender.id = message.sender_id
+      LEFT JOIN profiles profile ON profile.user_id = sender.id
+      WHERE message.id = :messageId
+      LIMIT 1
+    `, { replacements: { messageId }, type: QueryTypes.SELECT, transaction })
+    return mapMessage(updatedRows[0], userId)
+  })
+
+  publishRealtimeEvent(
+    roomName('channel', channelId),
+    'channel:chat:message:updated',
+    { ...message, reactionActorId: userId },
+    `channel-chat-reaction:${message.id}:${userId}:${Date.now()}`
+  )
   return message
 }
 

@@ -30,8 +30,8 @@ import { ok, cursorMeta } from '../http/api.js'
 import { decodeCursor } from '../http/pagination.js'
 import { idSchema, paginationSchema, parse } from '../http/validation.js'
 import { abuseRateLimit } from '../moderation/rate-limit.js'
-import { channelChatMessageSchema } from '../channels/chat-schemas.js'
-import { listChannelChatMessages, markChannelChatRead, sendChannelChatMessage } from '../channels/chat.js'
+import { channelChatMessageSchema, channelChatReactionSchema } from '../channels/chat-schemas.js'
+import { listChannelChatMessages, markChannelChatRead, sendChannelChatMessage, toggleChannelChatMessageReaction } from '../channels/chat.js'
 
 export const channelsRouter = Router()
 
@@ -91,6 +91,19 @@ channelsRouter.post('/:slug/chat', abuseRateLimit('message'), async (request, re
     const input = parse(channelChatMessageSchema, request.body, 'channel chat message')
     const channel = await getChannel(request.auth.userId, slug)
     response.status(201).json(ok({ message: await sendChannelChatMessage(request.auth.userId, channel.id, input.body, input.attachments) }))
+  } catch (error) {
+    next(error)
+  }
+})
+
+channelsRouter.put('/:slug/chat/:messageId/reactions', async (request, response, next) => {
+  try {
+    const slug = parse(channelSlugSchema, request.params.slug, 'channel slug')
+    const messageId = parse(idSchema, request.params.messageId, 'channel chat message id')
+    const input = parse(channelChatReactionSchema, request.body, 'channel chat reaction')
+    const channel = await getChannel(request.auth.userId, slug)
+    const message = await toggleChannelChatMessageReaction(request.auth.userId, channel.id, messageId, input)
+    response.json(ok({ message }))
   } catch (error) {
     next(error)
   }
