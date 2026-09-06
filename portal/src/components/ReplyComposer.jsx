@@ -58,26 +58,8 @@ export function ReplyComposer({ replyTarget, onCreated, onCancel }) {
     }
   }
 
-  function replaceRichText(value, previousValue) {
-    const currentBody = body.value
-    const previousStart = previousValue ? currentBody.indexOf(previousValue) : -1
-    if (previousStart < 0) {
-      insertRichText(value)
-      return
-    }
-    body.value = `${currentBody.slice(0, previousStart)}${value}${currentBody.slice(previousStart + previousValue.length)}`
-    if (typeof requestAnimationFrame === 'function') {
-      requestAnimationFrame(() => {
-        bodyInput?.focus()
-        const cursor = previousStart + value.length
-        bodyInput?.setSelectionRange(cursor, cursor)
-      })
-    }
-  }
-
   function selectRichContent({ type, value, label }) {
     if (type === 'gif') {
-      replaceRichText(value, imageUrl.value)
       imageUrl.value = value
       imageName.value = `GIF · ${label}`
       imageAltText.value = label

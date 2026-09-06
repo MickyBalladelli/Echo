@@ -152,26 +152,8 @@ export function PostComposer({ onCreated, channelId = null }) {
     }
   }
 
-  function replaceRichText(value, previousValue) {
-    const currentBody = body.value
-    const previousStart = previousValue ? currentBody.indexOf(previousValue) : -1
-    if (previousStart < 0) {
-      insertRichText(value)
-      return
-    }
-    body.value = `${currentBody.slice(0, previousStart)}${value}${currentBody.slice(previousStart + previousValue.length)}`
-    if (typeof requestAnimationFrame === 'function') {
-      requestAnimationFrame(() => {
-        bodyInput?.focus()
-        const cursor = previousStart + value.length
-        bodyInput?.setSelectionRange(cursor, cursor)
-      })
-    }
-  }
-
   function selectRichContent({ type, value, label }) {
     if (type === 'gif') {
-      replaceRichText(value, imageUrl.value)
       imageUrl.value = value
       imageName.value = `GIF · ${label}`
       imageAltText.value = label
@@ -327,7 +309,7 @@ export function PostComposer({ onCreated, channelId = null }) {
     let active = true
     const localDraft = readOfflineDraft(offlineScope())
     if (localDraft) {
-      body.value = localDraft.body || ''
+      body.value = removeAttachedGifUrl(localDraft.body || '', localDraft.imageUrl)
       postFormat.value = localDraft.postFormat || 'short'
       visibility.value = localDraft.visibility || 'public'
       contentWarning.value = localDraft.contentWarning || ''
@@ -342,7 +324,7 @@ export function PostComposer({ onCreated, channelId = null }) {
         if (!active) return
         const draft = result.data.draft
         if (draft && !localDraft) {
-          body.value = draft.body || ''
+          body.value = removeAttachedGifUrl(draft.body || '', draft.imageUrl)
           postFormat.value = draft.postFormat || 'short'
           visibility.value = draft.visibility || 'public'
           contentWarning.value = draft.contentWarning || ''
