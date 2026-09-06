@@ -1,11 +1,14 @@
 import { computed, signal } from '../lib/vendor.js'
-import { Button, Card, CheckBox, EmptyState, FormField, Label, Popup, TextField } from '../lib/vendor.js'
+import { Badge, Button, Card, CheckBox, EmptyState, FormField, Label, Popup, TextField } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
+import { LiveRegion } from './LiveRegion.jsx'
 
 export function ChannelManagementDialog({ channel: initialChannel, onUpdated }) {
   const open = signal(false)
   const state = signal('ready')
   const error = signal('')
+  const announcement = signal('')
+  const roleNotice = signal('')
   const busy = signal(false)
   const channel = signal(initialChannel)
   const members = signal([])
@@ -31,6 +34,7 @@ export function ChannelManagementDialog({ channel: initialChannel, onUpdated }) 
     open.value = true
     state.value = 'loading'
     error.value = ''
+    roleNotice.value = ''
     try {
       const encodedSlug = encodeURIComponent(slug.value)
       const [channelResult, membersResult] = await Promise.all([
@@ -104,8 +108,12 @@ export function ChannelManagementDialog({ channel: initialChannel, onUpdated }) 
         body: JSON.stringify({ role })
       })
       members.value = members.value.map(item => item.id === member.id ? { ...item, role } : item)
+      roleNotice.value = `${member.displayName} is now a ${role}`
+      announcement.value = `${member.displayName} is now a ${role}`
     } catch (requestError) {
       error.value = requestError.message || 'Could not update member'
+      roleNotice.value = ''
+      announcement.value = 'Member role change failed'
     } finally {
       busy.value = false
     }
@@ -169,7 +177,7 @@ export function ChannelManagementDialog({ channel: initialChannel, onUpdated }) 
             {members.value.map(member => (
               <div key={member.id} class="channel-member-row">
                 <span>{member.displayName} <small>@{member.username}</small></span>
-                <span>{member.role}</span>
+                <Badge tone={member.role === 'owner' ? 'accent' : member.role === 'moderator' ? 'success' : 'neutral'}>{member.role === 'owner' ? 'Owner' : member.role === 'moderator' ? 'Moderator' : 'Member'}</Badge>
                 {member.role !== 'owner' && (
                   <Button variant="tertiary" size="small" loading={busy} onClick={() => changeRole(member, member.role === 'moderator' ? 'member' : 'moderator')}>
                     {member.role === 'moderator' ? 'Make member' : 'Make moderator'}
@@ -178,8 +186,10 @@ export function ChannelManagementDialog({ channel: initialChannel, onUpdated }) 
               </div>
             ))}
           </div>
+          {roleNotice.value && <div class="channel-role-feedback" role="status">{roleNotice}</div>}
         </Card>
         <div class="post-feed-error" role="alert">{error}</div>
+        <LiveRegion message={announcement} />
       </div>
     )
   })

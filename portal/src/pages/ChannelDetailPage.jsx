@@ -1,5 +1,5 @@
 import { computed, onMount, signal } from '../lib/vendor.js'
-import { Button, Card, CheckBox, EmptyState, FormField, Label, Popup, TextField } from '../lib/vendor.js'
+import { Badge, Button, Card, CheckBox, EmptyState, FormField, Label, Popup, TextField } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { PageFrame } from './PageFrame.jsx'
 import { joinRealtimeRoom } from '../lib/realtime.js'
@@ -14,6 +14,7 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
   const error = signal('')
   const busy = signal(false)
   const inviteUsername = signal('')
+  const roleNotice = signal('')
   const name = signal('')
   const description = signal('')
   const imageUrl = signal('')
@@ -44,6 +45,7 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
       ])
       channel.value = channelResult.data.channel
       members.value = membersResult.data
+      roleNotice.value = ''
       name.value = channel.value.name
       description.value = channel.value.description
       imageUrl.value = channel.value.imageUrl || ''
@@ -150,14 +152,19 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
 
   async function changeRole(member, role) {
     busy.value = true
+    error.value = ''
     try {
       await apiRequest(`/api/channels/${encodeURIComponent(slug)}/members/${encodeURIComponent(member.id)}/role`, {
         method: 'PUT',
         body: JSON.stringify({ role })
       })
       members.value = members.value.map(item => item.id === member.id ? { ...item, role } : item)
+      roleNotice.value = `${member.displayName} is now a ${role}`
+      announcement.value = `${member.displayName} is now a ${role}`
     } catch (requestError) {
       error.value = requestError.message || 'Could not update member'
+      roleNotice.value = ''
+      announcement.value = 'Member role change failed'
     } finally {
       busy.value = false
     }
@@ -201,7 +208,7 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
           {members.value.map(member => (
             <div key={member.id} class="channel-member-row">
               <a href={`/users/${member.username}`} onClick={router.link(`/users/${member.username}`)}>{member.displayName} <span>@{member.username}</span></a>
-              <span>{member.role}</span>
+              <Badge tone={member.role === 'owner' ? 'accent' : member.role === 'moderator' ? 'success' : 'neutral'}>{member.role === 'owner' ? 'Owner' : member.role === 'moderator' ? 'Moderator' : 'Member'}</Badge>
               {channel.value.isOwner && member.role !== 'owner' && (
                 <Button variant="tertiary" size="small" onClick={() => changeRole(member, member.role === 'moderator' ? 'member' : 'moderator')}>
                   {member.role === 'moderator' ? 'Make member' : 'Make moderator'}
@@ -210,6 +217,7 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
             </div>
           ))}
         </div>
+        {roleNotice.value && <div class="channel-role-feedback" role="status">{roleNotice}</div>}
       </Card>
     )
 

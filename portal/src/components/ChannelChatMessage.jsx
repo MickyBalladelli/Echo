@@ -1,5 +1,5 @@
 import { signal } from '../lib/vendor.js'
-import { ChatIcon, CopyIcon, IconButton, SparkIcon } from '../lib/vendor.js'
+import { Badge, ChatIcon, CopyIcon, IconButton, SparkIcon } from '../lib/vendor.js'
 import { formatClockTime } from '../lib/dates.js'
 import { UserAvatar } from './UserAvatar.jsx'
 
@@ -15,12 +15,13 @@ function renderBody(body) {
     : part)
 }
 
-export function ChannelChatMessage({ message, currentUserId, currentUsername, compact = false, onReply }) {
+export function ChannelChatMessage({ message, currentUserId, currentUsername, compact = false, onReply, channelRole }) {
   const copied = signal(false)
   const reactionPickerOpen = signal(false)
   const selectedReaction = signal('')
   const own = message.sender.id === currentUserId
   const mentioned = mentionsUsername(message.body, currentUsername)
+  const roleLabel = channelRole === 'owner' ? 'Owner' : channelRole === 'moderator' ? 'Moderator' : ''
   let copyTimer
 
   async function copyMessage() {
@@ -72,7 +73,7 @@ export function ChannelChatMessage({ message, currentUserId, currentUsername, co
       role="group"
       tabIndex={0}
       data-keyboard-item="true"
-      aria-label={`Message from ${message.sender.displayName}`}
+      aria-label={`Message from ${message.sender.displayName}${roleLabel ? `, ${roleLabel}` : ''}`}
     >
       {compact
         ? <span class="channel-chat-message-avatar-spacer" aria-hidden="true" />
@@ -82,6 +83,7 @@ export function ChannelChatMessage({ message, currentUserId, currentUsername, co
           <div class="channel-chat-message-meta">
             <strong>{message.sender.displayName}</strong>
             <span class="channel-chat-message-badge" aria-hidden="true">🎈</span>
+            {roleLabel && <Badge tone={channelRole === 'owner' ? 'accent' : 'success'} size="small">{roleLabel}</Badge>}
             {mentioned && <span class="channel-chat-mention-label">Mentioned you</span>}
             <time datetime={message.createdAt}>{formatClockTime(message.createdAt)}</time>
           </div>

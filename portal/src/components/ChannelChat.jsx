@@ -340,6 +340,7 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
     const previous = messages.value[index - 1]
     const compact = Boolean(previous && previous.sender.id === message.sender.id &&
       new Date(message.createdAt).getTime() - new Date(previous.createdAt).getTime() < 5 * 60 * 1000)
+    const member = readMembers().find(item => item.id === message.sender.id)
 
     return <ChannelChatMessage
       message={message}
@@ -347,6 +348,7 @@ export function ChannelChat({ slug, channel, members, currentUserId, currentUser
       currentUsername={currentUsername}
       compact={compact}
       onReply={replyTo}
+      channelRole={member?.role}
     />
   }
 
