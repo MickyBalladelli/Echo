@@ -953,6 +953,11 @@ textarea {
   gap: 12px;
 }
 
+.reply-composer form {
+  display: grid;
+  gap: 12px;
+}
+
 .mention-suggestions {
   display: grid;
   gap: 4px;
