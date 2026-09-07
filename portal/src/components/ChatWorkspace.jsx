@@ -1,8 +1,9 @@
 import { computed, onMount, signal } from '../lib/vendor.js'
-import { Button, Card, CheckBox, EmptyState, FormField, Label, TextField } from '../lib/vendor.js'
+import { Badge, Button, Card, CheckBox, EmptyState, FormField, Label, TextField } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { emitRealtime, joinRealtimeRoom, onRealtimeControl, onRealtimeEvent } from '../lib/realtime.js'
 import { ChatMessage } from './ChatMessage.jsx'
+import { ChatUserAutocomplete } from './ChatUserAutocomplete.jsx'
 import { KeyboardList } from './KeyboardList.jsx'
 import { LiveRegion } from './LiveRegion.jsx'
 import { VirtualList } from './VirtualList.jsx'
@@ -198,7 +199,10 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId }) 
     return (
       <div class="chat-thread" aria-label={`Conversation ${conversation.value.title}`}>
         <Card class="chat-thread-header">
-          <div><Label size="large">{conversation.value.title}</Label><span>{conversation.value.members.length} members</span></div>
+          <div class="chat-thread-title-row">
+            <Label size="large">{conversation.value.title}</Label>
+            <Badge size="small" tone="neutral">{`${conversation.value.members.length} members`}</Badge>
+          </div>
           <div class="chat-thread-actions">
             <Button variant="tertiary" size="small" onClick={toggleMute}>{conversation.value.muted ? 'Unmute' : 'Mute'}</Button>
             {conversation.value.kind === 'direct' && <Button variant="tertiary" size="small" onClick={toggleBlock}>{conversation.value.blockedByViewer ? 'Unblock' : 'Block'}</Button>}
@@ -215,7 +219,7 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId }) 
           </div>
           {conversation.value.kind === 'group' && conversation.value.role === 'owner' && (
             <form class="chat-add-member" onSubmit={addMember}>
-              <TextField value={addUsername} placeholder="Username" required />
+              <ChatUserAutocomplete value={addUsername} ariaLabel="Username" placeholder="Username" required />
               <Button type="submit" size="small">Add member</Button>
             </form>
           )}
@@ -286,7 +290,9 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId }) 
       <Card class="chat-sidebar">
         <Label size="small" tone="accent">CONVERSATIONS</Label>
         <form class="chat-create-form" onSubmit={createConversation}>
-          <FormField label="Usernames" hint="One username for direct chat; commas for group"><TextField value={createUsernames} required /></FormField>
+          <FormField id="chat-create-usernames" label="Usernames" hint="One username for direct chat; commas for group">
+            <ChatUserAutocomplete id="chat-create-usernames" value={createUsernames} ariaLabel="Usernames" placeholder="Find a user" allowMultiple={groupChat} required />
+          </FormField>
           <CheckBox checked={groupChat}>Group chat</CheckBox>
           {groupTitleField}
           <Button type="submit" size="small" loading={busy}>Start chat</Button>

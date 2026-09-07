@@ -70,6 +70,7 @@ export function ChatPage({ router, conversationId = null, currentUserId }) {
       eyebrow="DIRECT / CHAT"
       title="Chat"
       description="Private conversations and real-time messages will live here."
+      className="chat-route-page"
       hideHeader={!conversationId}
     >
       <ChatWorkspace router={router} conversationId={conversationId} currentUserId={currentUserId} />

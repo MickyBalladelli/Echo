@@ -805,6 +805,11 @@ textarea {
   max-width: 760px;
 }
 
+.chat-route-page {
+  width: 100%;
+  max-width: none;
+}
+
 .route-page-header {
   display: flex;
   align-items: end;
@@ -1981,9 +1986,25 @@ textarea {
 
 .chat-workspace {
   display: grid;
+  width: 100%;
   grid-template-columns: minmax(240px, 0.75fr) minmax(0, 1.5fr);
   gap: 14px;
   align-items: start;
+}
+
+.chat-route-page .chat-workspace {
+  grid-template-columns: minmax(240px, 0.75fr) minmax(0, 1.5fr);
+}
+
+.chat-route-page .chat-sidebar {
+  grid-column: 1;
+  min-width: 0;
+}
+
+.chat-route-page .chat-thread {
+  grid-column: 2;
+  width: 100%;
+  min-width: 0;
 }
 
 .chat-sidebar,
@@ -2034,7 +2055,19 @@ textarea {
   font-size: 11px;
 }
 
+.chat-user-suggestion {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.chat-user-suggestion span {
+  color: var(--prism-color-text-muted);
+  font-size: 12px;
+}
+
 .chat-thread-header,
+.chat-thread-title-row,
 .chat-thread-actions,
 .chat-member-pills,
 .chat-add-member,
@@ -2048,7 +2081,27 @@ textarea {
 }
 
 .chat-thread-header {
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.chat-thread-header .chat-thread-title-row {
+  grid-column: 1;
+  min-width: 0;
+}
+
+.chat-thread-header .chat-thread-actions {
+  grid-column: 2;
+  justify-content: flex-end;
+}
+
+.chat-thread-header .chat-member-pills,
+.chat-thread-header .chat-add-member {
+  grid-column: 1 / -1;
+}
+
+.chat-thread-title-row {
+  flex-wrap: wrap;
 }
 
 .chat-member-pills {

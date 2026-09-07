@@ -1,8 +1,8 @@
 import { Button, Card, EmptyState, Label } from '../lib/vendor.js'
 
-export function PageFrame({ eyebrow, title, description, headerActions, hideHeader = false, children }) {
+export function PageFrame({ eyebrow, title, description, headerActions, hideHeader = false, className = '', children }) {
   return (
-    <section class="route-page" aria-labelledby={hideHeader ? undefined : 'route-title'}>
+    <section class={`route-page ${className}`} aria-labelledby={hideHeader ? undefined : 'route-title'}>
       {!hideHeader && (
         <header class="route-page-header">
           <div>
