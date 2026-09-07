@@ -3,6 +3,7 @@ import { Card, Label } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { FollowButton } from './FollowButton.jsx'
 import { UserAvatar } from './UserAvatar.jsx'
+import { UserProfilePopover } from './UserProfilePopover.jsx'
 
 function avatar(user) {
   return <UserAvatar user={user} size="small" className="social-user-avatar" />
@@ -34,11 +35,11 @@ export function SuggestedUsers({ router }) {
         {users.value.map(user => (
           <div class="suggested-user-row" key={user.id}>
             <a href={`/users/${user.username}`} onClick={router.link(`/users/${user.username}`)}>{avatar(user)}</a>
-            <a class="suggested-user-copy" href={`/users/${user.username}`} onClick={router.link(`/users/${user.username}`)}>
+            <UserProfilePopover username={user.username} previewUser={user} router={router} wrapperClassName="suggested-user-profile-anchor" triggerClassName="suggested-user-copy">
               <strong>{user.profile.displayName}</strong>
               <small>@{user.username}</small>
               {user.mutualCount > 0 && <small>{user.mutualCount} mutual {user.mutualCount === 1 ? 'follow' : 'follows'}</small>}
-            </a>
+            </UserProfilePopover>
             <FollowButton
               userId={user.id}
               following={false}

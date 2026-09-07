@@ -7,6 +7,7 @@ import { UserAvatar } from './UserAvatar.jsx'
 import { KeyboardList } from './KeyboardList.jsx'
 import { VirtualList } from './VirtualList.jsx'
 import { sortByCreatedAt } from '../lib/dates.js'
+import { UserProfilePopover } from './UserProfilePopover.jsx'
 
 const searchTypes = Object.freeze([
   { id: 'users', label: 'People' },
@@ -141,13 +142,13 @@ export function ExploreContent({ router, currentUserId }) {
           ? (
             <Card key={item.id} class="search-result-card">
               <UserAvatar user={item} size="small" className="social-user-avatar" />
-              <div>
+              <UserProfilePopover username={item.username} previewUser={item} router={router} wrapperClassName="search-user-profile-anchor" triggerClassName="search-user-profile-copy">
                 <Label size="large">{item.profile.displayName}</Label>
                 <UserBadges badges={item.badges} />
                 <p class="search-result-handle">@{item.username}</p>
                 <p>{item.profile.bio || 'No bio yet.'}</p>
                 {item.mutualCount > 0 && <p class="search-result-mutual">{item.mutualCount} mutual follows</p>}
-              </div>
+              </UserProfilePopover>
               <a class="back-link" href={`/users/${item.username}`} onClick={router.link(`/users/${item.username}`)}>View profile →</a>
             </Card>
           )

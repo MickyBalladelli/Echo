@@ -131,7 +131,7 @@ export function AppShell({
       view: () => ProfilePage({ userState, onUpdated, router })
     },
     { path: '/preferences', title: 'Preferences', view: () => PreferencesPage({ user: userState.value, onDeleted: onLogout }) },
-    { path: '/moderation', title: 'Moderation', view: () => ModerationPage({ user: userState.value }) },
+    { path: '/moderation', title: 'Moderation', view: () => ModerationPage({ user: userState.value, router }) },
     {
       path: '/users/:username',
       title: 'Profile',

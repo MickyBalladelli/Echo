@@ -3,6 +3,7 @@ import { Button, Card, EmptyState, Label } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { PageFrame } from './PageFrame.jsx'
 import { UserAvatar } from '../components/UserAvatar.jsx'
+import { UserProfilePopover } from '../components/UserProfilePopover.jsx'
 
 const graphLimit = 12
 const svgNamespace = 'http://www.w3.org/2000/svg'
@@ -42,19 +43,21 @@ function GraphPersonNode({ user, side, index, count, router }) {
   const position = `${side === 'followers' ? 18 : 82}%`
   const top = `${nodeY(index, count)}%`
   return (
-    <a
-      class={`social-graph-person social-graph-person-${side}`}
-      style={`left: ${position}; top: ${top};`}
-      href={`/users/${user.username}`}
-      onClick={router.link(`/users/${user.username}`)}
-      aria-label={`${displayName(user)} @${user.username}`}
+    <UserProfilePopover
+      username={user.username}
+      previewUser={user}
+      router={router}
+      wrapperClassName={`social-graph-person-profile social-graph-person-profile-${side}`}
+      wrapperProps={{ style: `left: ${position}; top: ${top};` }}
+      triggerClassName="social-graph-person"
+      triggerProps={{ 'aria-label': `${displayName(user)} @${user.username}` }}
     >
       <UserAvatar user={user} size="small" className="social-graph-avatar" />
       <span class="social-graph-person-copy">
         <strong>{displayName(user)}</strong>
         <small>@{user.username}</small>
       </span>
-    </a>
+    </UserProfilePopover>
   )
 }
 
@@ -167,12 +170,12 @@ function GraphStage({ profile, followers, following, extraFollowers, extraFollow
         <div class="social-graph-column-title social-graph-column-title-following">Following <span>{compactCount(profile.followingCount)}</span></div>
         <GraphNodeList users={followers} extraCount={extraFollowers} side="followers" router={router} />
         <GraphNodeList users={following} extraCount={extraFollowing} side="following" router={router} />
-        <a class="social-graph-root" href={`/users/${profile.username}`} onClick={router.link(`/users/${profile.username}`)}>
+        <UserProfilePopover username={profile.username} previewUser={profile} router={router} wrapperClassName="social-graph-root-profile" wrapperProps={{ style: 'left: 50%; top: 50%;' }} triggerClassName="social-graph-root">
           <UserAvatar user={profile} size="large" className="social-graph-root-avatar" />
           <strong>{displayName(profile)}</strong>
           <span>@{profile.username}</span>
           <small>You</small>
-        </a>
+        </UserProfilePopover>
       </div>
       <p class="social-graph-note">Large groups stay collapsed. Open a profile to explore its own connections.</p>
     </Card>

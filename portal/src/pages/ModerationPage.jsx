@@ -2,7 +2,7 @@ import { Card, EmptyState } from '../lib/vendor.js'
 import { ModerationQueue } from '../components/ModerationQueue.jsx'
 import { PageFrame } from './PageFrame.jsx'
 
-export function ModerationPage({ user }) {
+export function ModerationPage({ user, router }) {
   const staff = user.role === 'moderator' || user.role === 'admin'
 
   return (
@@ -13,7 +13,7 @@ export function ModerationPage({ user }) {
       hideHeader
     >
       {staff
-        ? <ModerationQueue />
+        ? <ModerationQueue router={router} />
         : <Card><EmptyState status="error" title="Staff access required" description="This queue is for moderators and admins." /></Card>}
     </PageFrame>
   )

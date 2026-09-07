@@ -98,7 +98,7 @@ export function ChannelDirectory({ router }) {
           </div>
         </div>
         {channel.isOwner
-          ? <ChannelManagementDialog channel={channel} onUpdated={updateChannel} />
+          ? <ChannelManagementDialog channel={channel} onUpdated={updateChannel} router={router} />
           : <button class="channel-card-action channel-card-action-button" type="button" onClick={() => router.navigate(`/channels/${channel.slug}`)}>{channelActionLabel(channel)} →</button>}
       </Card>
     )

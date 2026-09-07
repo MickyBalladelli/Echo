@@ -1,5 +1,6 @@
 import { computed, DropdownMenu } from '../lib/vendor.js'
 import { UserAvatar } from './UserAvatar.jsx'
+import { UserProfilePopover } from './UserProfilePopover.jsx'
 
 export function AccountMenu({ user, router, onLogout }) {
   const displayName = user.profile?.displayName || user.username
@@ -30,10 +31,10 @@ export function AccountMenu({ user, router, onLogout }) {
         onClick={toggle}
       >
         <UserAvatar user={user} size="small" className="echo-account-avatar" />
-        <span class="echo-account-trigger-copy">
+        <UserProfilePopover embedded username={user.username} previewUser={user} router={router} wrapperClassName="echo-account-profile-anchor" triggerClassName="echo-account-trigger-copy">
           <strong>{displayName}</strong>
           <span>@{user.username}</span>
-        </span>
+        </UserProfilePopover>
         <span class="echo-account-chevron" aria-hidden="true">⌄</span>
       </button>
     ),

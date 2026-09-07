@@ -6,6 +6,7 @@ import { joinRealtimeRoom } from '../lib/realtime.js'
 import { ReportButton } from '../components/ReportButton.jsx'
 import { LiveRegion } from '../components/LiveRegion.jsx'
 import { ChannelChat } from '../components/ChannelChat.jsx'
+import { UserProfilePopover } from '../components/UserProfilePopover.jsx'
 
 export function ChannelDetailPage({ slug, router, currentUserId, currentUsername, onHeaderChange = () => {} }) {
   const channel = signal(null)
@@ -189,12 +190,12 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
           <p>{channel.value.isOwner ? 'Change member roles here. Inviting people is optional for public channels.' : `${channel.value.memberCount} people are part of this channel.`}</p>
         </div>
         <div class="channel-member-list">
-          {members.value.map(member => (
-            <div key={member.id} class="channel-member-row">
-              <a href={`/users/${member.username}`} onClick={router.link(`/users/${member.username}`)}>
-                <span class="channel-member-name"><span aria-hidden="true">{member.chatMarker || '🎈'}</span> {member.displayName}</span>
-                <span>@{member.username}</span>
-              </a>
+            {members.value.map(member => (
+              <div key={member.id} class="channel-member-row">
+                <UserProfilePopover username={member.username} previewUser={member} router={router} wrapperClassName="channel-member-profile-anchor" triggerClassName="channel-member-profile-link">
+                  <span class="channel-member-name"><span aria-hidden="true">{member.chatMarker || '🎈'}</span> {member.displayName}</span>
+                  <span>@{member.username}</span>
+                </UserProfilePopover>
               <Badge tone={member.role === 'owner' ? 'accent' : member.role === 'moderator' ? 'success' : 'neutral'}>{member.role === 'owner' ? 'Owner' : member.role === 'moderator' ? 'Moderator' : 'Member'}</Badge>
               {channel.value.isOwner && member.role !== 'owner' && (
                 <Button variant="tertiary" size="small" onClick={() => changeRole(member, member.role === 'moderator' ? 'member' : 'moderator')}>

@@ -2,12 +2,13 @@ import { computed, onMount, signal } from '../lib/vendor.js'
 import { Button, Card, EmptyState, Label } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { formatDateTime } from '../lib/dates.js'
+import { UserProfilePopover } from './UserProfilePopover.jsx'
 
 function targetLabel(item) {
   return `${item.targetType} · ${item.target.preview}`
 }
 
-export function ModerationQueue() {
+export function ModerationQueue({ router }) {
   const reports = signal([])
   const appeals = signal([])
   const state = signal('loading')
@@ -81,7 +82,7 @@ export function ModerationQueue() {
                 <div class="moderation-item-copy">
                   <strong>{targetLabel(report)}</strong>
                   <span>{report.reason}</span>
-                  <small>Reported by @{report.reporter.username} · {formatDateTime(report.createdAt)}</small>
+                  <small>Reported by <UserProfilePopover embedded username={report.reporter.username} previewUser={report.reporter} router={router}>@{report.reporter.username}</UserProfilePopover> · {formatDateTime(report.createdAt)}</small>
                 </div>
                 <div class="moderation-item-actions">
                   {['removed', 'hidden', 'suspended'].includes(report.target.status)
@@ -104,7 +105,7 @@ export function ModerationQueue() {
                 <div class="moderation-item-copy">
                   <strong>{targetLabel(appeal)}</strong>
                   <span>{appeal.reason}</span>
-                  <small>Appeal by @{appeal.appellant.username} · {formatDateTime(appeal.createdAt)}</small>
+                  <small>Appeal by <UserProfilePopover embedded username={appeal.appellant.username} previewUser={appeal.appellant} router={router}>@{appeal.appellant.username}</UserProfilePopover> · {formatDateTime(appeal.createdAt)}</small>
                 </div>
                 <div class="moderation-item-actions">
                   <Button size="small" loading={busy.value === `appeal:${appeal.id}`} onClick={() => reviewAppeal(appeal, 'accept')}>Accept</Button>

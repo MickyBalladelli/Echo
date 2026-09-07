@@ -4,8 +4,9 @@ import { apiRequest } from '../lib/api.js'
 import { ReportButton } from './ReportButton.jsx'
 import { AppealButton } from './AppealButton.jsx'
 import { formatClockTime } from '../lib/dates.js'
+import { UserProfilePopover } from './UserProfilePopover.jsx'
 
-export function ChatMessage({ message, currentUserId, onUpdated, onDeleted }) {
+export function ChatMessage({ message, currentUserId, onUpdated, onDeleted, router }) {
   const editing = signal(false)
   const body = signal(message.body || '')
   const busy = signal(false)
@@ -43,7 +44,9 @@ export function ChatMessage({ message, currentUserId, onUpdated, onDeleted }) {
     <div class="chat-message-keyboard-item" role="group" tabIndex={0} data-keyboard-item="true" aria-label={`Message from ${message.sender.displayName}`}>
       <Card class={own ? 'chat-message chat-message-own' : 'chat-message'}>
       <div class="chat-message-meta">
-        <strong>{message.sender.displayName}</strong>
+        <UserProfilePopover username={message.sender.username} previewUser={message.sender} router={router}>
+          <strong>{message.sender.displayName}</strong>
+        </UserProfilePopover>
         <time datetime={message.createdAt}>{formatClockTime(message.createdAt)}</time>
       </div>
       {message.deletedAt
@@ -57,7 +60,16 @@ export function ChatMessage({ message, currentUserId, onUpdated, onDeleted }) {
       {message.moderationStatus === 'appeal_pending' && <small class="chat-message-moderation">Appeal pending</small>}
       {message.moderationStatus === 'appeal_accepted' && <small class="chat-message-moderation">Appeal accepted</small>}
       {message.moderationStatus === 'appeal_rejected' && <small class="chat-message-moderation">Appeal rejected</small>}
-      <small>{message.readBy.length ? `Read by ${message.readBy.map(reader => `@${reader.username}`).join(', ')}` : ''}</small>
+      {message.readBy.length > 0 && (
+        <small>
+          Read by {message.readBy.map((reader, index) => (
+            <span key={reader.id || reader.username}>
+              {index > 0 ? ', ' : ''}
+              <UserProfilePopover username={reader.username} router={router}>@{reader.username}</UserProfilePopover>
+            </span>
+          ))}
+        </small>
+      )}
       {!message.deletedAt && (
         <div class="chat-message-actions">
           {own && !editing.value && <Button variant="tertiary" size="small" onClick={() => editing.value = true}>Edit</Button>}

@@ -2,8 +2,9 @@ import { computed, signal } from '../lib/vendor.js'
 import { Badge, Button, Card, CheckBox, EmptyState, FormField, Label, Popup, TextField } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { LiveRegion } from './LiveRegion.jsx'
+import { UserProfilePopover } from './UserProfilePopover.jsx'
 
-export function ChannelManagementDialog({ channel: initialChannel, onUpdated }) {
+export function ChannelManagementDialog({ channel: initialChannel, onUpdated, router }) {
   const open = signal(false)
   const state = signal('ready')
   const error = signal('')
@@ -176,7 +177,9 @@ export function ChannelManagementDialog({ channel: initialChannel, onUpdated }) 
           <div class="channel-member-list">
             {members.value.map(member => (
               <div key={member.id} class="channel-member-row">
-                <span>{member.displayName} <small>@{member.username}</small></span>
+                <UserProfilePopover username={member.username} previewUser={member} router={router} wrapperClassName="channel-member-profile-anchor" triggerClassName="channel-member-profile-link">
+                  <span>{member.displayName} <small>@{member.username}</small></span>
+                </UserProfilePopover>
                 <Badge tone={member.role === 'owner' ? 'accent' : member.role === 'moderator' ? 'success' : 'neutral'}>{member.role === 'owner' ? 'Owner' : member.role === 'moderator' ? 'Moderator' : 'Member'}</Badge>
                 {member.role !== 'owner' && (
                   <Button variant="tertiary" size="small" loading={busy} onClick={() => changeRole(member, member.role === 'moderator' ? 'member' : 'moderator')}>

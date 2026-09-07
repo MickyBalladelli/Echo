@@ -1,6 +1,7 @@
 import { Card, EmptyState, Label } from '../lib/vendor.js'
 import { KeyboardList } from './KeyboardList.jsx'
 import { UserAvatar } from './UserAvatar.jsx'
+import { UserProfilePopover } from './UserProfilePopover.jsx'
 
 export function UserList({ title, users, router }) {
   return (
@@ -10,12 +11,14 @@ export function UserList({ title, users, router }) {
         ? <EmptyState title={`No ${title.toLowerCase()} yet`} />
         : <KeyboardList label={`${title} list`} className="social-user-list">
           {users.map(user => (
-            <a
+            <UserProfilePopover
               key={user.id}
-              data-keyboard-item="true"
-              class="social-user-row"
-              href={`/users/${user.username}`}
-              onClick={router.link(`/users/${user.username}`)}
+              username={user.username}
+              previewUser={user}
+              router={router}
+              wrapperClassName="social-user-popover-anchor-wide"
+              triggerClassName="social-user-row"
+              triggerProps={{ 'data-keyboard-item': 'true' }}
             >
               <UserAvatar user={user} size="small" className="social-user-avatar" />
               <span>
@@ -24,7 +27,7 @@ export function UserList({ title, users, router }) {
                 {user.mutual && <small class="social-user-mutual">Mutual follow</small>}
                 {!user.mutual && user.mutualCount > 0 && <small class="social-user-mutual">{user.mutualCount} mutual follows</small>}
               </span>
-            </a>
+            </UserProfilePopover>
           ))}
         </KeyboardList>}
     </Card>

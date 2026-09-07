@@ -22,6 +22,7 @@ import { isGifMedia, mediaSrc, removeAttachedGifUrl } from '../lib/media.js'
 import { Poll } from './Poll.jsx'
 import { UserAvatar } from './UserAvatar.jsx'
 import { ImmediateTooltip } from './ImmediateTooltip.jsx'
+import { UserProfilePopover } from './UserProfilePopover.jsx'
 
 function renderBody(value, router) {
   return value.split(/(#[a-z0-9_]+|@[a-z0-9_]+)/gi).map((part, index) => {
@@ -31,7 +32,7 @@ function renderBody(value, router) {
     }
     if (part.startsWith('@') && /^@[a-z0-9_]+$/i.test(part)) {
       const username = part.slice(1).toLowerCase()
-      return <a key={`${username}-${index}`} class="post-mention" href={`/users/${encodeURIComponent(username)}`} onClick={router.link(`/users/${encodeURIComponent(username)}`)}>{part}</a>
+      return <UserProfilePopover key={`${username}-${index}`} username={username} router={router} triggerClassName="post-mention">{part}</UserProfilePopover>
     }
     return part
   })
@@ -43,9 +44,9 @@ function renderRepostSource(source, router) {
     <div class="post-repost-source">
       <div class="post-repost-source-heading">
         <span aria-hidden="true">↻</span>
-        <a href={`/users/${source.author.username}`} onClick={router.link(`/users/${source.author.username}`)}>
+        <UserProfilePopover username={source.author.username} previewUser={source.author} router={router} triggerClassName="post-repost-source-author">
           {source.author.displayName} @{source.author.username}
-        </a>
+        </UserProfilePopover>
       </div>
       <p>{renderBody(source.body || 'Repost', router)}</p>
       {source.imageUrl && <img class={isGifMedia(source.imageUrl) ? 'post-media post-media-compact post-media-gif' : 'post-media post-media-compact'} src={mediaSrc(source.imageUrl)} alt={source.imageAltText || ''} loading="lazy" decoding="async" />}
@@ -360,15 +361,17 @@ export function PostCard({
       <Card class="post-card">
       <div class="post-card-header">
         <UserAvatar user={post.author} size="medium" className="post-author-avatar" />
-        <a
-          class="post-author-copy post-author-link"
-          href={`/users/${post.author.username}`}
-          onClick={router.link(`/users/${post.author.username}`)}
+        <UserProfilePopover
+          username={post.author.username}
+          previewUser={post.author}
+          router={router}
+          wrapperClassName="post-author-popover-anchor"
+          triggerClassName="post-author-copy post-author-link"
         >
           <Label size="large">{post.author.displayName}</Label>
           <UserBadges badges={post.author.badges} />
           <span>@{post.author.username}</span>
-        </a>
+        </UserProfilePopover>
         <div class="post-card-meta">
           <time datetime={post.createdAt} title={formatDateTime(post.createdAt)}>{formatRelativeTime(post.createdAt)}</time>
           {computed(() => isEdited.value ? <span title="This post has been edited">edited</span> : null)}

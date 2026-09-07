@@ -2,21 +2,24 @@ import { computed, Label, onMount, signal } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { formatRelativeTime } from '../lib/dates.js'
 import { UserAvatar } from './UserAvatar.jsx'
+import { UserProfilePopover } from './UserProfilePopover.jsx'
 
-function notificationText(notification) {
-  const actor = notification.actor?.displayName || 'Someone'
+function notificationText(notification, router) {
+  const actor = notification.actor?.username
+    ? <UserProfilePopover embedded username={notification.actor.username} previewUser={notification.actor} router={router}>{notification.actor.displayName}</UserProfilePopover>
+    : notification.actor?.displayName || 'Someone'
   const more = notification.groupCount > 1 ? ` and ${notification.groupCount - 1} more` : ''
   const messages = {
-    reply: `${actor}${more} replied to your post`,
-    like: `${actor}${more} liked your post`,
-    follow: `${actor}${more} followed you`,
-    channel_invite: `${actor}${more} invited you to a channel`,
-    channel_join: `${actor}${more} joined your channel`,
-    channel_post: `${actor}${more} created activity in your channel`,
-    chat_message: `${actor}${more} sent you a message`,
-    mention: `${actor}${more} tagged you${notification.channelId ? ' in a channel' : ''}`
+    reply: <>{actor}{more} replied to your post</>,
+    like: <>{actor}{more} liked your post</>,
+    follow: <>{actor}{more} followed you</>,
+    channel_invite: <>{actor}{more} invited you to a channel</>,
+    channel_join: <>{actor}{more} joined your channel</>,
+    channel_post: <>{actor}{more} created activity in your channel</>,
+    chat_message: <>{actor}{more} sent you a message</>,
+    mention: <>{actor}{more} tagged you{notification.channelId ? ' in a channel' : ''}</>
   }
-  return messages[notification.type] || `${actor} sent a notification`
+  return messages[notification.type] || <>{actor}{more} sent a notification</>
 }
 
 export function NotificationPeek({ router, unreadCount, notificationVersion }) {
@@ -65,7 +68,7 @@ export function NotificationPeek({ router, unreadCount, notificationVersion }) {
       >
         <UserAvatar user={notification.actor} size="small" className="notification-peek-avatar" />
         <span class="notification-peek-copy">
-          <strong>{notificationText(notification)}</strong>
+          <strong>{notificationText(notification, router)}</strong>
           <time datetime={notification.createdAt}>{formatRelativeTime(notification.createdAt)}</time>
         </span>
         {!notification.readAt && <span class="notification-unread-dot" role="img" aria-label="Unread" />}

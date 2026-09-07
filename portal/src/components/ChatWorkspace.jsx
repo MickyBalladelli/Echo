@@ -7,6 +7,7 @@ import { ChatUserAutocomplete } from './ChatUserAutocomplete.jsx'
 import { KeyboardList } from './KeyboardList.jsx'
 import { LiveRegion } from './LiveRegion.jsx'
 import { VirtualList } from './VirtualList.jsx'
+import { UserProfilePopover } from './UserProfilePopover.jsx'
 
 export function ChatWorkspace({ router, conversationId = null, currentUserId, notificationVersion }) {
   const conversations = signal([])
@@ -228,7 +229,9 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId, no
           <div class="chat-member-pills">
             {conversation.value.members.map(member => (
               <span key={member.id} class={onlineUserIds.value.includes(member.id) ? 'chat-member-online' : ''}>
-                {member.displayName}{onlineUserIds.value.includes(member.id) ? ' ●' : ''}
+                <UserProfilePopover username={member.username} previewUser={member} router={router}>
+                  {member.displayName}{onlineUserIds.value.includes(member.id) ? ' ●' : ''}
+                </UserProfilePopover>
                 {conversation.value.kind === 'group' && conversation.value.role === 'owner' && member.id !== currentUserId && (
                   <Button variant="tertiary" size="small" ariaLabel={`Remove ${member.displayName} from conversation`} onClick={() => removeMember(member)}>Remove</Button>
                 )}
@@ -248,7 +251,7 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId, no
             items={messages}
             estimateSize={104}
             label="Message history"
-            renderItem={message => <ChatMessage message={message} currentUserId={currentUserId} onUpdated={updateMessage} onDeleted={updateMessage} />}
+            renderItem={message => <ChatMessage message={message} currentUserId={currentUserId} onUpdated={updateMessage} onDeleted={updateMessage} router={router} />}
           />
         </KeyboardList>
         <div class="chat-typing" aria-live="polite">{typingUsers.value.length ? 'Someone is typing…' : ''}</div>

@@ -3,6 +3,7 @@ import { Badge, ChatIcon, CopyIcon, IconButton } from '../lib/vendor.js'
 import { formatClockTime } from '../lib/dates.js'
 import { UserAvatar } from './UserAvatar.jsx'
 import { MentionProfilePopover } from './MentionProfilePopover.jsx'
+import { UserProfilePopover } from './UserProfilePopover.jsx'
 import { ChannelReactionPicker } from './ChannelReactionPicker.jsx'
 
 function mentionsUsername(body, username) {
@@ -138,7 +139,9 @@ export function ChannelChatMessage({ message, currentUserId, currentUsername, co
       <div class="channel-chat-message-body">
         {!compact && (
           <div class="channel-chat-message-meta">
-            <strong>{message.sender.displayName}</strong>
+            <UserProfilePopover username={message.sender.username} previewUser={message.sender} router={router}>
+              <strong>{message.sender.displayName}</strong>
+            </UserProfilePopover>
             <span class="channel-chat-message-badge" aria-hidden="true">{message.sender.chatMarker || '🎈'}</span>
             {roleLabel && <Badge tone={channelRole === 'owner' ? 'accent' : 'success'} size="small">{roleLabel}</Badge>}
             {mentioned && <span class="channel-chat-mention-label">Mentioned you</span>}
