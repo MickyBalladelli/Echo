@@ -35,7 +35,11 @@ const topLevelPageHeaders = Object.freeze({
   '/bookmarks': { eyebrow: 'KEEP / BOOKMARKS', title: 'Bookmarks' },
   '/notes': { eyebrow: 'PRIVATE / NOTES', title: 'Notes' },
   '/channels': { eyebrow: 'COMMUNITIES / CHANNELS', title: 'Channels' },
-  '/chat': { eyebrow: 'DIRECT / CHAT', title: 'Chat' },
+  '/chat': {
+    eyebrow: 'DIRECT / CHAT',
+    title: 'Chat',
+    description: 'Private conversations and real-time messages will live here.'
+  },
   '/profile': { eyebrow: 'YOU / PROFILE', title: 'Profile' },
   '/preferences': { eyebrow: 'YOU / PREFERENCES', title: 'Preferences' },
   '/moderation': { eyebrow: 'STAFF / MODERATION', title: 'Moderation' }
@@ -169,6 +173,7 @@ export function AppShell({
   const activeView = routerView(router, () => NotFoundPage({ router }))
   const layoutClass = computed(() => {
     if (router.path.value.startsWith('/channels/')) return 'echo-layout echo-layout-channel'
+    if (router.path.value === '/chat' || router.path.value.startsWith('/chat/')) return 'echo-layout echo-layout-top-level echo-layout-chat'
     if (topLevelPageHeaders[router.path.value]) return 'echo-layout echo-layout-top-level'
     return 'echo-layout'
   })
@@ -213,7 +218,8 @@ export function AppShell({
   })
   const globalHeader = computed(() => {
     const channel = channelHeader.value
-    const pageHeader = topLevelPageHeaders[router.path.value]
+    const isChatRoute = router.path.value === '/chat' || router.path.value.startsWith('/chat/')
+    const pageHeader = topLevelPageHeaders[router.path.value] || (isChatRoute ? topLevelPageHeaders['/chat'] : null)
     const onProfilePage = router.path.value.startsWith('/users/')
     const onPostPage = router.path.value.startsWith('/posts/')
 
@@ -259,6 +265,7 @@ export function AppShell({
           <div class="echo-channel-header-details">
             <Label size="small" tone="accent">{pageHeader.eyebrow}</Label>
             <h1>{pageHeader.title}</h1>
+            {pageHeader.description && <p class="echo-header-page-description">{pageHeader.description}</p>}
           </div>
         </div>
       )

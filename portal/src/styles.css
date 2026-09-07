@@ -178,6 +178,10 @@ textarea {
   --echo-header-height: 3.7rem;
 }
 
+.echo-layout-chat {
+  --echo-header-height: 10.8rem;
+}
+
 .echo-layout-channel .prism-layout-header .prism-header-bar,
 .echo-layout-top-level .prism-layout-header .prism-header-bar {
   align-items: center;
@@ -292,6 +296,26 @@ textarea {
   max-width: min(760px, 100%);
   font-size: clamp(28px, 3vw, 40px);
   line-height: .9;
+}
+
+.echo-layout-chat .prism-layout-header .prism-header-bar {
+  align-items: flex-start;
+  min-height: var(--echo-header-height);
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.echo-layout-chat .echo-channel-header-details h1 {
+  margin-top: 10px;
+  font-size: clamp(42px, 7vw, 72px);
+}
+
+.echo-header-page-description {
+  max-width: 760px;
+  margin: 14px 0 0;
+  color: var(--prism-color-text);
+  font-size: clamp(18px, 2vw, 24px);
+  line-height: 1.4;
 }
 
 .echo-channel-visibility {
@@ -3575,6 +3599,10 @@ textarea {
     --echo-header-height: 6.5rem;
   }
 
+  .echo-layout-chat {
+    --echo-header-height: 10.8rem;
+  }
+
   .echo-channel-header-content {
     flex-direction: column;
     gap: 8px;
@@ -3612,6 +3640,10 @@ textarea {
   .echo-layout-channel,
   .echo-layout-top-level {
     --echo-header-height: 8rem;
+  }
+
+  .echo-layout-chat {
+    --echo-header-height: 10.5rem;
   }
 
   .echo-header-content span {

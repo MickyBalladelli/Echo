@@ -71,7 +71,7 @@ export function ChatPage({ router, conversationId = null, currentUserId, notific
       title="Chat"
       description="Private conversations and real-time messages will live here."
       className="chat-route-page"
-      hideHeader={!conversationId}
+      hideHeader
     >
       <ChatWorkspace router={router} conversationId={conversationId} currentUserId={currentUserId} notificationVersion={notificationVersion} />
     </PageFrame>
