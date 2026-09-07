@@ -29,7 +29,6 @@ export function AccountMenu({ user, router, onLogout }) {
         aria-haspopup="menu"
         aria-expanded={computed(() => open.value ? 'true' : 'false')}
         aria-label={`Open account menu for @${user.username}`}
-        title={`Account: @${user.username}`}
         onClick={toggle}
       >
         <UserAvatar user={user} size="small" className="echo-account-avatar" />
