@@ -137,7 +137,9 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId, no
       messageBody.value = ''
       scrollMessagesToBottom()
     } catch (requestError) {
-      error.value = requestError.message || 'Could not send message'
+      error.value = requestError.code === 'CHAT_RESTRICTED'
+        ? 'Message not sent. This user does not accept messages from you.'
+        : requestError.message || 'Could not send message'
     } finally {
       busy.value = false
     }
@@ -253,6 +255,7 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId, no
           <textarea use:bind={messageBody} onInput={typeMessage} maxlength="4000" rows="3" placeholder="Write a message" aria-label="Message" />
           <Button type="button" onClick={send} loading={busy}>Send</Button>
         </form>
+        {error.value && <div class="chat-compose-error" role="alert">{error}</div>}
         <LiveRegion message={announcement} />
       </div>
     )
@@ -319,7 +322,7 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId, no
         </KeyboardList>
       </Card>
       {conversationView}
-      <div class="post-feed-error" role="alert">{error}</div>
+      {!conversationId && <div class="post-feed-error" role="alert">{error}</div>}
     </div>
   )
 }

@@ -2155,10 +2155,16 @@ textarea {
   width: min(78%, 620px);
   justify-self: start;
   padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--prism-color-border-strong) 72%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--prism-color-surface) 88%, transparent);
+  box-shadow: 0 10px 24px rgb(0 0 0 / 16%);
+  overflow-wrap: anywhere;
 }
 
 .chat-message-own {
   justify-self: end;
+  border-color: color-mix(in srgb, var(--prism-color-action) 54%, var(--prism-color-border-strong));
   background: color-mix(in srgb, var(--prism-color-action) 16%, transparent);
 }
 
@@ -2204,9 +2210,15 @@ textarea {
 }
 
 .chat-message-error {
-  min-height: 14px;
+  min-height: 0;
   color: var(--prism-color-error);
   font-size: 11px;
+}
+
+.chat-compose-error {
+  min-height: 18px;
+  color: var(--prism-color-error);
+  font-size: 13px;
 }
 
 .explore-posts-heading {
