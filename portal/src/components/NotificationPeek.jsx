@@ -17,7 +17,8 @@ function notificationText(notification, router) {
     channel_join: <>{actor}{more} joined your channel</>,
     channel_post: <>{actor}{more} created activity in your channel</>,
     chat_message: <>{actor}{more} sent you a message</>,
-    mention: <>{actor}{more} tagged you{notification.channelId ? ' in a channel' : ''}</>
+    mention: <>{actor}{more} tagged you{notification.channelId ? ' in a channel' : ''}</>,
+    moderation_report: <>{actor}{more} reported {notification.payload?.targetType || 'content'} for review</>
   }
   return messages[notification.type] || <>{actor}{more} sent a notification</>
 }

@@ -1,6 +1,7 @@
 import { QueryTypes } from 'sequelize'
 import { sequelize, withTransaction } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
+import { notifyModerationReport } from '../notifications/service.js'
 
 const targetNotFoundMessages = Object.freeze({
   post: ['POST_NOT_FOUND', 'Post not found'],
@@ -95,7 +96,7 @@ export async function reportTarget(reporterId, { targetType, targetId, reason })
       if (!membership[0]) throw new HttpError(404, 'MESSAGE_NOT_FOUND', 'Message not found')
     }
 
-    await sequelize.query(`
+    const reportRows = await sequelize.query(`
       INSERT INTO moderation_reports (reporter_id, target_type, target_id, reason)
       VALUES (:reporterId, :targetType, :targetId, :reason)
       ON CONFLICT (reporter_id, target_type, target_id) DO UPDATE SET
@@ -105,10 +106,29 @@ export async function reportTarget(reporterId, { targetType, targetId, reason })
         reviewed_at = NULL,
         resolution_note = NULL,
         updated_at = CURRENT_TIMESTAMP
+      RETURNING id
     `, {
       replacements: { reporterId, targetType, targetId, reason },
+      type: QueryTypes.SELECT,
       transaction
     })
+
+    const staff = await sequelize.query(`
+      SELECT id
+      FROM users
+      WHERE global_role IN ('moderator', 'admin')
+        AND status = 'active'
+        AND deleted_at IS NULL
+    `, { type: QueryTypes.SELECT, transaction })
+    for (const member of staff) {
+      await notifyModerationReport({
+        recipientId: member.id,
+        actorId: reporterId,
+        reportId: reportRows[0]?.id,
+        targetType,
+        targetId
+      }, transaction)
+    }
 
     if (targetType === 'post' && ['active', 'appeal_accepted'].includes(target.moderation_status)) {
       await sequelize.query(`UPDATE posts SET moderation_status = 'flagged', updated_at = CURRENT_TIMESTAMP WHERE id = :targetId`, {

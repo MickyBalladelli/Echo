@@ -37,9 +37,15 @@ export function ReportButton({ targetType, targetId, label = 'Report' }) {
     if (event.key === 'Escape') open.value = false
   }
 
+  function toggleReport(event) {
+    event.stopPropagation()
+    error.value = ''
+    open.value = !open.value
+  }
+
   return (
     <span class="moderation-action">
-      {!result.value && <IconButton class="profile-report-icon" icon={reportIcon} ariaLabel={open.value ? 'Cancel report' : label} title={open.value ? 'Cancel report' : label} onClick={() => open.value = !open.value} />}
+      {!result.value && <IconButton class="profile-report-icon" icon={reportIcon} ariaLabel={open.value ? 'Cancel report' : label} title={open.value ? 'Cancel report' : label} onClick={toggleReport} />}
       {result.value && <span class="moderation-action-result">{result.value}</span>}
       {open.value && (
         <form class="moderation-action-form" role="dialog" aria-label={`Report ${targetType}`} onSubmit={submit} onKeyDown={closeOnEscape}>

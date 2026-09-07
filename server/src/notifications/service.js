@@ -16,6 +16,8 @@ export const notificationTypes = Object.freeze({
   mention: 'mention'
 })
 
+export const moderationReportNotificationType = 'moderation_report'
+
 export const notificationPreferenceTypes = Object.freeze(Object.values(notificationTypes))
 export const NOTIFICATION_RETENTION_DAYS = 90
 
@@ -32,6 +34,7 @@ function notificationGroupKey({ type, recipientId, postId, channelId, conversati
 }
 
 function notificationHref(row) {
+  if (row.type === moderationReportNotificationType) return '/moderation'
   if (row.post_id) return `/posts/${row.post_id}`
   if (row.type === notificationTypes.follow && row.actor_username) return `/users/${row.actor_username}`
   if (row.channel_slug) return `/channels/${row.channel_slug}`
@@ -210,7 +213,8 @@ export async function createNotification({
   conversationId = null,
   payload = {},
   dedupeKey,
-  groupKey = null
+  groupKey = null,
+  ignoreActorVisibility = false
 }, transaction) {
   if (actorId && recipientId === actorId && type !== notificationTypes.mention) return null
 
@@ -226,7 +230,7 @@ export async function createNotification({
   })
   if (preferenceRows[0] && !preferenceRows[0].enabled) return null
 
-  if (actorId) {
+  if (actorId && !ignoreActorVisibility) {
     const hidden = await sequelize.query(`
       SELECT 1
       FROM user_blocks hidden_block
@@ -362,6 +366,18 @@ export function notifyChatMessage({ recipientId, actorId, conversationId, messag
     conversationId,
     payload: { messageId },
     dedupeKey: `message:${messageId}`
+  }, transaction)
+}
+
+export function notifyModerationReport({ recipientId, actorId, reportId, targetType, targetId }, transaction) {
+  return createNotification({
+    recipientId,
+    actorId,
+    type: moderationReportNotificationType,
+    payload: { reportId, targetType, targetId },
+    dedupeKey: `moderation-report:${reportId}`,
+    groupKey: 'moderation:reports',
+    ignoreActorVisibility: true
   }, transaction)
 }
 
