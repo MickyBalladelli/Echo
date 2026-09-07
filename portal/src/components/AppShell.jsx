@@ -317,7 +317,7 @@ export function AppShell({
           children: globalHeader,
           trailing: headerTrailing
         })}
-        navigator={ShellNavigation({ router, user, unreadNotifications, notificationVersion })}
+        navigator={<ShellNavigation router={router} user={user} unreadNotifications={unreadNotifications} notificationVersion={notificationVersion} />}
       >
         <div class="app-content-grid">
           <main id="main-content" class="app-main" tabindex="-1">

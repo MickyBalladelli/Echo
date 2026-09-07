@@ -44,7 +44,7 @@ export function AuthGate({
       )
     }
 
-    if (!currentUser.value) {
+    if (!currentUser.peek()) {
       return (
         <Card class="auth-card">
           <Stack gap="medium">

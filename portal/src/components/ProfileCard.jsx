@@ -18,7 +18,7 @@ export function ProfileCard({ user, onUpdated }) {
             onSaved={updatedUser => {
               profileUser.value = updatedUser
               editing.value = false
-              onUpdated(updatedUser)
+              queueMicrotask(() => onUpdated(updatedUser))
             }}
             onCancel={() => editing.value = false}
           />

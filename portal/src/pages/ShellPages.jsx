@@ -1,5 +1,4 @@
 import { ProfileCard } from '../components/ProfileCard.jsx'
-import { UserSocialContent } from '../components/UserSocialContent.jsx'
 import { NotificationCenter } from '../components/NotificationCenter.jsx'
 import { NotificationPreferences } from '../components/NotificationPreferences.jsx'
 import { ChannelDirectory } from '../components/ChannelDirectory.jsx'
@@ -78,7 +77,7 @@ export function ChatPage({ router, conversationId = null, currentUserId }) {
   )
 }
 
-export function ProfilePage({ userState, onUpdated, router }) {
+export function ProfilePage({ userState, onUpdated }) {
   return (
     <PageFrame
       eyebrow="YOU / PROFILE"
@@ -87,12 +86,6 @@ export function ProfilePage({ userState, onUpdated, router }) {
       hideHeader
     >
       <ProfileCard user={userState.value} onUpdated={onUpdated} />
-      <UserSocialContent
-        username={userState.value.username}
-        router={router}
-        currentUserId={userState.value.id}
-        showIdentity={false}
-      />
     </PageFrame>
   )
 }

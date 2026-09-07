@@ -84,6 +84,7 @@ export function ProfileEditor({ user, onSaved, onCancel }) {
     error.value = ''
     busy.value = true
 
+    let updatedUser
     try {
       const result = await apiRequest('/api/me/profile', {
         method: 'PATCH',
@@ -98,12 +99,15 @@ export function ProfileEditor({ user, onSaved, onCancel }) {
           chatMarker: chatMarker.value
         })
       })
-      onSaved(result.data.user)
+      updatedUser = result.data.user
     } catch (saveError) {
       error.value = saveError.message || 'Could not save profile'
-    } finally {
       busy.value = false
+      return
     }
+
+    busy.value = false
+    queueMicrotask(() => onSaved(updatedUser))
   }
 
   return (
