@@ -3,7 +3,7 @@ import { ModerationQueue } from '../components/ModerationQueue.jsx'
 import { PageFrame } from './PageFrame.jsx'
 
 export function ModerationPage({ user, router }) {
-  const staff = user.role === 'moderator' || user.role === 'admin'
+  const staff = ['moderator', 'admin', 'developer'].includes(user.role)
 
   return (
     <PageFrame

@@ -27,7 +27,7 @@ export async function requireStaff(userId, transaction) {
     ...(transaction ? { transaction } : {})
   })
   const role = rows[0]?.global_role || 'user'
-  if (!['moderator', 'admin'].includes(role)) {
+  if (!['moderator', 'admin', 'developer'].includes(role)) {
     throw new HttpError(403, 'MODERATOR_REQUIRED', 'Moderator access required')
   }
   return role
@@ -116,7 +116,7 @@ export async function reportTarget(reporterId, { targetType, targetId, reason })
     const staff = await sequelize.query(`
       SELECT id
       FROM users
-      WHERE global_role IN ('moderator', 'admin')
+      WHERE global_role IN ('moderator', 'admin', 'developer')
         AND status = 'active'
         AND deleted_at IS NULL
     `, { type: QueryTypes.SELECT, transaction })

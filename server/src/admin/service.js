@@ -5,9 +5,10 @@ import { requireStaff } from '../moderation/service.js'
 
 async function requireAdmin(userId) {
   const role = await requireStaff(userId)
-  if (role !== 'admin') {
+  if (!['admin', 'developer'].includes(role)) {
     throw new HttpError(403, 'ADMIN_REQUIRED', 'Admin access required')
   }
+  return role
 }
 
 function mapAdminUser(row) {
@@ -54,12 +55,15 @@ export async function listAdminUsers(adminId) {
 }
 
 export async function updateAdminUserRole(adminId, userId, role) {
-  await requireAdmin(adminId)
+  const actorRole = await requireAdmin(adminId)
   if (adminId === userId) {
     throw new HttpError(400, 'SELF_ROLE_CHANGE_NOT_ALLOWED', 'You cannot change your own role')
   }
 
   const target = await findAdminUser(userId)
+  if (target.global_role === 'developer' && actorRole !== 'developer') {
+    throw new HttpError(403, 'DEVELOPER_REQUIRED', 'Only a developer can manage developer access')
+  }
   if (target.global_role === 'admin' && role !== 'admin') {
     const rows = await sequelize.query(`
       SELECT COUNT(*) AS admin_count
@@ -81,12 +85,15 @@ export async function updateAdminUserRole(adminId, userId, role) {
 }
 
 export async function updateAdminUserStatus(adminId, userId, status) {
-  await requireAdmin(adminId)
+  const actorRole = await requireAdmin(adminId)
   if (adminId === userId) {
     throw new HttpError(400, 'SELF_STATUS_CHANGE_NOT_ALLOWED', 'You cannot change your own account status')
   }
 
-  await findAdminUser(userId)
+  const target = await findAdminUser(userId)
+  if (target.global_role === 'developer' && actorRole !== 'developer') {
+    throw new HttpError(403, 'DEVELOPER_REQUIRED', 'Only a developer can manage developer access')
+  }
   await sequelize.query(`
     UPDATE users
     SET status = :status, updated_at = CURRENT_TIMESTAMP

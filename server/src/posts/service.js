@@ -71,7 +71,7 @@ const postVisibilityAccess = alias => `(
     OR EXISTS (
       SELECT 1 FROM users moderation_user
       WHERE moderation_user.id = :viewerId
-        AND moderation_user.global_role IN ('moderator', 'admin')
+        AND moderation_user.global_role IN ('moderator', 'admin', 'developer')
     )
   )
 )`

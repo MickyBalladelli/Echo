@@ -21,7 +21,7 @@ These choices lock the boundaries for P1 work. They match the current server and
 
 - Direct chats contain exactly two people. Group chats allow up to 20 invited people plus the owner, require a title up to 100 characters, and limit messages to 4,000 characters. Owners control membership.
 - Notifications are retained for 90 days, grouped where useful, and delivered in-app and through realtime events. Per-type preferences are stored now. Email delivery waits for a configured delivery provider and must honor those preferences.
-- Global roles are `user`, `moderator`, and `admin`. Reports enter a moderation queue; staff actions are audited. Content can be active, flagged, hidden/removed, or in an appeal state. Rate limits and block/restriction checks apply to abuse-sensitive actions.
+- Global roles are `user`, `moderator`, `admin`, and `developer`, in ascending privilege order. Developers sit above admins, and only another developer can remove developer access. Reports enter a moderation queue; staff actions are audited. Content can be active, flagged, hidden/removed, or in an appeal state. Rate limits and block/restriction checks apply to abuse-sensitive actions.
 - The prototype keeps resized images in data URLs and enforces MIME and byte limits. Production uploads move to private S3-compatible storage such as S3 or R2, using short-lived presigned URLs, server-side MIME/size checks, malware scanning, object keys, and CDN delivery with immutable hashes. Video and GIF uploads wait for this path.
 
 ## Revisit triggers

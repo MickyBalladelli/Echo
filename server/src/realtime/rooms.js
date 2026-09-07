@@ -60,7 +60,7 @@ async function canJoinPost(userId, postId) {
         OR EXISTS (
           SELECT 1 FROM users moderation_user
           WHERE moderation_user.id = :userId
-            AND moderation_user.global_role IN ('moderator', 'admin')
+            AND moderation_user.global_role IN ('moderator', 'admin', 'developer')
         )
       )
       AND NOT EXISTS (

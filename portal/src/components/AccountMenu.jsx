@@ -8,10 +8,10 @@ export function AccountMenu({ user, router, onLogout }) {
   const items = [
     { id: 'profile', label: 'Profile', icon: '◎', onSelect: goTo('/profile') },
     { id: 'settings', label: 'Settings', icon: '⚙', onSelect: goTo('/preferences') },
-    ...(user.role === 'moderator' || user.role === 'admin'
+    ...(['moderator', 'admin', 'developer'].includes(user.role)
       ? [{ id: 'moderation', label: 'Moderation', icon: '⚑', onSelect: goTo('/moderation') }]
       : []),
-    ...(user.role === 'admin'
+    ...(['admin', 'developer'].includes(user.role)
       ? [{ id: 'admin', label: 'Admin', icon: '◆', onSelect: goTo('/admin') }]
       : []),
     { type: 'separator' },

@@ -7,7 +7,8 @@ import { PageFrame } from './PageFrame.jsx'
 const roleOptions = [
   { value: 'user', label: 'User' },
   { value: 'moderator', label: 'Moderator' },
-  { value: 'admin', label: 'Admin' }
+  { value: 'admin', label: 'Admin' },
+  { value: 'developer', label: 'Developer' }
 ]
 
 const statusOptions = [
@@ -16,13 +17,14 @@ const statusOptions = [
 ]
 
 function roleTone(role) {
-  if (role === 'admin') return 'accent'
+  if (role === 'admin' || role === 'developer') return 'accent'
   if (role === 'moderator') return 'success'
   return 'neutral'
 }
 
 export function AdminPage({ user }) {
-  const isAdmin = user.role === 'admin'
+  const isDeveloper = user.role === 'developer'
+  const isAdmin = ['admin', 'developer'].includes(user.role)
   const users = signal([])
   const state = signal('loading')
   const error = signal('')
@@ -92,7 +94,7 @@ export function AdminPage({ user }) {
 
   const content = computed(() => {
     if (!isAdmin) {
-      return <Card><EmptyState status="error" title="Admin access required" description="Only admins can manage Echo accounts." /></Card>
+      return <Card><EmptyState status="error" title="Admin access required" description="Only admins and developers can manage Echo accounts." /></Card>
     }
     if (state.value === 'loading') return <Card><div role="status">Loading admin section…</div></Card>
     if (state.value === 'error') {
@@ -101,6 +103,7 @@ export function AdminPage({ user }) {
 
     const admins = users.value.filter(item => item.role === 'admin').length
     const moderators = users.value.filter(item => item.role === 'moderator').length
+    const developers = users.value.filter(item => item.role === 'developer').length
     const suspended = users.value.filter(item => item.status === 'suspended').length
 
     return (
@@ -115,6 +118,7 @@ export function AdminPage({ user }) {
             <div><strong>{users.value.length}</strong><span>Accounts</span></div>
             <div><strong>{admins}</strong><span>Admins</span></div>
             <div><strong>{moderators}</strong><span>Moderators</span></div>
+            <div><strong>{developers}</strong><span>Developers</span></div>
             <div><strong>{suspended}</strong><span>Suspended</span></div>
           </div>
         </Card>
@@ -123,12 +127,13 @@ export function AdminPage({ user }) {
           <div class="admin-section-heading">
             <Label size="small" tone="accent">USERS</Label>
             <h2>Account access</h2>
-            <p>Change a user role or suspend an account. Your own account stays protected.</p>
+            <p>Change a user role or suspend an account. Developer access can only be removed by another developer.</p>
           </div>
           {!users.value.length
             ? <EmptyState title="No users found" description="Echo has no accounts yet." />
             : <div class="admin-user-list">{users.value.map(target => {
               const isSelf = target.id === user.id
+              const developerLocked = target.role === 'developer' && !isDeveloper
               const roleBusy = busy.value === `role:${target.id}`
               const statusBusy = busy.value === `status:${target.id}`
               const roleValue = fieldValue(roleValues, target, 'role')
@@ -138,7 +143,7 @@ export function AdminPage({ user }) {
                   <div class="admin-user-copy">
                     <strong>{target.displayName}</strong>
                     <span>@{target.username} · {target.email}</span>
-                    <small>Joined {formatDateTime(target.createdAt)}{isSelf ? ' · You' : ''}</small>
+                    <small>Joined {formatDateTime(target.createdAt)}{isSelf ? ' · You' : ''}{developerLocked ? ' · Protected' : ''}</small>
                   </div>
                   <Badge tone={roleTone(target.role)}>{target.role}</Badge>
                   <div class="admin-user-controls">
@@ -149,7 +154,7 @@ export function AdminPage({ user }) {
                         value={roleValue}
                         ariaLabel={`Role for @${target.username}`}
                         options={roleOptions}
-                        disabled={isSelf || roleBusy || statusBusy}
+                        disabled={isSelf || developerLocked || roleBusy || statusBusy}
                         onChange={() => updateRole(target, roleValue.value)}
                       />
                     </div>
@@ -160,7 +165,7 @@ export function AdminPage({ user }) {
                         value={statusValue}
                         ariaLabel={`Status for @${target.username}`}
                         options={statusOptions}
-                        disabled={isSelf || roleBusy || statusBusy}
+                        disabled={isSelf || developerLocked || roleBusy || statusBusy}
                         onChange={() => updateStatus(target, statusValue.value)}
                       />
                     </div>

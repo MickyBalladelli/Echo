@@ -271,7 +271,7 @@ export async function listMessages(userId, conversationId, { cursor, limit }) {
         OR EXISTS (
           SELECT 1 FROM users moderation_user
           WHERE moderation_user.id = :userId
-            AND moderation_user.global_role IN ('moderator', 'admin')
+            AND moderation_user.global_role IN ('moderator', 'admin', 'developer')
         )
       )
     ORDER BY message.created_at DESC, message.id DESC

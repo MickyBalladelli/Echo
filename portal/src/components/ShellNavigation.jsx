@@ -65,10 +65,10 @@ function renderTreeItem(item) {
 export function ShellNavigation({ router, user, unreadNotifications, notificationVersion }) {
   const channels = signal([])
   const channelState = signal('loading')
-  const visibleItems = user.role === 'moderator' || user.role === 'admin'
+  const visibleItems = ['moderator', 'admin', 'developer'].includes(user.role)
     ? [...navItems, { path: '/moderation', label: 'Moderation', mark: '⚑' }]
     : navItems
-  const adminItems = user.role === 'admin'
+  const adminItems = ['admin', 'developer'].includes(user.role)
     ? [...visibleItems, { path: '/admin', label: 'Admin', mark: '◆' }]
     : visibleItems
 
