@@ -325,14 +325,30 @@ textarea {
   z-index: 1100;
   max-width: min(20rem, calc(100vw - 1rem));
   padding: 0.45rem 0.6rem;
-  border: 1px solid var(--prism-color-border);
+  border: 1px solid #cbd5e1;
   border-radius: var(--prism-radius-medium);
-  background: var(--prism-color-ink);
-  color: var(--prism-color-page);
+  background: #f8fafc;
+  color: #172033;
+  box-shadow: 0 10px 24px rgb(4 14 32 / 24%);
   font-size: 0.75rem;
+  font-weight: 600;
   line-height: 1.35;
   pointer-events: none;
   white-space: normal;
+}
+
+.echo-immediate-tooltip,
+.prism-tooltip {
+  border-radius: 10px !important;
+  border-color: #cbd5e1 !important;
+  background: #f8fafc !important;
+  color: #172033 !important;
+  box-shadow: 0 10px 24px rgb(4 14 32 / 24%) !important;
+  font-weight: 600;
+}
+
+.echo-status-tooltip-description {
+  color: #52627d !important;
 }
 
 .echo-header-status-item {

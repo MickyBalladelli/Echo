@@ -7,12 +7,22 @@ function titleTarget(target) {
   return anchor
 }
 
-function tooltipText(anchor) {
+function prepareTitle(anchor) {
+  if (!(anchor instanceof Element)) return
   const title = anchor.getAttribute('title')
-  if (title) {
-    anchor.dataset.echoTooltip = title
-    anchor.removeAttribute('title')
-  }
+  if (!title) return
+  anchor.dataset.echoTooltip = title
+  anchor.removeAttribute('title')
+}
+
+function prepareTitles(root) {
+  if (!(root instanceof Element)) return
+  prepareTitle(root)
+  root.querySelectorAll('[title]').forEach(prepareTitle)
+}
+
+function tooltipText(anchor) {
+  prepareTitle(anchor)
   return anchor.dataset.echoTooltip || ''
 }
 
@@ -47,6 +57,15 @@ export function installImmediateTitleTooltips() {
     tooltip.setAttribute('aria-hidden', 'true')
   }
 
+  prepareTitles(document.body)
+  const titleObserver = new MutationObserver(records => {
+    for (const record of records) {
+      if (record.type === 'attributes') prepareTitle(record.target)
+      if (record.type === 'childList') record.addedNodes.forEach(prepareTitles)
+    }
+  })
+  titleObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['title'] })
+
   const show = anchor => {
     const content = tooltipText(anchor)
     if (!content) return
@@ -59,7 +78,10 @@ export function installImmediateTitleTooltips() {
 
   const handlePointerOver = event => {
     const anchor = titleTarget(event.target)
-    if (!anchor) return
+    if (!anchor) {
+      if (activeAnchor) hide()
+      return
+    }
     if (event.relatedTarget instanceof Node && anchor.contains(event.relatedTarget)) return
     show(anchor)
   }
@@ -74,6 +96,7 @@ export function installImmediateTitleTooltips() {
   const handleFocusIn = event => {
     const anchor = titleTarget(event.target)
     if (anchor) show(anchor)
+    else if (activeAnchor) hide()
   }
 
   const handleFocusOut = event => {
@@ -91,6 +114,7 @@ export function installImmediateTitleTooltips() {
   document.addEventListener('pointerout', handlePointerOut)
   document.addEventListener('focusin', handleFocusIn)
   document.addEventListener('focusout', handleFocusOut)
+  window.addEventListener('blur', hide)
   window.addEventListener('scroll', handleViewportChange, true)
   window.addEventListener('resize', handleViewportChange)
 
@@ -100,8 +124,10 @@ export function installImmediateTitleTooltips() {
     document.removeEventListener('pointerout', handlePointerOut)
     document.removeEventListener('focusin', handleFocusIn)
     document.removeEventListener('focusout', handleFocusOut)
+    window.removeEventListener('blur', hide)
     window.removeEventListener('scroll', handleViewportChange, true)
     window.removeEventListener('resize', handleViewportChange)
+    titleObserver.disconnect()
     tooltip.remove()
   }
 }
