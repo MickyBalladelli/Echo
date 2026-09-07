@@ -35,11 +35,7 @@ const topLevelPageHeaders = Object.freeze({
   '/bookmarks': { eyebrow: 'KEEP / BOOKMARKS', title: 'Bookmarks' },
   '/notes': { eyebrow: 'PRIVATE / NOTES', title: 'Notes' },
   '/channels': { eyebrow: 'COMMUNITIES / CHANNELS', title: 'Channels' },
-  '/chat': {
-    eyebrow: 'DIRECT / CHAT',
-    title: 'Chat',
-    description: 'Private conversations and real-time messages will live here.'
-  },
+  '/chat': { eyebrow: 'DIRECT / CHAT', title: 'Chat' },
   '/profile': { eyebrow: 'YOU / PROFILE', title: 'Profile' },
   '/preferences': { eyebrow: 'YOU / PREFERENCES', title: 'Preferences' },
   '/moderation': { eyebrow: 'STAFF / MODERATION', title: 'Moderation' }
@@ -173,7 +169,7 @@ export function AppShell({
   const activeView = routerView(router, () => NotFoundPage({ router }))
   const layoutClass = computed(() => {
     if (router.path.value.startsWith('/channels/')) return 'echo-layout echo-layout-channel'
-    if (router.path.value === '/chat' || router.path.value.startsWith('/chat/')) return 'echo-layout echo-layout-top-level echo-layout-chat'
+    if (router.path.value === '/chat' || router.path.value.startsWith('/chat/')) return 'echo-layout echo-layout-top-level'
     if (topLevelPageHeaders[router.path.value]) return 'echo-layout echo-layout-top-level'
     return 'echo-layout'
   })
@@ -265,7 +261,6 @@ export function AppShell({
           <div class="echo-channel-header-details">
             <Label size="small" tone="accent">{pageHeader.eyebrow}</Label>
             <h1>{pageHeader.title}</h1>
-            {pageHeader.description && <p class="echo-header-page-description">{pageHeader.description}</p>}
           </div>
         </div>
       )

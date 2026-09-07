@@ -178,10 +178,6 @@ textarea {
   --echo-header-height: 3.7rem;
 }
 
-.echo-layout-chat {
-  --echo-header-height: 10.8rem;
-}
-
 .echo-layout-channel .prism-layout-header .prism-header-bar,
 .echo-layout-top-level .prism-layout-header .prism-header-bar {
   align-items: center;
@@ -296,26 +292,6 @@ textarea {
   max-width: min(760px, 100%);
   font-size: clamp(28px, 3vw, 40px);
   line-height: .9;
-}
-
-.echo-layout-chat .prism-layout-header .prism-header-bar {
-  align-items: flex-start;
-  min-height: var(--echo-header-height);
-  padding-top: 16px;
-  padding-bottom: 16px;
-}
-
-.echo-layout-chat .echo-channel-header-details h1 {
-  margin-top: 10px;
-  font-size: clamp(42px, 7vw, 72px);
-}
-
-.echo-header-page-description {
-  max-width: 760px;
-  margin: 14px 0 0;
-  color: var(--prism-color-text);
-  font-size: clamp(18px, 2vw, 24px);
-  line-height: 1.4;
 }
 
 .echo-channel-visibility {
@@ -2051,7 +2027,7 @@ textarea {
 .chat-thread,
 .chat-messages {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .chat-conversation-list {
@@ -2120,23 +2096,24 @@ textarea {
 }
 
 .chat-message-actions .prism-button-icon-only {
-  width: 44px;
-  min-width: 44px;
-  height: 44px;
-  min-height: 44px;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
   padding: 0;
 }
 
 .chat-message-actions .prism-button-icon-only .prism-button-icon {
-  width: 23px;
-  height: 23px;
-  flex-basis: 23px;
-  font-size: 23px;
+  width: 17px;
+  height: 17px;
+  flex-basis: 17px;
+  font-size: 17px;
 }
 
 .chat-thread-header {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+  padding: 8px 12px;
 }
 
 .chat-thread-header .chat-thread-title-row {
@@ -2163,7 +2140,7 @@ textarea {
 }
 
 .chat-member-pills > span {
-  padding: 4px 8px;
+  padding: 3px 7px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--prism-color-border-strong) 16%, transparent);
   color: var(--prism-color-text);
@@ -2177,7 +2154,7 @@ textarea {
 .chat-message {
   width: min(78%, 620px);
   justify-self: start;
-  padding: 12px 14px;
+  padding: 8px 10px;
 }
 
 .chat-message-own {
@@ -2189,6 +2166,18 @@ textarea {
   justify-content: space-between;
 }
 
+.chat-message-actions {
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.chat-message-actions .prism-button:not(.prism-button-icon-only) {
+  min-height: 30px;
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
 .chat-message-meta time,
 .chat-message small,
 .chat-message-deleted,
@@ -2198,7 +2187,7 @@ textarea {
 }
 
 .chat-message > p {
-  margin: 8px 0;
+  margin: 4px 0;
   white-space: pre-wrap;
 }
 
@@ -3599,10 +3588,6 @@ textarea {
     --echo-header-height: 6.5rem;
   }
 
-  .echo-layout-chat {
-    --echo-header-height: 10.8rem;
-  }
-
   .echo-channel-header-content {
     flex-direction: column;
     gap: 8px;
@@ -3640,10 +3625,6 @@ textarea {
   .echo-layout-channel,
   .echo-layout-top-level {
     --echo-header-height: 8rem;
-  }
-
-  .echo-layout-chat {
-    --echo-header-height: 10.5rem;
   }
 
   .echo-header-content span {
@@ -3797,6 +3778,8 @@ h1 {
 }
 
 .chat-messages-keyboard .virtual-list {
+  align-content: start;
+  gap: 6px;
   overscroll-behavior-y: auto;
 }
 

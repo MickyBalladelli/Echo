@@ -69,7 +69,6 @@ export function ChatPage({ router, conversationId = null, currentUserId, notific
     <PageFrame
       eyebrow="DIRECT / CHAT"
       title="Chat"
-      description="Private conversations and real-time messages will live here."
       className="chat-route-page"
       hideHeader
     >

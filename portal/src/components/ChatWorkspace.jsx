@@ -113,30 +113,34 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId, no
     messages.value = messages.value.map(item => item.id === message.id ? message : item)
   }
 
+  function scrollMessagesToBottom() {
+    if (typeof requestAnimationFrame !== 'function') return
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const viewport = document.querySelector('.chat-messages-keyboard .virtual-list')
+        if (viewport) viewport.scrollTop = viewport.scrollHeight
+      })
+    })
+  }
+
   async function send(event) {
     event.preventDefault()
     const body = messageBody.value.trim()
-    if (!body) return
+    if (!body || busy.value || !conversationId) return
     busy.value = true
-    emitRealtime('chat:message:send', { conversationId, body }, async response => {
-      if (response.ok) {
-        addMessage(response.message)
-        messageBody.value = ''
-      } else if (response.error === 'SOCKET_DISCONNECTED') {
-        try {
-          const result = await apiRequest(`/api/chat/conversations/${encodeURIComponent(conversationId)}/messages`, {
-            method: 'POST', body: JSON.stringify({ body })
-          })
-          addMessage(result.data.message)
-          messageBody.value = ''
-        } catch (requestError) {
-          error.value = requestError.message || 'Could not send message'
-        }
-      } else {
-        error.value = response.message || 'Could not send message'
-      }
+    error.value = ''
+    try {
+      const result = await apiRequest(`/api/chat/conversations/${encodeURIComponent(conversationId)}/messages`, {
+        method: 'POST', body: JSON.stringify({ body })
+      })
+      addMessage(result.data.message)
+      messageBody.value = ''
+      scrollMessagesToBottom()
+    } catch (requestError) {
+      error.value = requestError.message || 'Could not send message'
+    } finally {
       busy.value = false
-    })
+    }
   }
 
   function typeMessage() {
@@ -247,7 +251,7 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId, no
         <div class="chat-typing" aria-live="polite">{typingUsers.value.length ? 'Someone is typing…' : ''}</div>
         <form class="chat-compose" onSubmit={send}>
           <textarea use:bind={messageBody} onInput={typeMessage} maxlength="4000" rows="3" placeholder="Write a message" aria-label="Message" />
-          <Button type="submit" loading={busy}>Send</Button>
+          <Button type="button" onClick={send} loading={busy}>Send</Button>
         </form>
         <LiveRegion message={announcement} />
       </div>

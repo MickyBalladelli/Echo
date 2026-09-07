@@ -14,10 +14,10 @@ function csrfTokenFromCookie() {
   }
 }
 
-async function getCsrfToken() {
-  const existing = csrfTokenFromCookie()
+async function getCsrfToken(forceRefresh = false) {
+  const existing = forceRefresh ? null : csrfTokenFromCookie()
   if (existing) return existing
-  csrfRequest ||= fetch(`${apiUrl}/api/auth/csrf`, { credentials: 'include' })
+  csrfRequest ||= fetch(`${apiUrl}/api/auth/csrf`, { credentials: 'include', cache: 'no-store' })
     .then(response => response.json())
     .then(result => result.data?.csrfToken || null)
     .finally(() => {
@@ -39,17 +39,26 @@ export class ApiError extends Error {
 export async function apiRequest(path, options = {}) {
   const hasBody = options.body !== undefined
   const method = (options.method || 'GET').toUpperCase()
-  const csrfToken = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) ? await getCsrfToken() : null
-  const response = await fetch(`${apiUrl}${path}`, {
+  const unsafe = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)
+  let csrfToken = unsafe ? await getCsrfToken() : null
+  const makeRequest = token => fetch(`${apiUrl}${path}`, {
     ...options,
     credentials: 'include',
     headers: {
       ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
-      ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+      ...(token ? { 'X-CSRF-Token': token } : {}),
       ...(options.headers || {})
     }
   })
-  const result = await response.json().catch(() => null)
+
+  let response = await makeRequest(csrfToken)
+  let result = await response.json().catch(() => null)
+
+  if (unsafe && response.status === 403 && result?.error?.code === 'CSRF_REQUIRED') {
+    csrfToken = await getCsrfToken(true)
+    response = await makeRequest(csrfToken)
+    result = await response.json().catch(() => null)
+  }
 
   if (!response.ok || !result?.ok) {
     throw new ApiError(
