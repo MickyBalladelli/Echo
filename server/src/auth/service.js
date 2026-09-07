@@ -1,5 +1,5 @@
 import { QueryTypes } from 'sequelize'
-import { asJsonArray } from '../db/dialect.js'
+import { asJsonArray, isPostgres } from '../db/dialect.js'
 import { HttpError } from '../http/errors.js'
 import { sequelize, withTransaction } from '../db/pool.js'
 import { createSession } from './sessions.js'
@@ -75,9 +75,13 @@ export async function registerUser(input, requestInfo = {}) {
   try {
     return await withTransaction(async transaction => {
       const passwordHash = await hashPassword(input.password)
+      if (isPostgres()) {
+        await sequelize.query("SELECT pg_advisory_xact_lock(hashtext('echo:first-account'))", { transaction })
+      }
       const rows = await sequelize.query(`
-        INSERT INTO users (username, email, password_hash)
-        VALUES (:username, :email, :passwordHash)
+        INSERT INTO users (username, email, password_hash, global_role)
+        SELECT :username, :email, :passwordHash,
+          CASE WHEN EXISTS (SELECT 1 FROM users) THEN 'user' ELSE 'admin' END
         RETURNING id, username, email, created_at, global_role
       `, {
         replacements: { ...input, passwordHash },

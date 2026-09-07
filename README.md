@@ -43,6 +43,8 @@ For container deployment and operational procedures, see [docs/DEPLOYMENT.md](do
 
 Database commands run from the project root. `db:migrate` applies versioned SQL files from `server/src/db/migrations` for Postgres or `server/src/db/migrations/sqlite` for SQLite/Turso (chosen by `DB_DIALECT`). `db:seed` adds repeatable local users, posts, a channel, a chat, and a notification.
 
+The first account created becomes an admin. On an existing database with no admin, the migration promotes the oldest account. Admins can open `/admin` to change user roles and suspend or reactivate accounts.
+
 ## API response shape
 
 Success:

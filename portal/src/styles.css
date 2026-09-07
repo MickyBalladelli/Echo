@@ -814,6 +814,101 @@ textarea {
   gap: 8px;
 }
 
+.admin-page-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-summary-card,
+.admin-users-card {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-section-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-section-heading h2,
+.admin-section-heading p {
+  margin: 0;
+}
+
+.admin-section-heading p {
+  color: var(--prism-color-text);
+}
+
+.admin-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-summary-grid div {
+  display: grid;
+  gap: 3px;
+  padding: 12px;
+  border: 1px solid var(--prism-color-border);
+  border-radius: 12px;
+}
+
+.admin-summary-grid strong {
+  font-size: 24px;
+}
+
+.admin-summary-grid span,
+.admin-user-copy span,
+.admin-user-copy small,
+.admin-user-control > span {
+  color: var(--prism-color-text-muted);
+  font-size: 12px;
+}
+
+.admin-user-list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-user-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto minmax(260px, auto);
+  gap: 16px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--prism-color-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--prism-color-page) 64%, transparent);
+}
+
+.admin-user-copy,
+.admin-user-controls,
+.admin-user-control {
+  display: grid;
+  gap: 5px;
+}
+
+.admin-user-copy {
+  min-width: 0;
+}
+
+.admin-user-copy strong,
+.admin-user-copy span,
+.admin-user-copy small {
+  overflow-wrap: anywhere;
+}
+
+.admin-user-controls {
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.admin-page-error {
+  min-height: 18px;
+  color: var(--prism-color-accent-bright);
+  font-size: 13px;
+}
+
 .chat-message-moderation {
   color: var(--prism-color-warning);
 }
@@ -3844,6 +3939,18 @@ textarea {
 
   .moderation-item {
     flex-direction: column;
+  }
+
+  .admin-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-user-row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-user-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .moderation-item-actions {

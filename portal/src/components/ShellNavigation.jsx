@@ -68,6 +68,9 @@ export function ShellNavigation({ router, user, unreadNotifications, notificatio
   const visibleItems = user.role === 'moderator' || user.role === 'admin'
     ? [...navItems, { path: '/moderation', label: 'Moderation', mark: '⚑' }]
     : navItems
+  const adminItems = user.role === 'admin'
+    ? [...visibleItems, { path: '/admin', label: 'Admin', mark: '◆' }]
+    : visibleItems
 
   onMount(() => {
     let active = true
@@ -148,7 +151,7 @@ export function ShellNavigation({ router, user, unreadNotifications, notificatio
         : undefined
     })
 
-    return visibleItems.map(item => {
+    return adminItems.map(item => {
       if (item.children) {
         return {
           ...item,

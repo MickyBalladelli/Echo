@@ -12,6 +12,7 @@ import { ChannelDetailPage } from '../pages/ChannelDetailPage.jsx'
 import { BookmarksPage } from '../pages/BookmarksPage.jsx'
 import { HashtagPage } from '../pages/HashtagPage.jsx'
 import { ModerationPage } from '../pages/ModerationPage.jsx'
+import { AdminPage } from '../pages/AdminPage.jsx'
 import { SocialGraphPage } from '../pages/SocialGraphPage.jsx'
 import {
   ChannelsPage,
@@ -38,7 +39,8 @@ const topLevelPageHeaders = Object.freeze({
   '/chat': { eyebrow: 'DIRECT / CHAT', title: 'Chat' },
   '/profile': { eyebrow: 'YOU / PROFILE', title: 'Profile' },
   '/preferences': { eyebrow: 'YOU / PREFERENCES', title: 'Preferences' },
-  '/moderation': { eyebrow: 'STAFF / MODERATION', title: 'Moderation' }
+  '/moderation': { eyebrow: 'STAFF / MODERATION', title: 'Moderation' },
+  '/admin': { eyebrow: 'ADMIN / CONTROL', title: 'Admin' }
 })
 
 function getProfileReturnPath(search) {
@@ -132,6 +134,7 @@ export function AppShell({
     },
     { path: '/preferences', title: 'Preferences', view: () => PreferencesPage({ user: userState.value, onDeleted: onLogout }) },
     { path: '/moderation', title: 'Moderation', view: () => ModerationPage({ user: userState.value, router }) },
+    { path: '/admin', title: 'Admin', view: () => AdminPage({ user: userState.value }) },
     {
       path: '/users/:username',
       title: 'Profile',

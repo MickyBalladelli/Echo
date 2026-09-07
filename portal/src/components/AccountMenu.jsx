@@ -12,6 +12,9 @@ export function AccountMenu({ user, router, onLogout }) {
     ...(user.role === 'moderator' || user.role === 'admin'
       ? [{ id: 'moderation', label: 'Moderation', icon: '⚑', onSelect: goTo('/moderation') }]
       : []),
+    ...(user.role === 'admin'
+      ? [{ id: 'admin', label: 'Admin', icon: '◆', onSelect: goTo('/admin') }]
+      : []),
     { type: 'separator' },
     { id: 'logout', label: 'Log out', icon: '↪', onSelect: onLogout }
   ]

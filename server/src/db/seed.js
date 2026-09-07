@@ -33,8 +33,9 @@ async function findOrCreateUser(user, transaction) {
   }
 
   const rows = await sequelize.query(`
-    INSERT INTO users (username, email, password_hash)
-    VALUES (:username, :email, :passwordHash)
+    INSERT INTO users (username, email, password_hash, global_role)
+    SELECT :username, :email, :passwordHash,
+      CASE WHEN EXISTS (SELECT 1 FROM users) THEN 'user' ELSE 'admin' END
     RETURNING id
   `, {
     replacements: { ...user, passwordHash: hashPassword(user.password) },
