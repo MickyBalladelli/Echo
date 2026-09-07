@@ -3764,6 +3764,10 @@ h1 {
   min-width: 0;
 }
 
+.chat-messages-keyboard .virtual-list {
+  overscroll-behavior-y: auto;
+}
+
 .virtual-list {
   display: grid;
   max-height: min(72vh, 960px);
