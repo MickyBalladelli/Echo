@@ -2419,12 +2419,15 @@ textarea {
   background: color-mix(in srgb, var(--prism-color-accent) 18%, transparent);
 }
 
-.post-action-menu {
-  display: inline-flex;
+.post-card-inline-action.prism-button {
+  width: 38px;
+  min-width: 38px;
+  min-height: 32px;
+  padding: 6px;
 }
 
-.post-action-menu .prism-button {
-  margin-left: 0;
+.post-card-footer .post-card-inline-action .prism-button-icon {
+  font-size: 20px;
 }
 
 .post-card-error {

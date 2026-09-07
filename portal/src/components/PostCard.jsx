@@ -5,14 +5,13 @@ import {
   Card,
   ChatIcon,
   ClockIcon,
-  DropdownMenu,
   FormField,
   IconButton,
   Label,
   MapPinIcon,
-  MoreHorizontalIcon,
   Select,
-  TextField
+  TextField,
+  Tooltip
 } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { UserBadges } from './UserBadges.jsx'
@@ -407,23 +406,47 @@ export function PostCard({
             {likeCount}
           </Badge>
         </span>
-        {DropdownMenu({
-          class: 'post-action-menu',
-          ariaLabel: 'Post actions',
-          placement: 'bottom-end',
-          trigger: ({ open, toggle }) => IconButton({
-            icon: MoreHorizontalIcon(),
-            ariaLabel: 'More post actions',
-            title: 'More post actions',
-            pressed: open,
-            onClick: toggle
-          }),
-          items: [
-            { id: 'repost', label: 'Repost', icon: '↻', onSelect: () => repost() },
-            { id: 'quote', label: 'Quote post', icon: '“', onSelect: () => quoting.value = !quoting.value },
-            { type: 'separator' },
-            { id: 'bookmark', label: computed(() => bookmarked.value ? 'Remove bookmark' : 'Bookmark'), icon: '🔖', onSelect: toggleBookmark }
-          ]
+        {Tooltip({
+          content: 'Repost',
+          delay: 0,
+          children: (
+            <IconButton
+              class="post-card-inline-action"
+              icon="↻"
+              ariaLabel="Repost"
+              title="Repost"
+              loading={reposting}
+              onClick={() => repost()}
+            />
+          )
+        })}
+        {Tooltip({
+          content: 'Quote post',
+          delay: 0,
+          children: (
+            <IconButton
+              class="post-card-inline-action"
+              icon="“"
+              ariaLabel="Quote post"
+              title="Quote post"
+              pressed={quoting}
+              onClick={() => quoting.value = !quoting.value}
+            />
+          )
+        })}
+        {Tooltip({
+          content: computed(() => bookmarked.value ? 'Remove bookmark' : 'Bookmark'),
+          delay: 0,
+          children: (
+            <IconButton
+              class="post-card-inline-action"
+              icon="🔖"
+              ariaLabel={computed(() => bookmarked.value ? 'Remove bookmark' : 'Bookmark')}
+              title={computed(() => bookmarked.value ? 'Remove bookmark' : 'Bookmark')}
+              pressed={bookmarked}
+              onClick={toggleBookmark}
+            />
+          )
         })}
         {onTogglePinned && <IconButton icon={MapPinIcon()} ariaLabel={pinned ? 'Unpin this post' : 'Pin this post'} title={pinned ? 'Unpin' : 'Pin'} loading={pinning} pressed={pinned} onClick={togglePinned} />}
         {canEdit && <IconButton icon="✎" ariaLabel="Edit this post" title="Edit" onClick={() => editing.value = true} />}
