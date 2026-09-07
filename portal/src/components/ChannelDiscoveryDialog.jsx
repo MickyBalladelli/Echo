@@ -1,6 +1,7 @@
 import { computed, signal } from '../lib/vendor.js'
-import { Button, Card, EmptyState, Label, Popup, Tooltip } from '../lib/vendor.js'
+import { Button, Card, EmptyState, Label, Popup } from '../lib/vendor.js'
 import { mediaSrc } from '../lib/media.js'
+import { ImmediateTooltip } from './ImmediateTooltip.jsx'
 
 function openChannel(router, slug) {
   return event => {
@@ -64,9 +65,9 @@ export function ChannelDiscoveryDialog({ channels, state, error, loadingMore, ne
                 <div class="channel-card-copy">
                   <div class="channel-card-title-row">
                     <a class="channel-card-title-link" href={`/channels/${channel.slug}`} onClick={openChannel(router, channel.slug)}><Label size="large">{channel.name}</Label></a>
-                    <Tooltip class="channel-card-description-tooltip" content={channel.description || 'No description yet.'} placement="top">
+                    <ImmediateTooltip class="channel-card-description-tooltip" content={channel.description || 'No description yet.'} placement="top">
                       <p>{channel.description || 'No description yet.'}</p>
-                    </Tooltip>
+                    </ImmediateTooltip>
                   </div>
                   <div class="channel-card-description-row">
                     <a class="channel-card-slug-link channel-slug" href={`/channels/${channel.slug}`} onClick={openChannel(router, channel.slug)}>/{channel.slug}</a>

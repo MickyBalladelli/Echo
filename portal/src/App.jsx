@@ -2,6 +2,7 @@ import { io } from 'socket.io-client'
 import { clientEnv } from './config/env.js'
 import { AuthGate } from './components/AuthGate.jsx'
 import { apiRequest } from './lib/api.js'
+import { installImmediateTitleTooltips } from './lib/immediateTooltips.js'
 import { acceptRealtimeEvent, configureRealtimeSocket } from './lib/realtime.js'
 import {
   Background,
@@ -110,6 +111,7 @@ export function App() {
   })
   onMount(() => {
     active = true
+    const stopImmediateTitleTooltips = installImmediateTitleTooltips()
     fetchWithTimeout(`${apiUrl}/api/health`)
       .then(response => {
         if (!response.ok) {
@@ -149,6 +151,7 @@ export function App() {
 
     return () => {
       active = false
+      stopImmediateTitleTooltips()
       socket?.close()
     }
   })

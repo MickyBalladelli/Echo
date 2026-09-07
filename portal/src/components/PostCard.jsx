@@ -10,8 +10,7 @@ import {
   Label,
   MapPinIcon,
   Select,
-  TextField,
-  Tooltip
+  TextField
 } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { UserBadges } from './UserBadges.jsx'
@@ -22,6 +21,7 @@ import { formatDateTime, formatRelativeTime } from '../lib/dates.js'
 import { isGifMedia, mediaSrc, removeAttachedGifUrl } from '../lib/media.js'
 import { Poll } from './Poll.jsx'
 import { UserAvatar } from './UserAvatar.jsx'
+import { ImmediateTooltip } from './ImmediateTooltip.jsx'
 
 function renderBody(value, router) {
   return value.split(/(#[a-z0-9_]+|@[a-z0-9_]+)/gi).map((part, index) => {
@@ -406,7 +406,7 @@ export function PostCard({
             {likeCount}
           </Badge>
         </span>
-        {Tooltip({
+        {ImmediateTooltip({
           content: 'Repost',
           delay: 0,
           children: (
@@ -414,13 +414,12 @@ export function PostCard({
               class="post-card-inline-action"
               icon="↻"
               ariaLabel="Repost"
-              title="Repost"
               loading={reposting}
               onClick={() => repost()}
             />
           )
         })}
-        {Tooltip({
+        {ImmediateTooltip({
           content: 'Quote post',
           delay: 0,
           children: (
@@ -428,13 +427,12 @@ export function PostCard({
               class="post-card-inline-action"
               icon="“"
               ariaLabel="Quote post"
-              title="Quote post"
               pressed={quoting}
               onClick={() => quoting.value = !quoting.value}
             />
           )
         })}
-        {Tooltip({
+        {ImmediateTooltip({
           content: computed(() => bookmarked.value ? 'Remove bookmark' : 'Bookmark'),
           delay: 0,
           children: (
@@ -442,7 +440,6 @@ export function PostCard({
               class="post-card-inline-action"
               icon="🔖"
               ariaLabel={computed(() => bookmarked.value ? 'Remove bookmark' : 'Bookmark')}
-              title={computed(() => bookmarked.value ? 'Remove bookmark' : 'Bookmark')}
               pressed={bookmarked}
               onClick={toggleBookmark}
             />

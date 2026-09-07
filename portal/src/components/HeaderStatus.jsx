@@ -1,4 +1,5 @@
-import { computed, html, Tooltip } from '../lib/vendor.js'
+import { computed, html } from '../lib/vendor.js'
+import { ImmediateTooltip } from './ImmediateTooltip.jsx'
 
 function toneForApi(status) {
   if (status === 'API online') return 'success'
@@ -60,7 +61,7 @@ export function HeaderStatus({ apiStatus, socketStatus }) {
 
   return (
     <div class="echo-header-status" aria-label="Echo connection status">
-      {Tooltip({
+      {ImmediateTooltip({
         content: connectionTooltip,
         children: (
           <span class={connectionClass} tabIndex="0" aria-label={connectionLabel}>

@@ -320,6 +320,21 @@ textarea {
   display: inline-flex;
 }
 
+.echo-immediate-tooltip {
+  position: fixed;
+  z-index: 1100;
+  max-width: min(20rem, calc(100vw - 1rem));
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--prism-color-border);
+  border-radius: var(--prism-radius-medium);
+  background: var(--prism-color-ink);
+  color: var(--prism-color-page);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  pointer-events: none;
+  white-space: normal;
+}
+
 .echo-header-status-item {
   display: inline-flex;
   align-items: center;
@@ -2078,6 +2093,21 @@ textarea {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+}
+
+.chat-message-actions .prism-button-icon-only {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+}
+
+.chat-message-actions .prism-button-icon-only .prism-button-icon {
+  width: 23px;
+  height: 23px;
+  flex-basis: 23px;
+  font-size: 23px;
 }
 
 .chat-thread-header {
