@@ -4096,6 +4096,17 @@ img {
   line-height: 1;
 }
 
+.channel-member-name {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+}
+
+.channel-member-name > span {
+  font-size: 1.1em;
+  line-height: 1;
+}
+
 .channel-chat-mention-label {
   padding: 3px 7px;
   border-radius: 999px;

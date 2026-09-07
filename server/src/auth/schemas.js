@@ -44,6 +44,13 @@ export const passwordResetConfirmSchema = z.object({
   password: z.string().min(8).max(128)
 })
 
+export const profileChatMarkers = Object.freeze([
+  '🎈', '✨', '🔥', '🌈', '⭐', '🎉', '💎', '🦄',
+  '🚀', '🌻', '🎵', '💬', '🐱', '🐶', '🍕', '❤️'
+])
+
+const chatMarker = z.enum(profileChatMarkers)
+
 export const profileSchema = z.object({
   displayName: z.string().trim().min(1).max(80),
   bio: z.string().trim().max(280).default(''),
@@ -51,7 +58,8 @@ export const profileSchema = z.object({
   bannerUrl: imageUrl.nullable().optional(),
   profileVisibility: z.enum(['public', 'followers']).default('public'),
   showFollowers: z.boolean().default(true),
-  showFollowing: z.boolean().default(true)
+  showFollowing: z.boolean().default(true),
+  chatMarker: chatMarker.default('🎈')
 })
 
 export const localeSchema = z.object({

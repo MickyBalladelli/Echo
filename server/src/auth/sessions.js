@@ -60,6 +60,7 @@ export async function findSessionByToken(token, transaction) {
       p.profile_visibility,
       p.show_followers,
       p.show_following,
+      p.chat_marker,
       COALESCE((
         SELECT jsonb_agg(badge.badge_type ORDER BY CASE badge.badge_type WHEN 'staff' THEN 0 ELSE 1 END)
         FROM user_badges badge
@@ -111,7 +112,8 @@ export async function findSessionByToken(token, transaction) {
         bannerUrl: row.banner_url,
         profileVisibility: row.profile_visibility || 'public',
         showFollowers: Boolean(row.show_followers),
-        showFollowing: Boolean(row.show_following)
+        showFollowing: Boolean(row.show_following),
+        chatMarker: row.chat_marker || '🎈'
         ,locale: row.locale || 'en'
       },
       badges: asJsonArray(row.badges),

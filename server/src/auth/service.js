@@ -23,6 +23,7 @@ function publicUser(row) {
       profileVisibility: row.profile_visibility || 'public',
       showFollowers: Boolean(row.show_followers),
       showFollowing: Boolean(row.show_following),
+      chatMarker: row.chat_marker || '🎈',
       locale: row.locale || 'en'
     },
     badges: asJsonArray(row.badges),
@@ -50,6 +51,7 @@ async function findUserByIdentifier(identifier, transaction) {
       p.profile_visibility,
       p.show_followers,
       p.show_following,
+      p.chat_marker,
       COALESCE((
         SELECT jsonb_agg(badge.badge_type ORDER BY CASE badge.badge_type WHEN 'staff' THEN 0 ELSE 1 END)
         FROM user_badges badge
@@ -156,11 +158,11 @@ export async function updateUserProfile(userId, input) {
   const rows = await sequelize.query(`
     INSERT INTO profiles (
       user_id, display_name, bio, avatar_url, banner_url,
-      profile_visibility, show_followers, show_following
+      profile_visibility, show_followers, show_following, chat_marker
     )
     VALUES (
       :userId, :displayName, :bio, :avatarUrl, :bannerUrl,
-      :profileVisibility, :showFollowers, :showFollowing
+      :profileVisibility, :showFollowers, :showFollowing, :chatMarker
     )
     ON CONFLICT (user_id) DO UPDATE SET
       display_name = EXCLUDED.display_name,
@@ -170,8 +172,9 @@ export async function updateUserProfile(userId, input) {
       profile_visibility = EXCLUDED.profile_visibility,
       show_followers = EXCLUDED.show_followers,
       show_following = EXCLUDED.show_following,
+      chat_marker = EXCLUDED.chat_marker,
       updated_at = CURRENT_TIMESTAMP
-    RETURNING display_name, bio, avatar_url, banner_url, profile_visibility, show_followers, show_following
+    RETURNING display_name, bio, avatar_url, banner_url, profile_visibility, show_followers, show_following, chat_marker
   `, {
     replacements: {
       userId,
@@ -181,7 +184,8 @@ export async function updateUserProfile(userId, input) {
       bannerUrl: input.bannerUrl ?? null,
       profileVisibility: input.profileVisibility,
       showFollowers: input.showFollowers,
-      showFollowing: input.showFollowing
+      showFollowing: input.showFollowing,
+      chatMarker: input.chatMarker
     },
     type: QueryTypes.SELECT
   })

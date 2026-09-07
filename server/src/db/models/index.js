@@ -42,7 +42,8 @@ export const Profile = sequelize.define('Profile', {
   pinnedPostId: { type: DataTypes.UUID, field: 'pinned_post_id' },
   profileVisibility: { type: DataTypes.STRING(16), allowNull: false, defaultValue: 'public', field: 'profile_visibility' },
   showFollowers: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true, field: 'show_followers' },
-  showFollowing: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true, field: 'show_following' }
+  showFollowing: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true, field: 'show_following' },
+  chatMarker: { type: DataTypes.STRING(8), allowNull: false, defaultValue: '🎈', field: 'chat_marker' }
 }, {
   tableName: 'profiles',
   ...timestamps

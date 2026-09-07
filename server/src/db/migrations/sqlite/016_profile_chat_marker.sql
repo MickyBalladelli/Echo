@@ -1,0 +1,2 @@
+ALTER TABLE profiles
+  ADD COLUMN chat_marker VARCHAR(8) NOT NULL DEFAULT '🎈';

@@ -337,7 +337,7 @@ export async function leaveChannel(userId, slug) {
 export async function listChannelMembers(viewerId, slug) {
   const channel = await getChannelRow(viewerId, slug)
   const rows = await sequelize.query(`
-    SELECT u.id, u.username, profile.display_name, profile.avatar_url, member.role, member.joined_at
+    SELECT u.id, u.username, profile.display_name, profile.avatar_url, profile.chat_marker, member.role, member.joined_at
     FROM channel_members member
     JOIN users u ON u.id = member.user_id AND u.deleted_at IS NULL AND u.status = 'active'
     LEFT JOIN profiles profile ON profile.user_id = u.id
@@ -351,6 +351,7 @@ export async function listChannelMembers(viewerId, slug) {
     username: row.username,
     displayName: row.display_name || row.username,
     avatarUrl: row.avatar_url || null,
+    chatMarker: row.chat_marker || '🎈',
     role: row.role,
     joinedAt: row.joined_at
   }))

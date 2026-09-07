@@ -20,6 +20,7 @@ function mapUser(row) {
       profileVisibility: row.profile_visibility || 'public',
       showFollowers: Boolean(row.show_followers),
       showFollowing: Boolean(row.show_following),
+      chatMarker: row.chat_marker || '🎈',
       badges: asJsonArray(row.badges)
     },
     mutualCount: Number(row.mutual_count || 0),
@@ -30,7 +31,7 @@ function mapUser(row) {
 async function findPublicUser(identifier, transaction) {
   const rows = await sequelize.query(`
     SELECT u.id, u.username, u.created_at, p.display_name, p.bio, p.avatar_url, p.banner_url,
-      p.pinned_post_id, p.profile_visibility, p.show_followers, p.show_following,
+      p.pinned_post_id, p.profile_visibility, p.show_followers, p.show_following, p.chat_marker,
       COALESCE((
         SELECT jsonb_agg(badge.badge_type ORDER BY CASE badge.badge_type WHEN 'staff' THEN 0 ELSE 1 END)
         FROM user_badges badge
@@ -248,7 +249,7 @@ export async function listConnections(viewerId, username, kind, { cursor, limit 
   }
 
   const rows = await sequelize.query(`
-    SELECT u.id, u.username, u.created_at, p.display_name, p.bio, p.avatar_url, p.banner_url,
+    SELECT u.id, u.username, u.created_at, p.display_name, p.bio, p.avatar_url, p.banner_url, p.chat_marker,
       connection.created_at AS connected_at,
       (
         SELECT COUNT(DISTINCT mutual_viewer.following_id)::INTEGER
@@ -329,7 +330,7 @@ export async function setRelationship(viewerId, userId, kind, active) {
 export async function listSuggestedUsers(viewerId, limit) {
   const rows = await sequelize.query(`
     SELECT candidate.id, candidate.username, candidate.created_at,
-      profile.display_name, profile.bio, profile.avatar_url, profile.banner_url,
+      profile.display_name, profile.bio, profile.avatar_url, profile.banner_url, profile.chat_marker,
       (
         SELECT COUNT(DISTINCT viewer_follow.following_id)::INTEGER
         FROM follows viewer_follow

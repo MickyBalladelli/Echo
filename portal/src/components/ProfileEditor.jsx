@@ -4,6 +4,25 @@ import { mediaSrc } from '../lib/media.js'
 
 const maxImageBytes = 10 * 1024 * 1024
 
+const chatMarkerOptions = Object.freeze([
+  { value: '🎈', label: '🎈 Balloon' },
+  { value: '✨', label: '✨ Sparkles' },
+  { value: '🔥', label: '🔥 Fire' },
+  { value: '🌈', label: '🌈 Rainbow' },
+  { value: '⭐', label: '⭐ Star' },
+  { value: '🎉', label: '🎉 Party' },
+  { value: '💎', label: '💎 Gem' },
+  { value: '🦄', label: '🦄 Unicorn' },
+  { value: '🚀', label: '🚀 Rocket' },
+  { value: '🌻', label: '🌻 Sunflower' },
+  { value: '🎵', label: '🎵 Music' },
+  { value: '💬', label: '💬 Speech' },
+  { value: '🐱', label: '🐱 Cat' },
+  { value: '🐶', label: '🐶 Dog' },
+  { value: '🍕', label: '🍕 Pizza' },
+  { value: '❤️', label: '❤️ Heart' }
+])
+
 function resizeImage(file, maxWidth, maxHeight) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -34,6 +53,7 @@ export function ProfileEditor({ user, onSaved, onCancel }) {
   const profileVisibility = signal(user.profile?.profileVisibility || 'public')
   const showFollowers = signal(user.profile?.showFollowers !== false)
   const showFollowing = signal(user.profile?.showFollowing !== false)
+  const chatMarker = signal(user.profile?.chatMarker || '🎈')
   const error = signal('')
   const busy = signal(false)
 
@@ -74,7 +94,8 @@ export function ProfileEditor({ user, onSaved, onCancel }) {
           bannerUrl: bannerUrl.value || null,
           profileVisibility: profileVisibility.value,
           showFollowers: showFollowers.value,
-          showFollowing: showFollowing.value
+          showFollowing: showFollowing.value,
+          chatMarker: chatMarker.value
         })
       })
       onSaved(result.data.user)
@@ -92,6 +113,14 @@ export function ProfileEditor({ user, onSaved, onCancel }) {
       </FormField>
       <FormField id="profile-bio" label="Bio">
         <textarea id="profile-bio" use:bind={bio} rows="4" maxlength="280" aria-label="Bio" />
+      </FormField>
+      <FormField id="profile-chat-marker" label="Chat marker" hint="Shown beside your name in channel chat.">
+        <Select
+          id="profile-chat-marker"
+          value={chatMarker}
+          ariaLabel="Chat marker"
+          options={chatMarkerOptions}
+        />
       </FormField>
       <div class="profile-image-fields">
         <div class="profile-image-field">

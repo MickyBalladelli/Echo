@@ -191,7 +191,10 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
         <div class="channel-member-list">
           {members.value.map(member => (
             <div key={member.id} class="channel-member-row">
-              <a href={`/users/${member.username}`} onClick={router.link(`/users/${member.username}`)}>{member.displayName} <span>@{member.username}</span></a>
+              <a href={`/users/${member.username}`} onClick={router.link(`/users/${member.username}`)}>
+                <span class="channel-member-name"><span aria-hidden="true">{member.chatMarker || '🎈'}</span> {member.displayName}</span>
+                <span>@{member.username}</span>
+              </a>
               <Badge tone={member.role === 'owner' ? 'accent' : member.role === 'moderator' ? 'success' : 'neutral'}>{member.role === 'owner' ? 'Owner' : member.role === 'moderator' ? 'Moderator' : 'Member'}</Badge>
               {channel.value.isOwner && member.role !== 'owner' && (
                 <Button variant="tertiary" size="small" onClick={() => changeRole(member, member.role === 'moderator' ? 'member' : 'moderator')}>

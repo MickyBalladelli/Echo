@@ -139,7 +139,7 @@ export function ChannelChatMessage({ message, currentUserId, currentUsername, co
         {!compact && (
           <div class="channel-chat-message-meta">
             <strong>{message.sender.displayName}</strong>
-            <span class="channel-chat-message-badge" aria-hidden="true">🎈</span>
+            <span class="channel-chat-message-badge" aria-hidden="true">{message.sender.chatMarker || '🎈'}</span>
             {roleLabel && <Badge tone={channelRole === 'owner' ? 'accent' : 'success'} size="small">{roleLabel}</Badge>}
             {mentioned && <span class="channel-chat-mention-label">Mentioned you</span>}
             <time datetime={message.createdAt}>{formatClockTime(message.createdAt)}</time>
