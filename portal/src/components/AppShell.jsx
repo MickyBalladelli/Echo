@@ -119,11 +119,11 @@ export function AppShell({
         })
       }
     },
-    { path: '/chat', title: 'Chat', view: () => ChatPage({ router, currentUserId: userState.value.id }) },
+    { path: '/chat', title: 'Chat', view: () => ChatPage({ router, currentUserId: userState.value.id, notificationVersion }) },
     {
       path: '/chat/:id',
       title: 'Chat',
-      view: ({ id }) => ChatPage({ router, conversationId: id, currentUserId: userState.value.id })
+      view: ({ id }) => ChatPage({ router, conversationId: id, currentUserId: userState.value.id, notificationVersion })
     },
     {
       path: '/profile',

@@ -64,7 +64,7 @@ export function ChannelsPage({ router }) {
   )
 }
 
-export function ChatPage({ router, conversationId = null, currentUserId }) {
+export function ChatPage({ router, conversationId = null, currentUserId, notificationVersion }) {
   return (
     <PageFrame
       eyebrow="DIRECT / CHAT"
@@ -73,7 +73,7 @@ export function ChatPage({ router, conversationId = null, currentUserId }) {
       className="chat-route-page"
       hideHeader={!conversationId}
     >
-      <ChatWorkspace router={router} conversationId={conversationId} currentUserId={currentUserId} />
+      <ChatWorkspace router={router} conversationId={conversationId} currentUserId={currentUserId} notificationVersion={notificationVersion} />
     </PageFrame>
   )
 }

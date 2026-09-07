@@ -80,5 +80,9 @@ export function emitRealtime(type, payload, acknowledge) {
     acknowledge?.({ ok: false, error: 'SOCKET_DISCONNECTED' })
     return
   }
-  socket.emit(type, payload, acknowledge)
+  if (typeof acknowledge === 'function') {
+    socket.emit(type, payload, acknowledge)
+    return
+  }
+  socket.emit(type, payload)
 }

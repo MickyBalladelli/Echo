@@ -35,7 +35,7 @@ function notificationHref(row) {
   if (row.post_id) return `/posts/${row.post_id}`
   if (row.type === notificationTypes.follow && row.actor_username) return `/users/${row.actor_username}`
   if (row.channel_slug) return `/channels/${row.channel_slug}`
-  if (row.conversation_id) return '/chat'
+  if (row.conversation_id) return `/chat/${encodeURIComponent(row.conversation_id)}`
   return '/notifications'
 }
 

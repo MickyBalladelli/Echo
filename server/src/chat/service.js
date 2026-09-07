@@ -341,12 +341,18 @@ export async function sendMessage(userId, conversationId, body) {
         messageId: message.id
       }, transaction)
     }
-    transaction.afterCommit(() => publishRealtimeEvent(
-      roomName('conversation', conversationId),
-      'chat:message',
-      message,
-      `chat-message:${message.id}`
-    ))
+    const members = await sequelize.query(`
+      SELECT user_id
+      FROM chat_members
+      WHERE conversation_id = :conversationId AND left_at IS NULL
+    `, { replacements: { conversationId }, type: QueryTypes.SELECT, transaction })
+    transaction.afterCommit(() => {
+      const eventId = `chat-message:${message.id}`
+      publishRealtimeEvent(roomName('conversation', conversationId), 'chat:message', message, eventId)
+      for (const member of members) {
+        publishRealtimeEvent(roomName('user', member.user_id), 'chat:message', message, eventId)
+      }
+    })
     return message
   })
 }

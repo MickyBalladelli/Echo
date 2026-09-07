@@ -8,6 +8,10 @@ const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}
 const roomKinds = new Set(['channel', 'post', 'conversation'])
 const maxExplicitRooms = 100
 
+function normalizeAcknowledge(acknowledge) {
+  return typeof acknowledge === 'function' ? acknowledge : () => {}
+}
+
 export const roomName = (kind, id) => `${kind}:${id}`
 
 async function canJoinChannel(userId, channelId) {
@@ -138,6 +142,7 @@ export async function initializeSocketRooms(socket) {
   socket.data.automaticRooms = new Set(await joinMembershipRooms(socket, userId))
 
   socket.on('room:join', async (request = {}, acknowledge = () => {}) => {
+    acknowledge = normalizeAcknowledge(acknowledge)
     const limit = allowSocketEvent(socket, 'room:join')
     if (!limit.allowed) {
       acknowledge({ ok: false, error: 'RATE_LIMITED', retryAfterSeconds: limit.retryAfterSeconds })
@@ -168,6 +173,7 @@ export async function initializeSocketRooms(socket) {
   })
 
   socket.on('room:leave', async (request = {}, acknowledge = () => {}) => {
+    acknowledge = normalizeAcknowledge(acknowledge)
     const limit = allowSocketEvent(socket, 'room:leave')
     if (!limit.allowed) {
       acknowledge({ ok: false, error: 'RATE_LIMITED', retryAfterSeconds: limit.retryAfterSeconds })

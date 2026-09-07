@@ -14,6 +14,10 @@ import {
 
 const onlineUsers = new Map()
 
+function normalizeAcknowledge(acknowledge) {
+  return typeof acknowledge === 'function' ? acknowledge : () => {}
+}
+
 function conversationRooms(socket) {
   return [...socket.rooms].filter(room => room.startsWith('conversation:'))
 }
@@ -34,6 +38,7 @@ export function initializeChatSocket(socket) {
   )
 
   socket.on('chat:message:send', async (request = {}, acknowledge = () => {}) => {
+    acknowledge = normalizeAcknowledge(acknowledge)
     const limit = allowSocketEvent(socket, 'chat:message:send')
     const input = parseSocketEvent(chatMessageEventSchema, request)
     if (!limit.allowed) {
@@ -54,6 +59,7 @@ export function initializeChatSocket(socket) {
   })
 
   socket.on('channel:chat:message:send', async (request = {}, acknowledge = () => {}) => {
+    acknowledge = normalizeAcknowledge(acknowledge)
     const limit = allowSocketEvent(socket, 'channel:chat:message:send')
     const input = parseSocketEvent(channelChatMessageEventSchema, request)
     if (!limit.allowed) {
@@ -73,6 +79,7 @@ export function initializeChatSocket(socket) {
   })
 
   socket.on('chat:typing', async (request = {}, acknowledge = () => {}) => {
+    acknowledge = normalizeAcknowledge(acknowledge)
     const limit = allowSocketEvent(socket, 'chat:typing')
     const input = parseSocketEvent(typingEventSchema, request)
     if (!limit.allowed) {
@@ -97,6 +104,7 @@ export function initializeChatSocket(socket) {
   })
 
   socket.on('chat:read', async (request = {}, acknowledge = () => {}) => {
+    acknowledge = normalizeAcknowledge(acknowledge)
     const limit = allowSocketEvent(socket, 'chat:read')
     const input = parseSocketEvent(readEventSchema, request)
     if (!limit.allowed) {
@@ -116,6 +124,7 @@ export function initializeChatSocket(socket) {
   })
 
   socket.on('chat:presence:list', (request = {}, acknowledge = () => {}) => {
+    acknowledge = normalizeAcknowledge(acknowledge)
     const limit = allowSocketEvent(socket, 'chat:presence:list')
     const input = parseSocketEvent(presenceListEventSchema, request)
     if (!limit.allowed) {

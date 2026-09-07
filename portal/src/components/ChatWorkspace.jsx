@@ -8,7 +8,7 @@ import { KeyboardList } from './KeyboardList.jsx'
 import { LiveRegion } from './LiveRegion.jsx'
 import { VirtualList } from './VirtualList.jsx'
 
-export function ChatWorkspace({ router, conversationId = null, currentUserId }) {
+export function ChatWorkspace({ router, conversationId = null, currentUserId, notificationVersion }) {
   const conversations = signal([])
   const conversation = signal(null)
   const messages = signal([])
@@ -100,7 +100,10 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId }) 
   }
 
   function addMessage(message) {
-    if (message.conversationId !== conversationId) return
+    if (message.conversationId !== conversationId) {
+      loadConversations()
+      return
+    }
     if (!messages.value.some(item => item.id === message.id)) messages.value = [...messages.value, message]
     markLatestRead()
     loadConversations()
@@ -192,6 +195,14 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId }) 
     conversation.value = result.data.conversation
   }
 
+  const conversationList = computed(() => conversations.value.map(item => (
+    <a key={item.id} data-keyboard-item="true" class={item.id === conversationId ? 'chat-conversation-active' : ''} href={`/chat/${item.id}`} onClick={router.link(`/chat/${item.id}`)}>
+      <strong>{item.title}</strong>
+      <span>{item.lastMessage?.body || 'No messages yet'}</span>
+      {item.unreadCount > 0 && <b>{item.unreadCount}</b>}
+    </a>
+  )))
+
   const conversationView = computed(() => {
     if (!conversationId) return <Card><EmptyState title="Choose a conversation" description="Open one or create a new chat." /></Card>
     if (state.value === 'loading') return <Card><div role="status">Loading messages…</div></Card>
@@ -249,6 +260,7 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId }) 
   onMount(() => {
     loadConversations()
     loadConversation()
+    const stopNotificationRefresh = notificationVersion?.subscribe(() => loadConversations())
     const cleanups = [
       onRealtimeEvent('chat:message', addMessage),
       onRealtimeEvent('chat:message:updated', updateMessage),
@@ -278,6 +290,7 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId }) 
         if (conversationId) loadConversation()
       })
     ]
+    if (stopNotificationRefresh) cleanups.push(stopNotificationRefresh)
     return () => {
       clearTimeout(typingTimer)
       leaveRoom?.()
@@ -298,13 +311,7 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId }) 
           <Button type="submit" size="small" loading={busy}>Start chat</Button>
         </form>
         <KeyboardList label="Conversations" className="chat-conversation-list">
-          {conversations.value.map(item => (
-            <a key={item.id} data-keyboard-item="true" class={item.id === conversationId ? 'chat-conversation-active' : ''} href={`/chat/${item.id}`} onClick={router.link(`/chat/${item.id}`)}>
-              <strong>{item.title}</strong>
-              <span>{item.lastMessage?.body || 'No messages yet'}</span>
-              {item.unreadCount > 0 && <b>{item.unreadCount}</b>}
-            </a>
-          ))}
+          {conversationList}
         </KeyboardList>
       </Card>
       {conversationView}
