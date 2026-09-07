@@ -219,6 +219,7 @@ export function ChatWorkspace({ router, conversationId = null, currentUserId, no
           <div class="chat-thread-title-row">
             <Label size="large">{conversation.value.title}</Label>
             <Badge size="small" tone="neutral">{`${conversation.value.members.length} members`}</Badge>
+            {conversation.value.restrictedByOther && <Badge size="small" tone="error">Messaging restricted</Badge>}
           </div>
           <div class="chat-thread-actions">
             <Button variant="tertiary" size="small" onClick={toggleMute}>{conversation.value.muted ? 'Unmute' : 'Mute'}</Button>

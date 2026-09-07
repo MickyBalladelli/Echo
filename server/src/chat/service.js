@@ -150,7 +150,8 @@ export async function getConversation(userId, conversationId, transaction) {
   const blocks = other ? await sequelize.query(`
     SELECT
       EXISTS (SELECT 1 FROM user_blocks WHERE blocker_id = :userId AND blocked_id = :otherId) AS blocked_by_viewer,
-      EXISTS (SELECT 1 FROM user_blocks WHERE blocker_id = :otherId AND blocked_id = :userId) AS blocked_viewer
+      EXISTS (SELECT 1 FROM user_blocks WHERE blocker_id = :otherId AND blocked_id = :userId) AS blocked_viewer,
+      EXISTS (SELECT 1 FROM user_restrictions WHERE user_id = :otherId AND restricted_user_id = :userId) AS restricted_by_other
   `, {
     replacements: { userId, otherId: other.id },
     type: QueryTypes.SELECT,
@@ -171,6 +172,7 @@ export async function getConversation(userId, conversationId, transaction) {
     notificationsEnabled: Boolean(membership.notifications_enabled),
     blockedByViewer: Boolean(blocks[0]?.blocked_by_viewer),
     blockedViewer: Boolean(blocks[0]?.blocked_viewer),
+    restrictedByOther: Boolean(blocks[0]?.restricted_by_other),
     members: mappedMembers
   }
 }
