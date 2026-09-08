@@ -7,6 +7,7 @@ import { ReportButton } from '../components/ReportButton.jsx'
 import { LiveRegion } from '../components/LiveRegion.jsx'
 import { ChannelChat } from '../components/ChannelChat.jsx'
 import { UserProfilePopover } from '../components/UserProfilePopover.jsx'
+import { GlobalRoleBadge } from '../components/GlobalRoleBadge.jsx'
 
 export function ChannelDetailPage({ slug, router, currentUserId, currentUsername, onHeaderChange = () => {} }) {
   const channel = signal(null)
@@ -197,6 +198,7 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
                   <span>@{member.username}</span>
                 </UserProfilePopover>
               <Badge tone={member.role === 'owner' ? 'accent' : member.role === 'moderator' ? 'success' : 'neutral'}>{member.role === 'owner' ? 'Owner' : member.role === 'moderator' ? 'Moderator' : 'Member'}</Badge>
+              <GlobalRoleBadge role={member.globalRole} />
               {channel.value.isOwner && member.role !== 'owner' && (
                 <Button variant="tertiary" size="small" onClick={() => changeRole(member, member.role === 'moderator' ? 'member' : 'moderator')}>
                   {member.role === 'moderator' ? 'Make member' : 'Make moderator'}

@@ -5,6 +5,7 @@ import { UserAvatar } from './UserAvatar.jsx'
 import { MentionProfilePopover } from './MentionProfilePopover.jsx'
 import { UserProfilePopover } from './UserProfilePopover.jsx'
 import { ChannelReactionPicker } from './ChannelReactionPicker.jsx'
+import { GlobalRoleBadge } from './GlobalRoleBadge.jsx'
 
 function mentionsUsername(body, username) {
   if (!body || !username) return false
@@ -28,6 +29,8 @@ export function ChannelChatMessage({ message, currentUserId, currentUsername, co
   const own = message.sender.id === currentUserId
   const mentioned = mentionsUsername(message.body, currentUsername)
   const roleLabel = channelRole === 'owner' ? 'Owner' : channelRole === 'moderator' ? 'Moderator' : ''
+  const globalRoleLabel = message.sender.role === 'developer' ? 'Developer' : ''
+  const accessibilityRole = [globalRoleLabel, roleLabel].filter(Boolean).join(', ')
   let copyTimer
 
   async function copyMessage() {
@@ -131,7 +134,7 @@ export function ChannelChatMessage({ message, currentUserId, currentUsername, co
       role="group"
       tabIndex={0}
       data-keyboard-item="true"
-      aria-label={`Message from ${message.sender.displayName}${roleLabel ? `, ${roleLabel}` : ''}`}
+      aria-label={`Message from ${message.sender.displayName}${accessibilityRole ? `, ${accessibilityRole}` : ''}`}
     >
       {compact
         ? <span class="channel-chat-message-avatar-spacer" aria-hidden="true" />
@@ -143,6 +146,7 @@ export function ChannelChatMessage({ message, currentUserId, currentUsername, co
               <strong>{message.sender.displayName}</strong>
             </UserProfilePopover>
             <span class="channel-chat-message-badge" aria-hidden="true">{message.sender.chatMarker || '🎈'}</span>
+            <GlobalRoleBadge role={message.sender.role} />
             {roleLabel && <Badge tone={channelRole === 'owner' ? 'accent' : 'success'} size="small">{roleLabel}</Badge>}
             {mentioned && <span class="channel-chat-mention-label">Mentioned you</span>}
             <time datetime={message.createdAt}>{formatClockTime(message.createdAt)}</time>

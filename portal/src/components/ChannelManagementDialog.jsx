@@ -3,6 +3,7 @@ import { Badge, Button, Card, CheckBox, EmptyState, FormField, Label, Popup, Tex
 import { apiRequest } from '../lib/api.js'
 import { LiveRegion } from './LiveRegion.jsx'
 import { UserProfilePopover } from './UserProfilePopover.jsx'
+import { GlobalRoleBadge } from './GlobalRoleBadge.jsx'
 
 export function ChannelManagementDialog({ channel: initialChannel, onUpdated, router }) {
   const open = signal(false)
@@ -181,6 +182,7 @@ export function ChannelManagementDialog({ channel: initialChannel, onUpdated, ro
                   <span>{member.displayName} <small>@{member.username}</small></span>
                 </UserProfilePopover>
                 <Badge tone={member.role === 'owner' ? 'accent' : member.role === 'moderator' ? 'success' : 'neutral'}>{member.role === 'owner' ? 'Owner' : member.role === 'moderator' ? 'Moderator' : 'Member'}</Badge>
+                <GlobalRoleBadge role={member.globalRole} />
                 {member.role !== 'owner' && (
                   <Button variant="tertiary" size="small" loading={busy} onClick={() => changeRole(member, member.role === 'moderator' ? 'member' : 'moderator')}>
                     {member.role === 'moderator' ? 'Make member' : 'Make moderator'}

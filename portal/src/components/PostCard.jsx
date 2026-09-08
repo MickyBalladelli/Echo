@@ -23,6 +23,7 @@ import { Poll } from './Poll.jsx'
 import { UserAvatar } from './UserAvatar.jsx'
 import { ImmediateTooltip } from './ImmediateTooltip.jsx'
 import { UserProfilePopover } from './UserProfilePopover.jsx'
+import { GlobalRoleBadge } from './GlobalRoleBadge.jsx'
 
 function renderBody(value, router) {
   return value.split(/(#[a-z0-9_]+|@[a-z0-9_]+)/gi).map((part, index) => {
@@ -45,7 +46,7 @@ function renderRepostSource(source, router) {
       <div class="post-repost-source-heading">
         <span aria-hidden="true">↻</span>
         <UserProfilePopover username={source.author.username} previewUser={source.author} router={router} triggerClassName="post-repost-source-author">
-          {source.author.displayName} @{source.author.username}
+          {source.author.displayName} <GlobalRoleBadge role={source.author.role} /> @{source.author.username}
         </UserProfilePopover>
       </div>
       <p>{renderBody(source.body || 'Repost', router)}</p>
@@ -368,7 +369,10 @@ export function PostCard({
           wrapperClassName="post-author-popover-anchor"
           triggerClassName="post-author-copy post-author-link"
         >
-          <Label size="large">{post.author.displayName}</Label>
+          <span class="post-author-name-row">
+            <Label size="large">{post.author.displayName}</Label>
+            <GlobalRoleBadge role={post.author.role} />
+          </span>
           <UserBadges badges={post.author.badges} />
           <span>@{post.author.username}</span>
         </UserProfilePopover>

@@ -95,6 +95,7 @@ const postSelect = (extraSelect = '') => `
     p.channel_moderation_status,
     p.moderation_status,
     u.username,
+    u.global_role AS author_role,
     pr.display_name,
     COALESCE((
       SELECT jsonb_agg(post_badge.badge_type ORDER BY CASE post_badge.badge_type WHEN 'staff' THEN 0 ELSE 1 END)
@@ -147,6 +148,7 @@ const postSelect = (extraSelect = '') => `
         'author', jsonb_build_object(
           'id', source.author_id,
           'username', source_user.username,
+          'role', source_user.global_role,
           'displayName', COALESCE(source_profile.display_name, source_user.username),
           'avatarUrl', source_profile.avatar_url,
           'badges', COALESCE((
@@ -182,6 +184,7 @@ function mapPost(row) {
     author: {
       id: row.author_id,
       username: row.username,
+      role: row.author_role || 'user',
       displayName: row.display_name || row.username,
       avatarUrl: row.avatar_url || null,
       badges: asJsonArray(row.author_badges)

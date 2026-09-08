@@ -2514,6 +2514,24 @@ textarea {
   min-width: 0;
 }
 
+.post-author-name-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.post-author-name-row .prism-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.post-author-name-row .prism-badge {
+  flex: 0 0 auto;
+}
+
 .post-author-popover-anchor {
   display: block;
   flex: 1;
