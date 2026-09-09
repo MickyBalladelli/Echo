@@ -46,7 +46,7 @@ function renderRepostSource(source, router) {
       <div class="post-repost-source-heading">
         <span aria-hidden="true">↻</span>
         <UserProfilePopover username={source.author.username} previewUser={source.author} router={router} triggerClassName="post-repost-source-author">
-          {source.author.displayName} <GlobalRoleBadge role={source.author.role} /> @{source.author.username}
+          {source.author.displayName} <GlobalRoleBadge role={source.author.role} /> <UserBadges badges={source.author.badges} compact /> @{source.author.username}
         </UserProfilePopover>
       </div>
       <p>{renderBody(source.body || 'Repost', router)}</p>
@@ -372,8 +372,8 @@ export function PostCard({
           <span class="post-author-name-row">
             <Label size="large">{post.author.displayName}</Label>
             <GlobalRoleBadge role={post.author.role} />
+            <UserBadges badges={post.author.badges} compact />
           </span>
-          <UserBadges badges={post.author.badges} />
           <span>@{post.author.username}</span>
         </UserProfilePopover>
         <div class="post-card-meta">

@@ -1,4 +1,5 @@
 import { Badge } from '../lib/vendor.js'
+import { AccountBadge } from './AccountBadge.jsx'
 
 const badgeLabels = Object.freeze({
   verified: '✓ Verified',
@@ -21,13 +22,17 @@ const badgeTones = Object.freeze({
   staff: 'accent'
 })
 
+const accountBadgeTypes = new Set(['verified', 'government', 'business'])
+
 export function UserBadges({ badges = [], compact = false }) {
   if (!badges.length) return null
 
   return (
     <span class="user-badges" aria-label="Account badges">
       {badges.map(type => (
-        <Badge key={type} tone={badgeTones[type] || 'neutral'}>{compact ? compactBadgeLabels[type] || type : badgeLabels[type] || type}</Badge>
+        accountBadgeTypes.has(type)
+          ? <AccountBadge key={type} type={type} compact={compact} />
+          : <Badge key={type} tone={badgeTones[type] || 'neutral'}>{compact ? compactBadgeLabels[type] || type : badgeLabels[type] || type}</Badge>
       ))}
     </span>
   )

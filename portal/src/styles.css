@@ -2555,6 +2555,43 @@ textarea {
   align-items: center;
 }
 
+.account-badge {
+  display: inline-grid;
+  width: 1.12rem;
+  height: 1.12rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  font-size: .76rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.account-badge-compact {
+  width: .98rem;
+  height: .98rem;
+  font-size: .66rem;
+}
+
+.account-badge-verified {
+  background: #1d9bf0;
+}
+
+.account-badge-government {
+  background: #6b7280;
+}
+
+.account-badge-business {
+  color: #3b2a00;
+  background: #f5b700;
+}
+
+.post-author-name-row .user-badges {
+  flex: 0 0 auto;
+}
+
 .post-author-link {
   color: inherit;
   text-decoration: none;
