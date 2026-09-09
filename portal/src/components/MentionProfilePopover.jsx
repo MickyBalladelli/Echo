@@ -3,6 +3,7 @@ import { Badge } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { UserAvatar } from './UserAvatar.jsx'
 import { UserBadges } from './UserBadges.jsx'
+import { FollowButton } from './FollowButton.jsx'
 
 function displayName(user, username) {
   return user?.profile?.displayName || user?.displayName || username
@@ -31,7 +32,7 @@ export function MentionProfilePopover({ username, previewUser = null, router, ch
   async function show() {
     cancelClose()
     open.value = true
-    if (profile.value || loading.value) return
+    if ((profile.value && typeof profile.value.followedByViewer === 'boolean') || loading.value) return
 
     loading.value = true
     error.value = ''
@@ -50,6 +51,15 @@ export function MentionProfilePopover({ username, previewUser = null, router, ch
   const profileHref = returnPath
     ? `${profilePath}?from=${encodeURIComponent(returnPath)}`
     : profilePath
+  function handleFollowChanged(follow) {
+    if (!profile.value) return
+    profile.value = {
+      ...profile.value,
+      followedByViewer: follow.following,
+      followerCount: follow.followerCount ?? profile.value.followerCount
+    }
+  }
+
   const popover = computed(() => {
     if (!open.value) return null
 
@@ -73,6 +83,13 @@ export function MentionProfilePopover({ username, previewUser = null, router, ch
             <UserBadges badges={profile.value.profile?.badges || []} />
             {previewUser?.role === 'moderator' && <Badge tone="success" size="small">Moderator</Badge>}
             {previewUser?.role === 'owner' && <Badge tone="accent" size="small">Owner</Badge>}
+            {!profile.value.isSelf && typeof profile.value.followedByViewer === 'boolean' && <FollowButton
+              userId={profile.value.id}
+              following={profile.value.followedByViewer}
+              followerCount={profile.value.followerCount}
+              compact={false}
+              onChanged={handleFollowChanged}
+            />}
             <p>{bio(profile.value) || 'No bio yet.'}</p>
             <a class="channel-chat-profile-link" href={profileHref} onClick={router?.link(profileHref)}>View profile</a>
           </>

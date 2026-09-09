@@ -3,6 +3,7 @@ import { Badge } from '../lib/vendor.js'
 import { apiRequest } from '../lib/api.js'
 import { UserAvatar } from './UserAvatar.jsx'
 import { UserBadges } from './UserBadges.jsx'
+import { FollowButton } from './FollowButton.jsx'
 
 let profilePopoverId = 0
 
@@ -62,7 +63,7 @@ export function UserProfilePopover({ username, previewUser = null, router, child
         positionPopup(target, popup)
       })
     }
-    if (profile.value || loading.value) return
+    if ((profile.value && typeof profile.value.followedByViewer === 'boolean') || loading.value) return
 
     loading.value = true
     error.value = ''
@@ -95,6 +96,15 @@ export function UserProfilePopover({ username, previewUser = null, router, child
     goToProfile(event)
   }
 
+  function handleFollowChanged(follow) {
+    if (!profile.value) return
+    profile.value = {
+      ...profile.value,
+      followedByViewer: follow.following,
+      followerCount: follow.followerCount ?? profile.value.followerCount
+    }
+  }
+
   const popover = computed(() => {
     if (!open.value) return null
 
@@ -120,6 +130,13 @@ export function UserProfilePopover({ username, previewUser = null, router, child
             <UserBadges badges={profile.value.profile?.badges || profile.value.badges || []} />
             {previewUser?.role === 'moderator' && <Badge tone="success" size="small">Moderator</Badge>}
             {previewUser?.role === 'owner' && <Badge tone="accent" size="small">Owner</Badge>}
+            {!profile.value.isSelf && typeof profile.value.followedByViewer === 'boolean' && <FollowButton
+              userId={profile.value.id}
+              following={profile.value.followedByViewer}
+              followerCount={profile.value.followerCount}
+              compact={false}
+              onChanged={handleFollowChanged}
+            />}
             <p>{bio(profile.value) || 'No bio yet.'}</p>
             {embedded
               ? <span class="user-profile-popover-link" role="link" tabIndex={0} onClick={goToProfile} onKeyDown={handleTriggerKeyDown}>View profile</span>
