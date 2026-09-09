@@ -82,10 +82,6 @@ export const pollSchema = z.object({
   question: z.string().trim().min(1).max(240),
   options: z.array(z.string().trim().min(1).max(120)).min(2).max(4),
   expiresAt: z.string().datetime({ offset: true }).optional().nullable()
-}).superRefine((value, context) => {
-  if (new Set(value.options.map(option => option.toLowerCase())).size !== value.options.length) {
-    context.addIssue({ code: 'custom', path: ['options'], message: 'Poll options must be unique' })
-  }
 })
 
 export { hashtag, postInput }

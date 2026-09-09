@@ -47,7 +47,9 @@ export function PostComposer({ onCreated, channelId = null }) {
   const mentionLoading = signal(false)
   const scheduledAt = signal('')
   const pollQuestion = signal('')
-  const pollOptions = signal(['', ''])
+  const pollOptionValues = [signal(''), signal(''), signal(''), signal('')]
+  const pollOptionCount = signal(2)
+  const pollOptions = computed(() => pollOptionValues.slice(0, pollOptionCount.value))
   const pollEnabled = signal(false)
   const richPickerOpen = signal(false)
   const richPickerPosition = signal(null)
@@ -180,7 +182,8 @@ export function PostComposer({ onCreated, channelId = null }) {
     imageName.value = ''
     scheduledAt.value = ''
     pollQuestion.value = ''
-    pollOptions.value = ['', '']
+    pollOptionValues.forEach(option => option.value = '')
+    pollOptionCount.value = 2
     pollEnabled.value = false
     closeRichPicker()
     clearOfflineDraft(offlineScope())
@@ -251,7 +254,7 @@ export function PostComposer({ onCreated, channelId = null }) {
     busy.value = true
 
     try {
-      const cleanOptions = pollOptions.value.map(option => option.trim()).filter(Boolean)
+      const cleanOptions = pollOptions.value.map(option => option.value.trim()).filter(Boolean)
       if (pollEnabled.value && (!pollQuestion.value.trim() || cleanOptions.length < 2)) {
         error.value = 'Add a poll question and at least two options.'
         busy.value = false
@@ -294,7 +297,8 @@ export function PostComposer({ onCreated, channelId = null }) {
       imageName.value = ''
       scheduledAt.value = ''
       pollQuestion.value = ''
-      pollOptions.value = ['', '']
+      pollOptionValues.forEach(option => option.value = '')
+      pollOptionCount.value = 2
       pollEnabled.value = false
       closeRichPicker()
       draftStatus.value = 'saved'
@@ -359,6 +363,28 @@ export function PostComposer({ onCreated, channelId = null }) {
     saved: 'Draft saved',
     error: 'Draft unavailable'
   })[draftStatus.value] || draftStatus.value)
+
+  const pollComposer = computed(() => {
+    if (!pollEnabled.value) return null
+
+    return (
+      <div class="post-poll-composer">
+        <FormField id="poll-question" label="Poll question">
+          <TextField id="poll-question" value={pollQuestion} maxLength={240} placeholder="Ask a question" ariaLabel="Poll question" />
+        </FormField>
+        {pollOptions.value.map((option, index) => (
+          <TextField
+            key={index}
+            value={option}
+            maxLength={120}
+            placeholder={`Option ${index + 1}`}
+            ariaLabel={`Poll option ${index + 1}`}
+          />
+        ))}
+        {pollOptions.value.length < 4 && <Button class="post-poll-add-option" type="button" variant="tertiary" size="small" onClick={() => pollOptionCount.value += 1}>Add option</Button>}
+      </div>
+    )
+  })
 
   return (
     <Card class="post-composer">
@@ -442,22 +468,7 @@ export function PostComposer({ onCreated, channelId = null }) {
           </FormField>
           {!channelId && <CheckBox checked={pollEnabled} class="post-poll-toggle">Add poll</CheckBox>}
         </div>
-        {pollEnabled.value && <div class="post-poll-composer">
-          <FormField id="poll-question" label="Poll question">
-            <TextField id="poll-question" value={pollQuestion} maxLength={240} placeholder="Ask a question" ariaLabel="Poll question" />
-          </FormField>
-          {pollOptions.value.map((option, index) => (
-            <TextField
-              key={index}
-              value={option}
-              maxLength={120}
-              placeholder={`Option ${index + 1}`}
-              ariaLabel={`Poll option ${index + 1}`}
-              onInput={event => pollOptions.value = pollOptions.value.map((item, itemIndex) => itemIndex === index ? event.target.value : item)}
-            />
-          ))}
-          {pollOptions.value.length < 4 && <Button type="button" variant="tertiary" size="small" onClick={() => pollOptions.value = [...pollOptions.value, '']}>Add option</Button>}
-        </div>}
+        {pollComposer}
         {imageBusy.value && <div role="status">Preparing image…</div>}
         {imageUrl.value && (
           <div class="post-image-preview">

@@ -40,6 +40,7 @@ export function Poll({ postId, poll }) {
               key={option.id}
               type="button"
               variant={selected ? 'secondary' : 'tertiary'}
+              size="small"
               class="post-poll-option"
               loading={busy}
               pressed={selected}
