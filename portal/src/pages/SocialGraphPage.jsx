@@ -7,6 +7,7 @@ import { UserProfilePopover } from '../components/UserProfilePopover.jsx'
 
 const graphLimit = 12
 const svgNamespace = 'http://www.w3.org/2000/svg'
+const graphSidePosition = Object.freeze({ followers: 12, following: 88 })
 
 function displayName(user) {
   return user?.profile?.displayName || user?.username || 'User'
@@ -25,8 +26,8 @@ function nodeY(index, count) {
 
 function edgePath(side, y) {
   return side === 'followers'
-    ? `M 18 ${y} C 29 ${y}, 39 50, 50 50`
-    : `M 50 50 C 61 50, 71 ${y}, 82 ${y}`
+    ? `M ${graphSidePosition.followers} ${y} C 27 ${y}, 39 50, 50 50`
+    : `M 50 50 C 61 50, 73 ${y}, ${graphSidePosition.following} ${y}`
 }
 
 function createSvgElement(tagName, attributes = {}) {
@@ -40,7 +41,7 @@ function createSvgElement(tagName, attributes = {}) {
 }
 
 function GraphPersonNode({ user, side, index, count, router, onFollowChanged }) {
-  const position = `${side === 'followers' ? 18 : 82}%`
+  const position = `${graphSidePosition[side]}%`
   const top = `${nodeY(index, count)}%`
   return (
     <UserProfilePopover
@@ -66,7 +67,7 @@ function GraphAggregateNode({ side, count, index, total }) {
   return (
     <div
       class={`social-graph-aggregate social-graph-aggregate-${side}`}
-      style={`left: ${side === 'followers' ? 18 : 82}%; top: ${nodeY(index, total)}%;`}
+      style={`left: ${graphSidePosition[side]}%; top: ${nodeY(index, total)}%;`}
       role="status"
       aria-label={`${count} more ${side}`}
     >

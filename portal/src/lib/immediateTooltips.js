@@ -88,7 +88,7 @@ export function installImmediateTitleTooltips() {
 
   const handlePointerOut = event => {
     const anchor = titleTarget(event.target)
-    if (anchor !== activeAnchor) return
+    if (!anchor || anchor !== activeAnchor) return
     if (event.relatedTarget instanceof Node && anchor.contains(event.relatedTarget)) return
     hide()
   }
@@ -101,7 +101,7 @@ export function installImmediateTitleTooltips() {
 
   const handleFocusOut = event => {
     const anchor = titleTarget(event.target)
-    if (anchor !== activeAnchor) return
+    if (!anchor || anchor !== activeAnchor) return
     if (event.relatedTarget instanceof Node && anchor.contains(event.relatedTarget)) return
     hide()
   }

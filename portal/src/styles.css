@@ -1555,13 +1555,13 @@ textarea {
 .social-graph-column-title-followers,
 .social-graph-person-followers,
 .social-graph-aggregate-followers {
-  left: 18%;
+  left: 12%;
 }
 
 .social-graph-column-title-following,
 .social-graph-person-following,
 .social-graph-aggregate-following {
-  left: 82%;
+  left: 88%;
 }
 
 .social-graph-person,
@@ -2256,6 +2256,12 @@ textarea {
   position: relative;
   display: inline-block;
   min-width: 0;
+}
+
+.user-profile-popover-anchor.social-graph-person-profile,
+.user-profile-popover-anchor.social-graph-root-profile {
+  display: block;
+  position: absolute;
 }
 
 .user-profile-trigger {
