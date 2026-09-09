@@ -358,7 +358,7 @@ export function PostCard({
     : null)
 
   return (
-    <div class="post-card-keyboard-item" role="group" tabIndex={0} data-keyboard-item="true" aria-label={`Post by ${post.author.displayName}`}>
+    <div class="post-card-keyboard-item" role="group" tabIndex={0} data-keyboard-item="true" data-post-id={post.id} aria-label={`Post by ${post.author.displayName}`}>
       <Card class="post-card">
       <div class="post-card-header">
         <UserAvatar user={post.author} size="medium" className="post-author-avatar" />

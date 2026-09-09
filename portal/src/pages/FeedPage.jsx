@@ -18,6 +18,7 @@ export function FeedPage({ router, currentUserId, feed = 'home', createdPost }) 
   const state = signal('loading')
   const error = signal('')
   const loadingMore = signal(false)
+  const locallyAddedPostIds = new Set()
   let lastCreatedPostId = ''
 
   async function loadFeed({ append = false } = {}) {
@@ -34,12 +35,23 @@ export function FeedPage({ router, currentUserId, feed = 'home', createdPost }) 
       if (append && nextCursor.value) query.set('cursor', nextCursor.value)
       const result = await apiRequest(`/api/posts?${query.toString()}`)
       const received = sortByCreatedAt(result.data || [])
-      posts.value = append ? sortByCreatedAt([...posts.value, ...received]) : received
+      if (append) {
+        posts.value = sortByCreatedAt([...posts.value, ...received])
+      } else {
+        const merged = new Map(received.map(post => [post.id, post]))
+        posts.value
+          .filter(post => locallyAddedPostIds.has(post.id))
+          .forEach(post => merged.set(post.id, post))
+        posts.value = sortByCreatedAt([...merged.values()])
+      }
       nextCursor.value = result.meta?.nextCursor || null
       state.value = 'ready'
     } catch (requestError) {
       if (append) {
         error.value = getRequestMessage(requestError)
+      } else if (posts.value.length) {
+        error.value = getRequestMessage(requestError)
+        state.value = 'ready'
       } else {
         state.value = 'error'
         error.value = getRequestMessage(requestError)
@@ -49,12 +61,22 @@ export function FeedPage({ router, currentUserId, feed = 'home', createdPost }) 
     }
   }
 
-  function addPost(post) {
+  function addPost(post, { scrollToPost = false } = {}) {
+    if (!post?.id) return
+    locallyAddedPostIds.add(post.id)
     posts.value = sortByCreatedAt([post, ...posts.value.filter(existing => existing.id !== post.id)])
     state.value = 'ready'
+    if (scrollToPost) {
+      requestAnimationFrame(() => {
+        const target = [...document.querySelectorAll('[data-post-id]')]
+          .find(element => element.dataset.postId === post.id)
+        target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      })
+    }
   }
 
   function removePost(postId) {
+    locallyAddedPostIds.delete(postId)
     posts.value = posts.value.filter(post => post.id !== postId)
   }
 
@@ -118,7 +140,7 @@ export function FeedPage({ router, currentUserId, feed = 'home', createdPost }) 
         const post = createdPost.value
         if (!post || post.id === lastCreatedPostId) return
         lastCreatedPostId = post.id
-        addPost(post)
+        addPost(post, { scrollToPost: true })
       })
       : null
 
