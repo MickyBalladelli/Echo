@@ -13,6 +13,7 @@ export function AccountBadge({ type, compact = false }) {
       class={`account-badge account-badge-${type} ${compact ? 'account-badge-compact' : ''}`}
       role="img"
       aria-label={label}
+      title={label}
     >✓</span>
   )
 }
