@@ -30,7 +30,9 @@ export function ChannelChatMessage({ message, currentUserId, currentUsername, co
   const own = message.sender.id === currentUserId
   const mentioned = mentionsUsername(message.body, currentUsername)
   const roleLabel = channelRole === 'owner' ? 'Owner' : channelRole === 'moderator' ? 'Moderator' : ''
-  const globalRoleLabel = message.sender.role === 'developer' ? 'Developer' : ''
+  const globalRoleLabel = ['moderator', 'admin', 'developer'].includes(message.sender.role)
+    ? message.sender.role[0].toUpperCase() + message.sender.role.slice(1)
+    : ''
   const accessibilityRole = [globalRoleLabel, roleLabel].filter(Boolean).join(', ')
   let copyTimer
 
