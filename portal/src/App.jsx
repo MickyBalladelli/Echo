@@ -78,6 +78,17 @@ export function App() {
     socket.io.on('reconnect_attempt', () => {
       socketStatus.value = 'reconnecting'
     })
+    socket.on('account:access-updated', envelope => {
+      if (!acceptRealtimeEvent(envelope)) return
+      const access = envelope?.data
+      const user = currentUser.peek()
+      if (!user || String(access?.userId) !== String(user.id)) return
+
+      currentUser.value = {
+        ...user,
+        role: access.status === 'active' ? access.role : 'user'
+      }
+    })
     socket.on('notification:new', envelope => {
       if (!acceptRealtimeEvent(envelope)) return
       unreadNotifications.value = envelope.data.unreadCount

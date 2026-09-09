@@ -62,15 +62,9 @@ function renderTreeItem(item) {
   `
 }
 
-export function ShellNavigation({ router, user, unreadNotifications, notificationVersion }) {
+export function ShellNavigation({ router, userState, unreadNotifications, notificationVersion }) {
   const channels = signal([])
   const channelState = signal('loading')
-  const visibleItems = ['moderator', 'admin', 'developer'].includes(user.role)
-    ? [...navItems, { path: '/moderation', label: 'Moderation', mark: '⚑' }]
-    : navItems
-  const adminItems = ['admin', 'developer'].includes(user.role)
-    ? [...visibleItems, { path: '/admin', label: 'Admin', mark: '◆' }]
-    : visibleItems
 
   onMount(() => {
     let active = true
@@ -118,6 +112,13 @@ export function ShellNavigation({ router, user, unreadNotifications, notificatio
   })
 
   const treeItems = computed(() => {
+    const role = userState.value.role
+    const visibleItems = ['moderator', 'admin', 'developer'].includes(role)
+      ? [...navItems, { path: '/moderation', label: 'Moderation', mark: '⚑' }]
+      : navItems
+    const adminItems = ['admin', 'developer'].includes(role)
+      ? [...visibleItems, { path: '/admin', label: 'Admin', mark: '◆' }]
+      : visibleItems
     const unreadChannelCount = channels.value.reduce((total, channel) => total + channel.unreadNotificationCount, 0)
     const channelChildren = channels.value.length > 0
       ? channels.value.map(channel => ({

@@ -134,7 +134,7 @@ export function AppShell({
     },
     { path: '/preferences', title: 'Preferences', view: () => PreferencesPage({ user: userState.value, onDeleted: onLogout }) },
     { path: '/moderation', title: 'Moderation', view: () => ModerationPage({ user: userState.value, router }) },
-    { path: '/admin', title: 'Admin', view: () => AdminPage({ user: userState.value }) },
+    { path: '/admin', title: 'Admin', view: () => AdminPage({ user: userState.value, router }) },
     {
       path: '/users/:username',
       title: 'Profile',
@@ -308,7 +308,18 @@ export function AppShell({
   })
   const user = userState.value
 
-  onMount(() => router.start())
+  onMount(() => {
+    const stopAccessUpdates = userState.subscribe((nextUser, previousUser) => {
+      if (!nextUser || !previousUser || nextUser.id !== previousUser.id || nextUser.role === previousUser.role) return
+      if (router.path.value === '/admin' && !['admin', 'developer'].includes(nextUser.role)) {
+        router.navigate('/').catch(() => {})
+      }
+    })
+
+    router.start()
+
+    return () => stopAccessUpdates()
+  })
 
   return (
     <div class="echo-shell">
@@ -322,7 +333,7 @@ export function AppShell({
           children: globalHeader,
           trailing: headerTrailing
         })}
-        navigator={<ShellNavigation router={router} user={user} unreadNotifications={unreadNotifications} notificationVersion={notificationVersion} />}
+        navigator={<ShellNavigation router={router} userState={userState} unreadNotifications={unreadNotifications} notificationVersion={notificationVersion} />}
       >
         <div class="app-content-grid">
           <main id="main-content" class="app-main" tabindex="-1">

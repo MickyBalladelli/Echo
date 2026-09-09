@@ -3,6 +3,7 @@ import { asJsonArray } from '../db/dialect.js'
 import { sequelize } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
 import { requireStaff } from '../moderation/service.js'
+import { publishRealtimeEvent } from '../realtime/events.js'
 
 export async function requireAdmin(userId) {
   const role = await requireStaff(userId)
@@ -23,6 +24,14 @@ function mapAdminUser(row) {
     createdAt: row.created_at,
     badges: asJsonArray(row.badges)
   }
+}
+
+function publishAccountAccessUpdate(user) {
+  publishRealtimeEvent(`user:${user.id}`, 'account:access-updated', {
+    userId: user.id,
+    role: user.role,
+    status: user.status
+  })
 }
 
 async function findAdminUser(userId) {
@@ -93,7 +102,9 @@ export async function updateAdminUserRole(adminId, userId, role) {
     WHERE id = :userId AND deleted_at IS NULL
   `, { replacements: { role, userId } })
 
-  return mapAdminUser(await findAdminUser(userId))
+  const updatedUser = mapAdminUser(await findAdminUser(userId))
+  publishAccountAccessUpdate(updatedUser)
+  return updatedUser
 }
 
 export async function updateAdminUserStatus(adminId, userId, status) {
@@ -112,7 +123,9 @@ export async function updateAdminUserStatus(adminId, userId, status) {
     WHERE id = :userId AND deleted_at IS NULL
   `, { replacements: { status, userId } })
 
-  return mapAdminUser(await findAdminUser(userId))
+  const updatedUser = mapAdminUser(await findAdminUser(userId))
+  publishAccountAccessUpdate(updatedUser)
+  return updatedUser
 }
 
 export async function updateAdminUserBadge(adminId, userId, badge, active) {
