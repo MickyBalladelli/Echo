@@ -16,6 +16,12 @@ const statusOptions = [
   { value: 'suspended', label: 'Suspended' }
 ]
 
+const badgeOptions = [
+  { value: 'verified', label: 'Verified' },
+  { value: 'government', label: 'Government' },
+  { value: 'business', label: 'Business' }
+]
+
 function roleTone(role) {
   if (role === 'admin' || role === 'developer') return 'accent'
   if (role === 'moderator') return 'success'
@@ -92,6 +98,22 @@ export function AdminPage({ user }) {
     }
   }
 
+  async function updateBadge(target, badge, active) {
+    busy.value = `badge:${target.id}:${badge}`
+    error.value = ''
+    try {
+      const result = await apiRequest(`/api/admin/users/${encodeURIComponent(target.id)}/badges/${badge}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ active })
+      })
+      users.value = users.value.map(item => item.id === target.id ? result.data.user : item)
+    } catch (requestError) {
+      error.value = requestError.message || 'Could not update account badge'
+    } finally {
+      busy.value = ''
+    }
+  }
+
   const content = computed(() => {
     if (!isAdmin) {
       return <Card><EmptyState status="error" title="Admin access required" description="Only admins and developers can manage Echo accounts." /></Card>
@@ -127,7 +149,7 @@ export function AdminPage({ user }) {
           <div class="admin-section-heading">
             <Label size="small" tone="accent">USERS</Label>
             <h2>Account access</h2>
-            <p>Change a user role or suspend an account. Developer access can only be removed by another developer.</p>
+            <p>Change roles, account access, and badges. Only admins and developers can grant badges.</p>
           </div>
           {!users.value.length
             ? <EmptyState title="No users found" description="Echo has no accounts yet." />
@@ -136,6 +158,7 @@ export function AdminPage({ user }) {
               const developerLocked = target.role === 'developer' && !isDeveloper
               const roleBusy = busy.value === `role:${target.id}`
               const statusBusy = busy.value === `status:${target.id}`
+              const badges = Array.isArray(target.badges) ? target.badges : []
               const roleValue = fieldValue(roleValues, target, 'role')
               const statusValue = fieldValue(statusValues, target, 'status')
               return (
@@ -168,6 +191,25 @@ export function AdminPage({ user }) {
                         disabled={isSelf || developerLocked || roleBusy || statusBusy}
                         onChange={() => updateStatus(target, statusValue.value)}
                       />
+                    </div>
+                    <div class="admin-user-control admin-user-badges-control">
+                      <span>Badges</span>
+                      <div class="admin-user-badges">
+                        {badgeOptions.map(badge => {
+                          const active = badges.includes(badge.value)
+                          const badgeBusy = busy.value === `badge:${target.id}:${badge.value}`
+                          return <Button
+                            key={badge.value}
+                            variant={active ? 'secondary' : 'tertiary'}
+                            size="small"
+                            pressed={active}
+                            loading={badgeBusy}
+                            disabled={badgeBusy || roleBusy || statusBusy}
+                            ariaLabel={`${active ? 'Remove' : 'Give'} ${badge.label} badge to @${target.username}`}
+                            onClick={() => updateBadge(target, badge.value, !active)}
+                          >{badge.label}</Button>
+                        })}
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -903,6 +903,16 @@ textarea {
   gap: 10px;
 }
 
+.admin-user-badges-control {
+  grid-column: 1 / -1;
+}
+
+.admin-user-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .admin-page-error {
   min-height: 18px;
   color: var(--prism-color-accent-bright);

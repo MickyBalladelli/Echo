@@ -6,6 +6,7 @@ import { MentionProfilePopover } from './MentionProfilePopover.jsx'
 import { UserProfilePopover } from './UserProfilePopover.jsx'
 import { ChannelReactionPicker } from './ChannelReactionPicker.jsx'
 import { GlobalRoleBadge } from './GlobalRoleBadge.jsx'
+import { UserBadges } from './UserBadges.jsx'
 
 function mentionsUsername(body, username) {
   if (!body || !username) return false
@@ -146,6 +147,7 @@ export function ChannelChatMessage({ message, currentUserId, currentUsername, co
               <strong>{message.sender.displayName}</strong>
             </UserProfilePopover>
             <span class="channel-chat-message-badge" aria-hidden="true">{message.sender.chatMarker || '🎈'}</span>
+            <UserBadges badges={message.sender.badges} compact />
             <GlobalRoleBadge role={message.sender.role} />
             {roleLabel && <Badge tone={channelRole === 'owner' ? 'accent' : 'success'} size="small">{roleLabel}</Badge>}
             {mentioned && <span class="channel-chat-mention-label">Mentioned you</span>}

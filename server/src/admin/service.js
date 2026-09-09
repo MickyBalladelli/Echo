@@ -1,4 +1,5 @@
 import { QueryTypes } from 'sequelize'
+import { asJsonArray } from '../db/dialect.js'
 import { sequelize } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
 import { requireStaff } from '../moderation/service.js'
@@ -19,14 +20,20 @@ function mapAdminUser(row) {
     displayName: row.display_name || row.username,
     role: row.global_role || 'user',
     status: row.status,
-    createdAt: row.created_at
+    createdAt: row.created_at,
+    badges: asJsonArray(row.badges)
   }
 }
 
 async function findAdminUser(userId) {
   const rows = await sequelize.query(`
     SELECT u.id, u.username, u.email, u.status, u.global_role, u.created_at,
-      profile.display_name
+      profile.display_name,
+      COALESCE((
+        SELECT jsonb_agg(badge.badge_type ORDER BY CASE badge.badge_type WHEN 'verified' THEN 0 WHEN 'government' THEN 1 WHEN 'business' THEN 2 WHEN 'staff' THEN 3 ELSE 4 END)
+        FROM user_badges badge
+        WHERE badge.user_id = u.id AND badge.revoked_at IS NULL
+      ), '[]'::JSONB) AS badges
     FROM users u
     LEFT JOIN profiles profile ON profile.user_id = u.id
     WHERE u.id = :userId AND u.deleted_at IS NULL
@@ -44,7 +51,12 @@ export async function listAdminUsers(adminId) {
   await requireAdmin(adminId)
   const rows = await sequelize.query(`
     SELECT u.id, u.username, u.email, u.status, u.global_role, u.created_at,
-      profile.display_name
+      profile.display_name,
+      COALESCE((
+        SELECT jsonb_agg(badge.badge_type ORDER BY CASE badge.badge_type WHEN 'verified' THEN 0 WHEN 'government' THEN 1 WHEN 'business' THEN 2 WHEN 'staff' THEN 3 ELSE 4 END)
+        FROM user_badges badge
+        WHERE badge.user_id = u.id AND badge.revoked_at IS NULL
+      ), '[]'::JSONB) AS badges
     FROM users u
     LEFT JOIN profiles profile ON profile.user_id = u.id
     WHERE u.deleted_at IS NULL
@@ -99,6 +111,28 @@ export async function updateAdminUserStatus(adminId, userId, status) {
     SET status = :status, updated_at = CURRENT_TIMESTAMP
     WHERE id = :userId AND deleted_at IS NULL
   `, { replacements: { status, userId } })
+
+  return mapAdminUser(await findAdminUser(userId))
+}
+
+export async function updateAdminUserBadge(adminId, userId, badge, active) {
+  await requireAdmin(adminId)
+  await findAdminUser(userId)
+
+  if (active) {
+    await sequelize.query(`
+      INSERT INTO user_badges (user_id, badge_type, granted_by, revoked_at)
+      VALUES (:userId, :badge, :adminId, NULL)
+      ON CONFLICT (user_id, badge_type) DO UPDATE
+      SET granted_by = :adminId, revoked_at = NULL
+    `, { replacements: { userId, badge, adminId } })
+  } else {
+    await sequelize.query(`
+      UPDATE user_badges
+      SET granted_by = :adminId, revoked_at = CURRENT_TIMESTAMP
+      WHERE user_id = :userId AND badge_type = :badge AND revoked_at IS NULL
+    `, { replacements: { userId, badge, adminId } })
+  }
 
   return mapAdminUser(await findAdminUser(userId))
 }

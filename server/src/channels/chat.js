@@ -1,4 +1,5 @@
 import { QueryTypes } from 'sequelize'
+import { asJsonArray } from '../db/dialect.js'
 import { sequelize, withTransaction } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
 import { encodeCursor } from '../http/pagination.js'
@@ -76,7 +77,8 @@ function mapMessage(row, currentUserId) {
       role: row.global_role || 'user',
       displayName: row.display_name || row.username,
       avatarUrl: row.avatar_url || null,
-      chatMarker: row.chat_marker || '🎈'
+      chatMarker: row.chat_marker || '🎈',
+      badges: asJsonArray(row.sender_badges)
     }
   }
 }
@@ -121,7 +123,12 @@ export async function listChannelChatMessages(userId, channelId, { cursor, limit
     replacements.cursorId = cursor.id
   }
   const rows = await sequelize.query(`
-    SELECT message.*, sender.username, sender.global_role, profile.display_name, profile.avatar_url, profile.chat_marker
+    SELECT message.*, sender.username, sender.global_role, profile.display_name, profile.avatar_url, profile.chat_marker,
+      COALESCE((
+        SELECT jsonb_agg(badge.badge_type ORDER BY CASE badge.badge_type WHEN 'verified' THEN 0 WHEN 'government' THEN 1 WHEN 'business' THEN 2 WHEN 'staff' THEN 3 ELSE 4 END)
+        FROM user_badges badge
+        WHERE badge.user_id = sender.id AND badge.revoked_at IS NULL
+      ), '[]'::JSONB) AS sender_badges
     FROM channel_chat_messages message
     JOIN users sender ON sender.id = message.sender_id AND sender.deleted_at IS NULL
     LEFT JOIN profiles profile ON profile.user_id = sender.id
@@ -169,7 +176,12 @@ export async function sendChannelChatMessage(userId, channelId, body, attachment
       transaction
     })
     const result = await sequelize.query(`
-      SELECT message.*, sender.username, sender.global_role, profile.display_name, profile.avatar_url, profile.chat_marker
+      SELECT message.*, sender.username, sender.global_role, profile.display_name, profile.avatar_url, profile.chat_marker,
+        COALESCE((
+          SELECT jsonb_agg(badge.badge_type ORDER BY CASE badge.badge_type WHEN 'verified' THEN 0 WHEN 'government' THEN 1 WHEN 'business' THEN 2 WHEN 'staff' THEN 3 ELSE 4 END)
+          FROM user_badges badge
+          WHERE badge.user_id = sender.id AND badge.revoked_at IS NULL
+        ), '[]'::JSONB) AS sender_badges
       FROM channel_chat_messages message
       JOIN users sender ON sender.id = message.sender_id
       LEFT JOIN profiles profile ON profile.user_id = sender.id
@@ -233,7 +245,12 @@ export async function toggleChannelChatMessageReaction(userId, channelId, messag
     })
 
     const updatedRows = await sequelize.query(`
-      SELECT message.*, sender.username, sender.global_role, profile.display_name, profile.avatar_url, profile.chat_marker
+      SELECT message.*, sender.username, sender.global_role, profile.display_name, profile.avatar_url, profile.chat_marker,
+        COALESCE((
+          SELECT jsonb_agg(badge.badge_type ORDER BY CASE badge.badge_type WHEN 'verified' THEN 0 WHEN 'government' THEN 1 WHEN 'business' THEN 2 WHEN 'staff' THEN 3 ELSE 4 END)
+          FROM user_badges badge
+          WHERE badge.user_id = sender.id AND badge.revoked_at IS NULL
+        ), '[]'::JSONB) AS sender_badges
       FROM channel_chat_messages message
       JOIN users sender ON sender.id = message.sender_id
       LEFT JOIN profiles profile ON profile.user_id = sender.id
