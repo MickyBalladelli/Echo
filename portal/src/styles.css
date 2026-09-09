@@ -1248,6 +1248,10 @@ textarea {
   font-size: 24px;
 }
 
+.post-rich-content-toggle .prism-button-icon {
+  font-size: 32px;
+}
+
 .post-composer-error,
 .post-card-error,
 .post-feed-error {
