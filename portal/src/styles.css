@@ -4403,6 +4403,10 @@ img {
   min-width: 0;
 }
 
+.post-poll-hide-results {
+  margin-top: .15rem;
+}
+
 .post-poll-add-option.prism-button {
   justify-self: start;
   width: fit-content;

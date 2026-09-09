@@ -5,13 +5,19 @@ import { HttpError } from '../http/errors.js'
 
 async function pollForPost(postId, viewerId = null, transaction) {
   const rows = await sequelize.query(`
-    SELECT poll.id, poll.question, poll.expires_at,
-      COUNT(vote.user_id)::INTEGER AS total_votes,
+    SELECT poll.id, poll.question, poll.expires_at, poll.hide_results_until_voted,
+      CASE WHEN NOT poll.hide_results_until_voted OR EXISTS (
+        SELECT 1 FROM poll_votes viewer_vote
+        WHERE viewer_vote.poll_id = poll.id AND viewer_vote.user_id = :viewerId
+      ) THEN COUNT(vote.user_id)::INTEGER ELSE 0 END AS total_votes,
       (SELECT option_id FROM poll_votes viewer_vote WHERE viewer_vote.poll_id = poll.id AND viewer_vote.user_id = :viewerId LIMIT 1) AS viewer_option_id,
       COALESCE((
         SELECT jsonb_agg(jsonb_build_object(
           'id', option.id, 'label', option.label, 'position', option.position,
-          'votes', (SELECT COUNT(*)::INTEGER FROM poll_votes option_vote WHERE option_vote.option_id = option.id)
+          'votes', CASE WHEN NOT poll.hide_results_until_voted OR EXISTS (
+            SELECT 1 FROM poll_votes viewer_vote
+            WHERE viewer_vote.poll_id = poll.id AND viewer_vote.user_id = :viewerId
+          ) THEN (SELECT COUNT(*)::INTEGER FROM poll_votes option_vote WHERE option_vote.option_id = option.id) ELSE 0 END
         ) ORDER BY option.position)
         FROM poll_options option WHERE option.poll_id = poll.id
       ), '[]'::JSONB) AS options
@@ -27,6 +33,7 @@ async function pollForPost(postId, viewerId = null, transaction) {
     id: row.id,
     question: row.question,
     expiresAt: row.expires_at,
+    hideResultsUntilVoted: Boolean(row.hide_results_until_voted),
     totalVotes: Number(row.total_votes),
     viewerOptionId: row.viewer_option_id || null,
     options: asJsonArray(row.options)
@@ -44,9 +51,18 @@ export async function createPoll(userId, postId, input) {
     })
     if (existing[0]) throw new HttpError(409, 'POLL_EXISTS', 'This post already has a poll')
     const rows = await sequelize.query(`
-      INSERT INTO post_polls (post_id, question, expires_at)
-      VALUES (:postId, :question, :expiresAt) RETURNING id
-    `, { replacements: { postId, question: input.question, expiresAt: input.expiresAt || null }, type: QueryTypes.SELECT, transaction })
+      INSERT INTO post_polls (post_id, question, expires_at, hide_results_until_voted)
+      VALUES (:postId, :question, :expiresAt, :hideResultsUntilVoted) RETURNING id
+    `, {
+      replacements: {
+        postId,
+        question: input.question,
+        expiresAt: input.expiresAt || null,
+        hideResultsUntilVoted: input.hideResultsUntilVoted
+      },
+      type: QueryTypes.SELECT,
+      transaction
+    })
     for (const [position, label] of input.options.entries()) {
       await sequelize.query(`
         INSERT INTO poll_options (poll_id, label, position) VALUES (:pollId, :label, :position)

@@ -26,6 +26,11 @@ export function Poll({ postId, poll }) {
 
   const options = computed(() => current.value.options || [])
   const totalVotes = computed(() => Number(current.value.totalVotes || 0))
+  const resultsHidden = computed(() => Boolean(current.value.hideResultsUntilVoted) && !current.value.viewerOptionId)
+  const voteSummary = computed(() => {
+    if (resultsHidden.value) return 'Vote to see results'
+    return `${totalVotes.value} ${totalVotes.value === 1 ? 'vote' : 'votes'}`
+  })
 
   return (
     <div class="post-poll">
@@ -44,15 +49,16 @@ export function Poll({ postId, poll }) {
               class="post-poll-option"
               loading={busy}
               pressed={selected}
+              ariaLabel={resultsHidden.value ? `${option.label} — vote to reveal results` : `${option.label} — ${percentage}% · ${option.votes}`}
               onClick={() => vote(option.id)}
             >
               <span>{option.label}</span>
-              <span>{percentage}% · {option.votes}</span>
+              <span>{resultsHidden.value ? 'Vote to reveal' : `${percentage}% · ${option.votes}`}</span>
             </Button>
           )
         })}
       </div>
-      <small>{totalVotes.value} {totalVotes.value === 1 ? 'vote' : 'votes'}{current.value.expiresAt ? ` · closes ${new Date(current.value.expiresAt).toLocaleDateString()}` : ''}</small>
+      <small>{voteSummary.value}{current.value.expiresAt ? ` · closes ${new Date(current.value.expiresAt).toLocaleDateString()}` : ''}</small>
       <div class="post-feed-error" role="alert">{error}</div>
     </div>
   )

@@ -50,6 +50,7 @@ export function PostComposer({ onCreated, channelId = null }) {
   const pollOptionValues = [signal(''), signal(''), signal(''), signal('')]
   const pollOptionCount = signal(2)
   const pollOptions = computed(() => pollOptionValues.slice(0, pollOptionCount.value))
+  const hidePollResults = signal(false)
   const pollEnabled = signal(false)
   const richPickerOpen = signal(false)
   const richPickerPosition = signal(null)
@@ -184,6 +185,7 @@ export function PostComposer({ onCreated, channelId = null }) {
     pollQuestion.value = ''
     pollOptionValues.forEach(option => option.value = '')
     pollOptionCount.value = 2
+    hidePollResults.value = false
     pollEnabled.value = false
     closeRichPicker()
     clearOfflineDraft(offlineScope())
@@ -262,7 +264,11 @@ export function PostComposer({ onCreated, channelId = null }) {
       }
       const wasScheduled = Boolean(scheduledAt.value)
       const hadPoll = pollEnabled.value
-      const pollPayload = { question: pollQuestion.value.trim(), options: cleanOptions }
+      const pollPayload = {
+        question: pollQuestion.value.trim(),
+        options: cleanOptions,
+        hideResultsUntilVoted: hidePollResults.value
+      }
       const payload = {
         body: trimmedBody,
         ...(channelId ? { channelId } : {}),
@@ -299,6 +305,7 @@ export function PostComposer({ onCreated, channelId = null }) {
       pollQuestion.value = ''
       pollOptionValues.forEach(option => option.value = '')
       pollOptionCount.value = 2
+      hidePollResults.value = false
       pollEnabled.value = false
       closeRichPicker()
       draftStatus.value = 'saved'
@@ -381,6 +388,7 @@ export function PostComposer({ onCreated, channelId = null }) {
             ariaLabel={`Poll option ${index + 1}`}
           />
         ))}
+        <CheckBox checked={hidePollResults} class="post-poll-hide-results">Hide results until voted</CheckBox>
         {pollOptions.value.length < 4 && <Button class="post-poll-add-option" type="button" variant="tertiary" size="small" onClick={() => pollOptionCount.value += 1}>Add option</Button>}
       </div>
     )

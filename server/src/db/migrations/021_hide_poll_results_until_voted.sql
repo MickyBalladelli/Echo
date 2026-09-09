@@ -1,0 +1,2 @@
+ALTER TABLE post_polls
+  ADD COLUMN IF NOT EXISTS hide_results_until_voted BOOLEAN NOT NULL DEFAULT FALSE;

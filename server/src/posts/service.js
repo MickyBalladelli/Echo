@@ -122,14 +122,21 @@ const postSelect = (extraSelect = '') => `
         'id', post_poll.id,
         'question', post_poll.question,
         'expiresAt', post_poll.expires_at,
-        'totalVotes', (SELECT COUNT(*)::INTEGER FROM poll_votes total_vote WHERE total_vote.poll_id = post_poll.id),
+        'hideResultsUntilVoted', post_poll.hide_results_until_voted,
+        'totalVotes', CASE WHEN NOT post_poll.hide_results_until_voted OR EXISTS (
+          SELECT 1 FROM poll_votes viewer_vote
+          WHERE viewer_vote.poll_id = post_poll.id AND viewer_vote.user_id = :viewerId
+        ) THEN (SELECT COUNT(*)::INTEGER FROM poll_votes total_vote WHERE total_vote.poll_id = post_poll.id) ELSE 0 END,
         'viewerOptionId', (SELECT viewer_vote.option_id FROM poll_votes viewer_vote WHERE viewer_vote.poll_id = post_poll.id AND viewer_vote.user_id = :viewerId LIMIT 1),
         'options', COALESCE((
           SELECT jsonb_agg(jsonb_build_object(
             'id', poll_option.id,
             'label', poll_option.label,
             'position', poll_option.position,
-            'votes', (SELECT COUNT(*)::INTEGER FROM poll_votes option_vote WHERE option_vote.option_id = poll_option.id)
+            'votes', CASE WHEN NOT post_poll.hide_results_until_voted OR EXISTS (
+              SELECT 1 FROM poll_votes viewer_vote
+              WHERE viewer_vote.poll_id = post_poll.id AND viewer_vote.user_id = :viewerId
+            ) THEN (SELECT COUNT(*)::INTEGER FROM poll_votes option_vote WHERE option_vote.option_id = poll_option.id) ELSE 0 END
           ) ORDER BY poll_option.position)
           FROM poll_options poll_option WHERE poll_option.poll_id = post_poll.id
         ), '[]'::JSONB)

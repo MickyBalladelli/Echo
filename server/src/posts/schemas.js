@@ -81,7 +81,8 @@ export const scheduledPostSchema = withPostFormatRules(postInput.extend({
 export const pollSchema = z.object({
   question: z.string().trim().min(1).max(240),
   options: z.array(z.string().trim().min(1).max(120)).min(2).max(4),
-  expiresAt: z.string().datetime({ offset: true }).optional().nullable()
+  expiresAt: z.string().datetime({ offset: true }).optional().nullable(),
+  hideResultsUntilVoted: z.boolean().default(false)
 })
 
 export { hashtag, postInput }
