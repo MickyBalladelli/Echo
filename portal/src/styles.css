@@ -2718,6 +2718,12 @@ textarea {
   font-size: 13px;
 }
 
+.post-content-warning > .prism-button {
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
+}
+
 .post-edit-form,
 .post-edit-history {
   display: grid;
