@@ -39,7 +39,7 @@ function createSvgElement(tagName, attributes = {}) {
   return element
 }
 
-function GraphPersonNode({ user, side, index, count, router }) {
+function GraphPersonNode({ user, side, index, count, router, onFollowChanged }) {
   const position = `${side === 'followers' ? 18 : 82}%`
   const top = `${nodeY(index, count)}%`
   return (
@@ -47,6 +47,7 @@ function GraphPersonNode({ user, side, index, count, router }) {
       username={user.username}
       previewUser={user}
       router={router}
+      onFollowChanged={onFollowChanged}
       wrapperClassName={`social-graph-person-profile social-graph-person-profile-${side}`}
       wrapperProps={{ style: `left: ${position}; top: ${top};` }}
       triggerClassName="social-graph-person"
@@ -75,7 +76,7 @@ function GraphAggregateNode({ side, count, index, total }) {
   )
 }
 
-function GraphNodeList({ users, extraCount, side, router }) {
+function GraphNodeList({ users, extraCount, side, router, onFollowChanged }) {
   const total = users.length + (extraCount > 0 ? 1 : 0)
   return [
     ...users.map((user, index) => (
@@ -86,6 +87,7 @@ function GraphNodeList({ users, extraCount, side, router }) {
         index={index}
         count={total}
         router={router}
+        onFollowChanged={onFollowChanged}
       />
     )),
     extraCount > 0 && (
@@ -148,7 +150,7 @@ function GraphEdges({ followerNodeCount, followingNodeCount }) {
   return svg
 }
 
-function GraphStage({ profile, followers, following, extraFollowers, extraFollowing, router }) {
+function GraphStage({ profile, followers, following, extraFollowers, extraFollowing, router, onFollowChanged }) {
   const followerNodes = followers.length + (extraFollowers > 0 ? 1 : 0)
   const followingNodes = following.length + (extraFollowing > 0 ? 1 : 0)
   return (
@@ -168,8 +170,8 @@ function GraphStage({ profile, followers, following, extraFollowers, extraFollow
         <GraphEdges followerNodeCount={followerNodes} followingNodeCount={followingNodes} />
         <div class="social-graph-column-title social-graph-column-title-followers">Followers <span>{compactCount(profile.followerCount)}</span></div>
         <div class="social-graph-column-title social-graph-column-title-following">Following <span>{compactCount(profile.followingCount)}</span></div>
-        <GraphNodeList users={followers} extraCount={extraFollowers} side="followers" router={router} />
-        <GraphNodeList users={following} extraCount={extraFollowing} side="following" router={router} />
+        <GraphNodeList users={followers} extraCount={extraFollowers} side="followers" router={router} onFollowChanged={onFollowChanged} />
+        <GraphNodeList users={following} extraCount={extraFollowing} side="following" router={router} onFollowChanged={onFollowChanged} />
         <UserProfilePopover username={profile.username} previewUser={profile} router={router} wrapperClassName="social-graph-root-profile" wrapperProps={{ style: 'left: 50%; top: 50%;' }} triggerClassName="social-graph-root">
           <UserAvatar user={profile} size="large" className="social-graph-root-avatar" />
           <strong>{displayName(profile)}</strong>
@@ -224,13 +226,17 @@ export function SocialGraphPage({ router, username }) {
     }
   }
 
+  function handleFollowChanged(follow) {
+    if (!follow.optimistic) loadGraph()
+  }
+
   const content = computed(() => {
     if (state.value === 'loading') return <Card><div role="status">Loading social graph…</div></Card>
     if (state.value === 'error') {
       return <Card><EmptyState status="error" title="Social graph unavailable" description={error.value} action={Button({ children: 'Try again', onClick: loadGraph })} /></Card>
     }
     if (!graph.value) return null
-    return <GraphStage {...graph.value} router={router} />
+    return <GraphStage {...graph.value} router={router} onFollowChanged={handleFollowChanged} />
   })
 
   onMount(() => {

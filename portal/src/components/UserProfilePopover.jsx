@@ -15,7 +15,7 @@ function bio(user) {
   return user?.profile?.bio || user?.bio || ''
 }
 
-export function UserProfilePopover({ username, previewUser = null, router, children, embedded = false, wrapperClassName = '', wrapperProps = {}, triggerClassName = '', triggerProps = {} }) {
+export function UserProfilePopover({ username, previewUser = null, router, children, onFollowChanged, embedded = false, wrapperClassName = '', wrapperProps = {}, triggerClassName = '', triggerProps = {} }) {
   const open = signal(false)
   const loading = signal(false)
   const profile = signal(previewUser)
@@ -98,11 +98,13 @@ export function UserProfilePopover({ username, previewUser = null, router, child
 
   function handleFollowChanged(follow) {
     if (!profile.value) return
-    profile.value = {
+    const nextProfile = {
       ...profile.value,
       followedByViewer: follow.following,
       followerCount: follow.followerCount ?? profile.value.followerCount
     }
+    profile.value = nextProfile
+    onFollowChanged?.(follow, nextProfile)
   }
 
   const popover = computed(() => {
