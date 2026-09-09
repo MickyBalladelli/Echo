@@ -26,6 +26,10 @@ function tooltipText(anchor) {
   return anchor.dataset.echoTooltip || ''
 }
 
+function containsNode(anchor, target) {
+  return anchor instanceof Element && target instanceof Node && anchor.contains(target)
+}
+
 function positionTooltip(tooltip, anchor) {
   const gap = 8
   const anchorRect = anchor.getBoundingClientRect()
@@ -82,14 +86,14 @@ export function installImmediateTitleTooltips() {
       if (activeAnchor) hide()
       return
     }
-    if (event.relatedTarget instanceof Node && anchor.contains(event.relatedTarget)) return
+    if (containsNode(anchor, event.relatedTarget)) return
     show(anchor)
   }
 
   const handlePointerOut = event => {
     const anchor = titleTarget(event.target)
     if (!anchor || anchor !== activeAnchor) return
-    if (event.relatedTarget instanceof Node && anchor.contains(event.relatedTarget)) return
+    if (containsNode(anchor, event.relatedTarget)) return
     hide()
   }
 
@@ -102,7 +106,7 @@ export function installImmediateTitleTooltips() {
   const handleFocusOut = event => {
     const anchor = titleTarget(event.target)
     if (!anchor || anchor !== activeAnchor) return
-    if (event.relatedTarget instanceof Node && anchor.contains(event.relatedTarget)) return
+    if (containsNode(anchor, event.relatedTarget)) return
     hide()
   }
 

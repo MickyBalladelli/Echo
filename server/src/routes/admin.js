@@ -2,9 +2,18 @@ import { Router } from 'express'
 import { ok } from '../http/api.js'
 import { idSchema, parse } from '../http/validation.js'
 import { adminBadgeSchema, adminBadgeUpdateSchema, adminRoleSchema, adminStatusSchema } from '../admin/schemas.js'
-import { listAdminUsers, updateAdminUserBadge, updateAdminUserRole, updateAdminUserStatus } from '../admin/service.js'
+import { listAdminUsers, requireAdmin, updateAdminUserBadge, updateAdminUserRole, updateAdminUserStatus } from '../admin/service.js'
 
 export const adminRouter = Router()
+
+adminRouter.use(async (request, response, next) => {
+  try {
+    await requireAdmin(request.auth.userId)
+    next()
+  } catch (error) {
+    next(error)
+  }
+})
 
 adminRouter.get('/users', async (request, response, next) => {
   try {

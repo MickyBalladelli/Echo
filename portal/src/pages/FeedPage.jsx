@@ -166,10 +166,6 @@ export function PostDetailPage({ id, router, currentUserId, onPostCreated }) {
     router.navigate('/')
   }
 
-  function sortReplies(replies) {
-    return sortByCreatedAt(replies, 'asc')
-  }
-
   function selectReplyTarget(target) {
     replyTarget.value = target
     requestAnimationFrame(() => {
@@ -191,19 +187,14 @@ export function PostDetailPage({ id, router, currentUserId, onPostCreated }) {
 
   function addReply(reply) {
     const target = replyTarget.value
-    const nextReply = {
-      ...reply,
-      depth: reply.depth || (target?.depth || 0) + 1
-    }
-    const nextPost = {
-      ...post.value,
-      replyCount: post.value.replyCount + 1,
-      replies: sortReplies([...post.value.replies, nextReply])
-    }
+    const nextReply = { ...reply, depth: reply.depth || (target?.depth || 0) + 1 }
+    const targetId = target?.id
 
-    post.value = nextPost
-    replyTarget.value = nextPost
-    onPostCreated?.(nextReply)
+    loadPost().then(() => {
+      const refreshedTarget = post.value?.replies?.find(item => item.id === targetId) || post.value
+      replyTarget.value = refreshedTarget
+      onPostCreated?.(nextReply)
+    })
   }
 
   const detailContent = computed(() => {

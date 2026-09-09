@@ -4,7 +4,7 @@ import { sequelize } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
 import { requireStaff } from '../moderation/service.js'
 
-async function requireAdmin(userId) {
+export async function requireAdmin(userId) {
   const role = await requireStaff(userId)
   if (!['admin', 'developer'].includes(role)) {
     throw new HttpError(403, 'ADMIN_REQUIRED', 'Admin access required')
@@ -78,12 +78,12 @@ export async function updateAdminUserRole(adminId, userId, role) {
   }
   if (target.global_role === 'admin' && role !== 'admin') {
     const rows = await sequelize.query(`
-      SELECT COUNT(*) AS admin_count
+      SELECT COUNT(*) AS admin_or_developer_count
       FROM users
-      WHERE global_role = 'admin' AND status = 'active' AND deleted_at IS NULL
+      WHERE global_role IN ('admin', 'developer') AND status = 'active' AND deleted_at IS NULL
     `, { type: QueryTypes.SELECT })
-    if (Number(rows[0]?.admin_count || 0) <= 1) {
-      throw new HttpError(400, 'LAST_ADMIN_REQUIRED', 'Echo needs at least one active admin')
+    if (Number(rows[0]?.admin_or_developer_count || 0) <= 1) {
+      throw new HttpError(400, 'LAST_ADMIN_REQUIRED', 'Echo needs at least one active admin or developer')
     }
   }
 
