@@ -1031,6 +1031,11 @@ textarea {
   padding: 0;
 }
 
+.post-composer-popup.prism-popup-panel {
+  height: min(56rem, calc(100dvh - 2.5rem));
+  min-height: 0;
+}
+
 .post-composer-popup .post-composer {
   margin: 0;
   border: 0;
