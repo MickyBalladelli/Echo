@@ -4,6 +4,7 @@ import { apiRequest } from '../lib/api.js'
 import { LiveRegion } from './LiveRegion.jsx'
 import { UserProfilePopover } from './UserProfilePopover.jsx'
 import { GlobalRoleBadge } from './GlobalRoleBadge.jsx'
+import { UserBadges } from './UserBadges.jsx'
 
 export function ChannelManagementDialog({ channel: initialChannel, onUpdated, router }) {
   const open = signal(false)
@@ -179,7 +180,7 @@ export function ChannelManagementDialog({ channel: initialChannel, onUpdated, ro
             {members.value.map(member => (
               <div key={member.id} class="channel-member-row">
                 <UserProfilePopover username={member.username} previewUser={member} router={router} wrapperClassName="channel-member-profile-anchor" triggerClassName="channel-member-profile-link">
-                  <span>{member.displayName} <small>@{member.username}</small></span>
+                  <span>{member.displayName} <UserBadges badges={member.badges} compact /> <small>@{member.username}</small></span>
                 </UserProfilePopover>
                 <Badge tone={member.role === 'owner' ? 'accent' : member.role === 'moderator' ? 'success' : 'neutral'}>{member.role === 'owner' ? 'Owner' : member.role === 'moderator' ? 'Moderator' : 'Member'}</Badge>
                 <GlobalRoleBadge role={member.globalRole} />

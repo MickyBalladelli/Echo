@@ -8,6 +8,7 @@ import { LiveRegion } from '../components/LiveRegion.jsx'
 import { ChannelChat } from '../components/ChannelChat.jsx'
 import { UserProfilePopover } from '../components/UserProfilePopover.jsx'
 import { GlobalRoleBadge } from '../components/GlobalRoleBadge.jsx'
+import { UserBadges } from '../components/UserBadges.jsx'
 
 export function ChannelDetailPage({ slug, router, currentUserId, currentUsername, onHeaderChange = () => {} }) {
   const channel = signal(null)
@@ -194,7 +195,7 @@ export function ChannelDetailPage({ slug, router, currentUserId, currentUsername
             {members.value.map(member => (
               <div key={member.id} class="channel-member-row">
                 <UserProfilePopover username={member.username} previewUser={member} router={router} wrapperClassName="channel-member-profile-anchor" triggerClassName="channel-member-profile-link">
-                  <span class="channel-member-name"><span aria-hidden="true">{member.chatMarker || '🎈'}</span> {member.displayName}</span>
+                  <span class="channel-member-name"><span aria-hidden="true">{member.chatMarker || '🎈'}</span> {member.displayName} <UserBadges badges={member.badges} compact /></span>
                   <span>@{member.username}</span>
                 </UserProfilePopover>
               <Badge tone={member.role === 'owner' ? 'accent' : member.role === 'moderator' ? 'success' : 'neutral'}>{member.role === 'owner' ? 'Owner' : member.role === 'moderator' ? 'Moderator' : 'Member'}</Badge>

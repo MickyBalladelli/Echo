@@ -1,4 +1,5 @@
 import { QueryTypes } from 'sequelize'
+import { asJsonArray } from '../db/dialect.js'
 import { sequelize, withTransaction } from '../db/pool.js'
 import { HttpError } from '../http/errors.js'
 import { encodeCursor } from '../http/pagination.js'
@@ -337,7 +338,13 @@ export async function leaveChannel(userId, slug) {
 export async function listChannelMembers(viewerId, slug) {
   const channel = await getChannelRow(viewerId, slug)
   const rows = await sequelize.query(`
-    SELECT u.id, u.username, u.global_role, profile.display_name, profile.avatar_url, profile.chat_marker, member.role, member.joined_at
+    SELECT u.id, u.username, u.global_role, profile.display_name, profile.avatar_url, profile.chat_marker,
+      COALESCE((
+        SELECT jsonb_agg(badge.badge_type ORDER BY CASE badge.badge_type WHEN 'verified' THEN 0 WHEN 'government' THEN 1 WHEN 'business' THEN 2 WHEN 'staff' THEN 3 ELSE 4 END)
+        FROM user_badges badge
+        WHERE badge.user_id = u.id AND badge.revoked_at IS NULL
+      ), '[]'::JSONB) AS badges,
+      member.role, member.joined_at
     FROM channel_members member
     JOIN users u ON u.id = member.user_id AND u.deleted_at IS NULL AND u.status = 'active'
     LEFT JOIN profiles profile ON profile.user_id = u.id
@@ -352,6 +359,7 @@ export async function listChannelMembers(viewerId, slug) {
     displayName: row.display_name || row.username,
     avatarUrl: row.avatar_url || null,
     chatMarker: row.chat_marker || '🎈',
+    badges: asJsonArray(row.badges),
     globalRole: row.global_role || 'user',
     role: row.role,
     joinedAt: row.joined_at
