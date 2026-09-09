@@ -36,6 +36,7 @@ Notes:
 - Exact `CLIENT_ORIGIN` or `CLIENT_ORIGINS`
 - Optional OAuth client credentials and a provider callback URL if OAuth login is enabled
 - `LOG_LEVEL=info` or `warn`
+- `LOG_FORMAT=morgan` (default) or `json` for structured HTTP access logs
 - A managed PostgreSQL backup schedule
 - TLS termination and websocket upgrade support for `/socket.io`
 

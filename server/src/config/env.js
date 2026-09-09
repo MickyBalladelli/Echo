@@ -1,5 +1,9 @@
-import 'dotenv/config'
+import { fileURLToPath } from 'node:url'
+import dotenv from 'dotenv'
 import { z } from 'zod'
+
+dotenv.config({ path: fileURLToPath(new URL('../../.env', import.meta.url)), quiet: true })
+dotenv.config({ quiet: true })
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -13,6 +17,7 @@ const envSchema = z.object({
   CLIENT_ORIGINS: z.string().optional(),
   GIPHY_API_KEY: z.string().trim().optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  LOG_FORMAT: z.enum(['morgan', 'json']).default('morgan'),
   DB_QUERY_TIMEOUT_MS: z.coerce.number().int().min(100).max(30000).default(5000),
   DB_CONNECTION_TIMEOUT_MS: z.coerce.number().int().min(100).max(30000).default(5000),
   DB_PROFILE_SLOW_MS: z.coerce.number().int().min(10).max(30000).default(250),
@@ -71,6 +76,7 @@ export const env = Object.freeze({
   clientOrigins: Object.freeze(clientOrigins),
   giphyApiKey: result.data.GIPHY_API_KEY,
   logLevel: result.data.LOG_LEVEL,
+  logFormat: result.data.LOG_FORMAT,
   dbQueryTimeoutMs: result.data.DB_QUERY_TIMEOUT_MS,
   dbConnectionTimeoutMs: result.data.DB_CONNECTION_TIMEOUT_MS,
   dbProfileSlowMs: result.data.DB_PROFILE_SLOW_MS,
