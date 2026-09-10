@@ -70,7 +70,7 @@ export function FeedPage({ router, currentUserId, feed = 'home', createdPost }) 
       requestAnimationFrame(() => {
         const target = [...document.querySelectorAll('[data-post-id]')]
           .find(element => element.dataset.postId === post.id)
-        target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        target?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       })
     }
   }
@@ -135,17 +135,24 @@ export function FeedPage({ router, currentUserId, feed = 'home', createdPost }) 
   })
 
   onMount(() => {
+    const handleCreatedPost = post => {
+      if (!post || post.id === lastCreatedPostId) return
+      lastCreatedPostId = post.id
+      addPost(post, { scrollToPost: true })
+    }
     const stopCreatedPostEffect = createdPost
       ? effect(() => {
-        const post = createdPost.value
-        if (!post || post.id === lastCreatedPostId) return
-        lastCreatedPostId = post.id
-        addPost(post, { scrollToPost: true })
+        handleCreatedPost(createdPost.value)
       })
       : null
+    const onPostCreated = event => handleCreatedPost(event.detail)
+    window.addEventListener('echo:post-created', onPostCreated)
 
     loadFeed()
-    return () => stopCreatedPostEffect?.()
+    return () => {
+      stopCreatedPostEffect?.()
+      window.removeEventListener('echo:post-created', onPostCreated)
+    }
   })
 
   return (

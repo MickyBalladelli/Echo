@@ -68,6 +68,7 @@ export function AppShell({
   const handleTimelinePostCreated = post => {
     latestTimelinePost.value = post
     refreshPostMap(post)
+    window.dispatchEvent(new CustomEvent('echo:post-created', { detail: post }))
   }
   const router = createRouter([
     { path: '/', title: 'Timeline', view: () => HomePage({ router, currentUserId: userState.value.id, createdPost: latestTimelinePost }) },
